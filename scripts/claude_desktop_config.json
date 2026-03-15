@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cognitive-twin": {
+      "command": "python",
+      "args": ["C:\\Users\\User\\Cognitive_Twin\\src\\mcp_server.py"]
+    }
+  }
+}
