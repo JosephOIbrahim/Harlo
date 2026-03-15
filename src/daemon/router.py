@@ -18,6 +18,7 @@ def route_command(command: str, args: dict) -> dict:
     """
     router = {
         "ask": _handle_ask,
+        "detect": _handle_detect,
         "recall": _handle_recall,
         "session_close": _handle_session_close,
         "session_list": _handle_session_list,
@@ -113,6 +114,30 @@ def _handle_ask(args: dict) -> dict:
         return {"status": "error", "message": str(e)}
     except ImportError as e:
         return {"status": "error", "message": f"Provider not available: {e}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def _handle_detect(args: dict) -> dict:
+    """Handle detect command: run pattern detection on stored traces."""
+    try:
+        from ..daemon.config import DB_PATH, ensure_data_dirs
+
+        ensure_data_dirs()
+        threshold = args.get("threshold", 100)
+        min_cluster = args.get("min_cluster", 3)
+
+        from ..modulation.detector import PatternDetector
+        detector = PatternDetector(str(DB_PATH), threshold=threshold)
+        patterns = detector.detect_all(min_cluster_size=min_cluster)
+
+        return {
+            "status": "ok",
+            "result": {
+                "patterns": [p.to_dict() for p in patterns],
+                "count": len(patterns),
+            },
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -582,9 +607,21 @@ def _handle_reflect(args: dict) -> dict:
 
 
 def _handle_inquire(args: dict) -> dict:
-    """Handle inquire command: surface pending inquiries."""
-    depth = args.get("depth", "standard")
-    return {"status": "ok", "result": {"inquiries": [], "depth": depth}}
+    """Handle inquire command: detect patterns and surface as inquiries."""
+    try:
+        from ..daemon.config import DB_PATH, ensure_data_dirs
+
+        ensure_data_dirs()
+        depth = args.get("depth", "standard")
+
+        from ..modulation.detector import PatternDetector
+        detector = PatternDetector(str(DB_PATH))
+        patterns = detector.detect_all()
+
+        inquiries = [p.to_dict() for p in patterns]
+        return {"status": "ok", "result": {"inquiries": inquiries, "depth": depth}}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 def _handle_boundaries(args: dict) -> dict:
