@@ -19,6 +19,7 @@ def route_command(command: str, args: dict) -> dict:
     router = {
         "ask": _handle_ask,
         "detect": _handle_detect,
+        "health": _handle_health,
         "recall": _handle_recall,
         "session_close": _handle_session_close,
         "session_list": _handle_session_list,
@@ -196,6 +197,15 @@ def _handle_session_list(args: dict) -> dict:
                 "count": len(sessions),
             },
         }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def _handle_health(args: dict) -> dict:
+    """Handle health command: return daemon health status."""
+    try:
+        from ..daemon.lifecycle import get_health
+        return {"status": "ok", "result": get_health()}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

@@ -50,8 +50,21 @@ def run_socket_activated():
 
     On systems without socket activation, falls back to creating
     the socket directly. Exits after handling one batch of commands.
+    Performs startup cleanup and installs signal handlers.
     """
     ensure_data_dirs()
+
+    # Lifecycle: startup
+    from .lifecycle import (
+        write_pid_file,
+        startup_cleanup,
+        graceful_shutdown,
+        install_signal_handlers,
+    )
+
+    write_pid_file()
+    startup_cleanup()
+    install_signal_handlers(shutdown_fn=graceful_shutdown)
 
     # Check for systemd socket activation (LISTEN_FDS)
     listen_fds = os.environ.get("LISTEN_FDS")
@@ -80,6 +93,8 @@ def run_socket_activated():
         # Clean up socket file
         if SOCKET_PATH.exists():
             SOCKET_PATH.unlink(missing_ok=True)
+        # Lifecycle: shutdown
+        graceful_shutdown()
 
 
 def run_direct(command: str, args: dict) -> dict:
