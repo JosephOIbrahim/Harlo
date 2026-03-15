@@ -55,14 +55,21 @@ def route_command(command: str, args: dict) -> dict:
 
 
 def _handle_recall(args: dict) -> dict:
-    """Handle recall command via Hippocampus Rust engine."""
+    """Handle recall command via Hippocampus Rust engine or semantic encoder."""
     try:
-        import hippocampus
-        from ..daemon.config import DB_PATH, ensure_data_dirs
+        from ..daemon.config import DB_PATH, ENCODER_TYPE, ensure_data_dirs
 
         ensure_data_dirs()
         query = args.get("query", "")
         depth = args.get("depth", "normal")
+        encoder = args.get("encoder", ENCODER_TYPE)
+
+        if encoder == "semantic":
+            from ..encoder import semantic_recall
+            result = semantic_recall(str(DB_PATH), query, depth=depth)
+            return {"status": "ok", "result": result}
+
+        import hippocampus
         result = hippocampus.py_recall(query, depth=depth, db_path=str(DB_PATH))
         return {"status": "ok", "result": result}
     except ImportError:
@@ -74,8 +81,7 @@ def _handle_recall(args: dict) -> dict:
 def _handle_store(args: dict) -> dict:
     """Handle store trace command."""
     try:
-        import hippocampus
-        from ..daemon.config import DB_PATH, ensure_data_dirs
+        from ..daemon.config import DB_PATH, ENCODER_TYPE, ensure_data_dirs
 
         ensure_data_dirs()
         trace_id = args.get("trace_id", "")
@@ -83,7 +89,17 @@ def _handle_store(args: dict) -> dict:
         tags = args.get("tags")
         domain = args.get("domain")
         source = args.get("source")
+        encoder = args.get("encoder", ENCODER_TYPE)
 
+        if encoder == "semantic":
+            from ..encoder import semantic_store
+            semantic_store(
+                str(DB_PATH), trace_id, message,
+                tags=tags, domain=domain, source=source,
+            )
+            return {"status": "ok", "trace_id": trace_id}
+
+        import hippocampus
         hippocampus.py_store_trace(
             trace_id, message,
             tags=tags, domain=domain, source=source,
