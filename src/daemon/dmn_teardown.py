@@ -61,8 +61,10 @@ class DMNTeardown:
                 # Rule 30: Dump to temp file on abort
                 self._dump_to_temp(result)
             # If not aborted, result was committed by synthesis_fn
-        except Exception:
-            pass  # Synthesis failed, exit cleanly
+        except Exception as e:
+            # Log synthesis failure but exit cleanly (background thread)
+            import sys
+            print(f"DMN synthesis error: {e}", file=sys.stderr)
 
     def _dump_to_temp(self, data):
         """Write partial results to temp file. Rule 30."""
@@ -71,8 +73,8 @@ class DMNTeardown:
             with open(temp_path, "w") as f:
                 json.dump(data, f)
             self._temp_file = temp_path
-        except Exception:
-            pass  # Best effort
+        except (OSError, TypeError, ValueError):
+            pass  # Best effort — temp file is non-critical
 
     def recover_temp(self) -> Optional[dict]:
         """Recover partial results from temp file on boot."""
@@ -86,7 +88,7 @@ class DMNTeardown:
                         data = json.load(f)
                     path.unlink()  # Delete after recovery
                     return data
-                except Exception:
+                except (json.JSONDecodeError, OSError):
                     path.unlink(missing_ok=True)
         return None
 

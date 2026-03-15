@@ -127,7 +127,10 @@ def escalate(query: str, context: dict, stage_id: str) -> dict:
     # --- Step 3: Aletheia GVR ---
     intent = context.get("intent", query)
     output_text = _outcome_to_text(resolution.outcome)
-    gvr_result: VerificationResult = run_gvr(intent=intent, output=output_text)
+    generator_fn = context.get("generator_fn")
+    gvr_result: VerificationResult = run_gvr(
+        intent=intent, output=output_text, generator_fn=generator_fn,
+    )
     result["verification"] = gvr_result.to_dict()
     resolution_dict["gvr_state"] = gvr_result.state.value
 

@@ -184,7 +184,7 @@ def _handle_resolve(args: dict) -> dict:
 
         stage = MerkleStage.from_dict(stage_data)
         resolution = resolve(stage)
-        log_resolution(stage_id, resolution)
+        log_resolution(resolution, stage_id)
 
         return {"status": "ok", "result": resolution.to_dict()}
     except ImportError as e:
