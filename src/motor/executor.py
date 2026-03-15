@@ -75,6 +75,47 @@ def _default_handler(action: PlannedAction, session_state: dict) -> dict:
     }
 
 
+def _handle_recall(action: PlannedAction, session_state: dict) -> dict:
+    """Handle recall action — query the Association Engine."""
+    from ..daemon.router import route_command
+    query = action.payload.get("query", action.target)
+    result = route_command("recall", {"query": query, "depth": action.payload.get("depth", "normal")})
+    return result.get("result", {})
+
+
+def _handle_store(action: PlannedAction, session_state: dict) -> dict:
+    """Handle store action — store a trace."""
+    from ..daemon.router import route_command
+    result = route_command("store", {
+        "trace_id": action.payload.get("trace_id", action.target),
+        "message": action.payload.get("message", ""),
+        "tags": action.payload.get("tags"),
+        "domain": action.payload.get("domain"),
+    })
+    return result.get("result", {"trace_id": action.target})
+
+
+def _handle_inquire(action: PlannedAction, session_state: dict) -> dict:
+    """Handle inquire action — run pattern detection."""
+    from ..daemon.router import route_command
+    result = route_command("inquire", {"depth": action.payload.get("depth", "standard")})
+    return result.get("result", {})
+
+
+def _handle_reflect(action: PlannedAction, session_state: dict) -> dict:
+    """Handle reflect action — run DMN reflection synthesis."""
+    from ..daemon.router import route_command
+    result = route_command("reflect", {})
+    return result.get("result", {})
+
+
+# Register built-in action handlers
+register_handler("recall", _handle_recall)
+register_handler("store", _handle_store)
+register_handler("inquire", _handle_inquire)
+register_handler("reflect", _handle_reflect)
+
+
 # ------------------------------------------------------------------
 # Execution (Rule 24: ONE at a time)
 # ------------------------------------------------------------------

@@ -612,8 +612,33 @@ def _handle_deferred(args: dict) -> dict:
 
 
 def _handle_reflect(args: dict) -> dict:
-    """Handle reflect command: run DMN reflection synthesis."""
-    return {"status": "ok", "result": {"insights": [], "synthesis": "No reflection data yet."}}
+    """Handle reflect command: run DMN reflection synthesis on stored patterns."""
+    try:
+        from ..daemon.config import DB_PATH, ensure_data_dirs
+
+        ensure_data_dirs()
+
+        from ..modulation.detector import PatternDetector
+        detector = PatternDetector(str(DB_PATH))
+        patterns = detector.detect_all()
+
+        # Build insights from detected patterns
+        insights = []
+        for p in patterns:
+            insights.append({
+                "type": p.pattern_type,
+                "description": p.description,
+                "confidence": p.confidence,
+                "evidence_count": len(p.trace_ids),
+            })
+
+        synthesis = "No patterns detected yet." if not insights else (
+            f"Found {len(insights)} pattern(s) across stored traces."
+        )
+
+        return {"status": "ok", "result": {"insights": insights, "synthesis": synthesis}}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 def _handle_inquire(args: dict) -> dict:
@@ -635,11 +660,23 @@ def _handle_inquire(args: dict) -> dict:
 
 
 def _handle_boundaries(args: dict) -> dict:
-    """Handle boundaries command: list/add/remove boundaries."""
-    action = args.get("action", "list")
-    topic = args.get("topic", "")
-    # Stub: return empty boundaries list
-    return {"status": "ok", "result": {"boundaries": [], "action": action}}
+    """Handle boundaries command: list/add/remove inquiry boundaries."""
+    try:
+        from ..inquiry.engine import InquiryEngine
+
+        engine = InquiryEngine()
+        action = args.get("action", "list")
+        topic = args.get("topic", "")
+
+        if action == "add" and topic:
+            engine.consent.block_topic(topic, reason="user boundary")
+        elif action == "remove" and topic:
+            engine.consent.unblock_topic(topic, reason="user removed boundary")
+
+        boundaries = engine.consent.get_blocked_keys()
+        return {"status": "ok", "result": {"boundaries": boundaries, "action": action}}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 def _handle_profile(args: dict) -> dict:
@@ -703,15 +740,172 @@ def _handle_reflexes(args: dict) -> dict:
 
 
 def _handle_export(args: dict) -> dict:
-    """Handle export command: export twin data."""
-    path = args.get("path", "")
-    return {"status": "ok", "result": {"path": path, "exported": True}}
+    """Handle export command: export traces and sessions to JSON file."""
+    try:
+        from ..daemon.config import DB_PATH, ensure_data_dirs
+
+        ensure_data_dirs()
+        path = args.get("path", "")
+        if not path:
+            return {"status": "error", "message": "path is required"}
+
+        from ..session.manager import SessionManager
+        import sqlite3
+
+        export_data = {"version": "6.0.0", "traces": [], "sessions": [], "patterns": []}
+
+        conn = sqlite3.connect(str(DB_PATH))
+        try:
+            # Export traces
+            try:
+                rows = conn.execute(
+                    "SELECT id, message, created_at, tags_json, domain, source FROM traces"
+                ).fetchall()
+                for r in rows:
+                    export_data["traces"].append({
+                        "id": r[0], "message": r[1], "created_at": r[2],
+                        "tags": json.loads(r[3]) if r[3] else [],
+                        "domain": r[4], "source": r[5],
+                    })
+            except sqlite3.OperationalError:
+                pass
+
+            # Export sessions
+            try:
+                rows = conn.execute(
+                    """SELECT session_id, started_at, last_active, exchange_count,
+                              domain, encoder_type, closed, history_json, allostatic_tokens
+                       FROM sessions"""
+                ).fetchall()
+                for r in rows:
+                    export_data["sessions"].append({
+                        "session_id": r[0], "started_at": r[1], "last_active": r[2],
+                        "exchange_count": r[3], "domain": r[4], "encoder_type": r[5],
+                        "closed": bool(r[6]), "history": json.loads(r[7]) if r[7] else [],
+                        "allostatic_tokens": r[8],
+                    })
+            except sqlite3.OperationalError:
+                pass
+
+            # Export patterns
+            try:
+                rows = conn.execute(
+                    """SELECT pattern_id, pattern_type, description, trace_ids_json,
+                              confidence, detected_at, topic_key
+                       FROM patterns"""
+                ).fetchall()
+                for r in rows:
+                    export_data["patterns"].append({
+                        "pattern_id": r[0], "pattern_type": r[1],
+                        "description": r[2], "trace_ids": json.loads(r[3]),
+                        "confidence": r[4], "detected_at": r[5], "topic_key": r[6],
+                    })
+            except sqlite3.OperationalError:
+                pass
+        finally:
+            conn.close()
+
+        # Write to file
+        from pathlib import Path
+        Path(path).write_text(json.dumps(export_data, indent=2), encoding="utf-8")
+
+        return {
+            "status": "ok",
+            "result": {
+                "path": path,
+                "exported": True,
+                "traces": len(export_data["traces"]),
+                "sessions": len(export_data["sessions"]),
+                "patterns": len(export_data["patterns"]),
+            },
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 def _handle_import(args: dict) -> dict:
-    """Handle import command: import twin data."""
-    path = args.get("path", "")
-    return {"status": "ok", "result": {"path": path, "imported": True}}
+    """Handle import command: import traces and sessions from JSON file."""
+    try:
+        from ..daemon.config import DB_PATH, ensure_data_dirs
+
+        ensure_data_dirs()
+        path = args.get("path", "")
+        if not path:
+            return {"status": "error", "message": "path is required"}
+
+        from pathlib import Path
+        import_path = Path(path)
+        if not import_path.exists():
+            return {"status": "error", "message": f"File not found: {path}"}
+
+        import_data = json.loads(import_path.read_text(encoding="utf-8"))
+        traces_imported = 0
+        sessions_imported = 0
+
+        import sqlite3
+        conn = sqlite3.connect(str(DB_PATH))
+        try:
+            # Import traces (message-only, SDR will be re-encoded on next recall)
+            for t in import_data.get("traces", []):
+                try:
+                    from ..encoder import semantic_store
+                    semantic_store(
+                        str(DB_PATH), t["id"], t["message"],
+                        tags=t.get("tags"), domain=t.get("domain"),
+                        source=t.get("source"),
+                    )
+                    traces_imported += 1
+                except Exception:
+                    pass  # Skip traces that fail to import
+
+            # Import sessions
+            for s in import_data.get("sessions", []):
+                try:
+                    conn.execute("""
+                        CREATE TABLE IF NOT EXISTS sessions (
+                            session_id TEXT PRIMARY KEY,
+                            started_at INTEGER NOT NULL,
+                            last_active INTEGER NOT NULL,
+                            exchange_count INTEGER NOT NULL DEFAULT 0,
+                            domain TEXT NOT NULL DEFAULT 'general',
+                            encoder_type TEXT NOT NULL DEFAULT 'semantic',
+                            closed INTEGER NOT NULL DEFAULT 0,
+                            history_json TEXT NOT NULL DEFAULT '[]',
+                            allostatic_tokens INTEGER NOT NULL DEFAULT 0
+                        )
+                    """)
+                    conn.execute(
+                        """INSERT OR IGNORE INTO sessions
+                           (session_id, started_at, last_active, exchange_count,
+                            domain, encoder_type, closed, history_json, allostatic_tokens)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (
+                            s["session_id"], s["started_at"], s["last_active"],
+                            s["exchange_count"], s["domain"], s["encoder_type"],
+                            int(s["closed"]), json.dumps(s.get("history", [])),
+                            s["allostatic_tokens"],
+                        ),
+                    )
+                    sessions_imported += 1
+                except Exception:
+                    pass
+            conn.commit()
+        finally:
+            conn.close()
+
+        return {
+            "status": "ok",
+            "result": {
+                "path": path,
+                "imported": True,
+                "traces": traces_imported,
+                "sessions": sessions_imported,
+            },
+        }
+    except json.JSONDecodeError:
+        return {"status": "error", "message": f"Invalid JSON in {path}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 def _handle_inquiries(args: dict) -> dict:
