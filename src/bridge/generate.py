@@ -110,16 +110,23 @@ def generate(
 def _recall_context(
     db_path: str, query: str, encoder_type: str, depth: str
 ) -> dict:
-    """Recall relevant traces for context injection."""
+    """Recall relevant traces for context injection.
+
+    Tries the requested encoder first. If lexical is requested but the
+    hippocampus Rust module is not available, falls back to semantic
+    recall so that stored traces are still found.
+    """
     if encoder_type == "semantic":
         from ..encoder import semantic_recall
         return semantic_recall(db_path, query, depth=depth)
-    else:
-        try:
-            import hippocampus
-            return hippocampus.py_recall(query, depth=depth, db_path=db_path)
-        except ImportError:
-            return {"context": "", "traces": [], "confidence": 0.0}
+
+    # Lexical path via Rust — fall back to semantic if unavailable
+    try:
+        import hippocampus
+        return hippocampus.py_recall(query, depth=depth, db_path=db_path)
+    except ImportError:
+        from ..encoder import semantic_recall
+        return semantic_recall(db_path, query, depth=depth)
 
 
 def _build_augmented_prompt(
