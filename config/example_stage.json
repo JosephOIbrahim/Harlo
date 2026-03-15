@@ -1,0 +1,26 @@
+{
+  "stage_id": "example",
+  "layers": [
+    {
+      "layer_id": "base_knowledge",
+      "arc_type": "INHERIT",
+      "data": {
+        "domain": "general",
+        "confidence_threshold": 0.7,
+        "max_recall_depth": 5
+      },
+      "source": "system_defaults",
+      "timestamp": 1710000000
+    },
+    {
+      "layer_id": "user_override",
+      "arc_type": "LOCAL",
+      "data": {
+        "max_recall_depth": 10,
+        "preferred_format": "detailed"
+      },
+      "source": "user_profile",
+      "timestamp": 1710100000
+    }
+  ]
+}

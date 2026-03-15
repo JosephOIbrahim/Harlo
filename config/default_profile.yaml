@@ -1,0 +1,22 @@
+modulation:
+  s_nm: 0.0
+  association_radius: 10
+  escalation_threshold: 0.7
+  decay_lambda: 0.05
+  tangent_tolerance: 1.0
+  verbosity: normal
+
+anchors:
+  - SAFETY
+  - CONSENT
+  - KNOWLEDGE
+  - CONSTITUTIONAL
+
+inquiry:
+  depth: standard
+  consent_level: standard
+  boundaries: []
+
+motor:
+  session_consent: 0
+  scope: {}

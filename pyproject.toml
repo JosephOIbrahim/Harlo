@@ -1,0 +1,21 @@
+[build-system]
+requires = ["maturin>=1.5"]
+build-backend = "maturin"
+
+[project]
+name = "cognitive-twin"
+version = "6.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.0",
+    "jsonschema>=4.0",
+    "numpy>=1.26",
+    "maturin>=1.5",
+]
+
+[tool.maturin]
+manifest-path = "crates/hippocampus/Cargo.toml"
+features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
