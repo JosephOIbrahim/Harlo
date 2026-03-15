@@ -5,6 +5,7 @@ Uses Click framework. All commands: human-readable default, --json for LLM.
 
 import click
 
+from .commands.ask import ask
 from .commands.audit import audit
 from .commands.boundaries import boundaries
 from .commands.compose import compose
@@ -24,6 +25,7 @@ from .commands.plan import plan
 from .commands.profile import profile
 from .commands.recall import recall
 from .commands.reflect import reflect
+from .commands.session import session
 from .commands.reflexes import reflexes
 from .commands.resolve import resolve
 from .commands.status import status
@@ -41,6 +43,7 @@ def cli():
 
 
 # Register commands
+cli.add_command(ask)
 cli.add_command(audit)
 cli.add_command(boundaries)
 cli.add_command(compose)
@@ -63,6 +66,7 @@ cli.add_command(recall)
 cli.add_command(reflect)
 cli.add_command(reflexes)
 cli.add_command(resolve)
+cli.add_command(session)
 cli.add_command(status)
 cli.add_command(stuck)
 cli.add_command(trace)

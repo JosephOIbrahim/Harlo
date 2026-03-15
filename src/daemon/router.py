@@ -17,7 +17,12 @@ def route_command(command: str, args: dict) -> dict:
         Result dictionary with at minimum a "status" key.
     """
     router = {
+        "ask": _handle_ask,
         "recall": _handle_recall,
+        "session_close": _handle_session_close,
+        "session_list": _handle_session_list,
+        "session_start": _handle_session_start,
+        "session_status": _handle_session_status,
         "store": _handle_store,
         "consolidate": _handle_consolidate,
         "trace": _handle_trace,
@@ -52,6 +57,122 @@ def route_command(command: str, args: dict) -> dict:
         return {"status": "error", "message": f"Unknown command: {command}"}
 
     return handler(args)
+
+
+def _get_session_manager():
+    """Get a SessionManager instance using daemon config."""
+    from ..daemon.config import DB_PATH, SESSION_TIMEOUT_S, ensure_data_dirs
+    from ..session import SessionManager
+
+    ensure_data_dirs()
+    return SessionManager(db_path=str(DB_PATH), timeout_s=SESSION_TIMEOUT_S)
+
+
+def _handle_ask(args: dict) -> dict:
+    """Handle ask command: full Twin generation loop with session tracking."""
+    try:
+        from ..daemon.config import DB_PATH, ENCODER_TYPE, ensure_data_dirs
+
+        ensure_data_dirs()
+        question = args.get("question", "")
+        provider_name = args.get("provider", "claude")
+        depth = args.get("depth", "normal")
+        domain = args.get("domain", "general")
+        encoder = args.get("encoder", ENCODER_TYPE)
+        session_id = args.get("session_id")
+
+        # Session management
+        mgr = _get_session_manager()
+        session = mgr.get_or_create(session_id, domain=domain, encoder_type=encoder)
+
+        from ..provider import get_provider
+        from ..bridge.generate import generate
+
+        provider = get_provider(provider_name)
+
+        # Pass conversation history as context
+        history = session.history if session.history else None
+
+        result = generate(
+            query=question,
+            provider=provider,
+            db_path=str(DB_PATH),
+            domain=domain,
+            encoder_type=encoder,
+            recall_depth=depth,
+        )
+
+        # Record exchange in session
+        response_text = result.get("response", "")
+        token_estimate = len(question.split()) + len(response_text.split())
+        mgr.record_exchange(session.session_id, question, response_text, tokens=token_estimate)
+
+        result["session_id"] = session.session_id
+        return {"status": "ok", "result": result}
+    except ValueError as e:
+        return {"status": "error", "message": str(e)}
+    except ImportError as e:
+        return {"status": "error", "message": f"Provider not available: {e}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def _handle_session_start(args: dict) -> dict:
+    """Handle session_start command: create a new session."""
+    try:
+        domain = args.get("domain", "general")
+        encoder = args.get("encoder_type", "semantic")
+        mgr = _get_session_manager()
+        session = mgr.create(domain=domain, encoder_type=encoder)
+        return {"status": "ok", "result": session.to_dict()}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def _handle_session_close(args: dict) -> dict:
+    """Handle session_close command: close a session and trigger DMN teardown."""
+    try:
+        session_id = args.get("session_id", "")
+        if not session_id:
+            return {"status": "error", "message": "session_id is required"}
+        mgr = _get_session_manager()
+        session = mgr.close(session_id)
+        if session is None:
+            return {"status": "error", "message": f"Session not found: {session_id}"}
+        return {"status": "ok", "result": session.to_dict()}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def _handle_session_status(args: dict) -> dict:
+    """Handle session_status command: return session info."""
+    try:
+        session_id = args.get("session_id", "")
+        if not session_id:
+            return {"status": "error", "message": "session_id is required"}
+        mgr = _get_session_manager()
+        session = mgr.get(session_id)
+        if session is None:
+            return {"status": "error", "message": f"Session not found: {session_id}"}
+        return {"status": "ok", "result": session.to_dict()}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def _handle_session_list(args: dict) -> dict:
+    """Handle session_list command: list active sessions."""
+    try:
+        mgr = _get_session_manager()
+        sessions = mgr.list_active()
+        return {
+            "status": "ok",
+            "result": {
+                "sessions": [s.to_dict() for s in sessions],
+                "count": len(sessions),
+            },
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 def _handle_recall(args: dict) -> dict:

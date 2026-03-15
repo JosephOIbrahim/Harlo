@@ -35,6 +35,9 @@ DEFAULT_EPSILON = 0.01
 # Encoder type: "lexical" (default, Rust hot path) or "semantic" (BGE + LSH)
 ENCODER_TYPE = os.environ.get("TWIN_ENCODER_TYPE", "lexical")
 
+# Session timeout in seconds (default 1800 = 30 minutes)
+SESSION_TIMEOUT_S = int(os.environ.get("TWIN_SESSION_TIMEOUT", "1800"))
+
 
 def ensure_data_dirs():
     """Create data directories if they don't exist."""
