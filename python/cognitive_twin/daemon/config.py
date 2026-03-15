@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 # Project root detection
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
 # Data paths
 DATA_DIR = PROJECT_ROOT / "data"

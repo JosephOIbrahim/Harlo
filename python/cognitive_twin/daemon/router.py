@@ -225,7 +225,7 @@ def _handle_recall(args: dict) -> dict:
             result = semantic_recall(str(DB_PATH), query, depth=depth)
             return {"status": "ok", "result": result}
 
-        import hippocampus
+        from cognitive_twin import hippocampus
         result = hippocampus.py_recall(query, depth=depth, db_path=str(DB_PATH))
         return {"status": "ok", "result": result}
     except ImportError:
@@ -255,7 +255,7 @@ def _handle_store(args: dict) -> dict:
             )
             return {"status": "ok", "trace_id": trace_id}
 
-        import hippocampus
+        from cognitive_twin import hippocampus
         hippocampus.py_store_trace(
             trace_id, message,
             tags=tags, domain=domain, source=source,
@@ -271,7 +271,7 @@ def _handle_store(args: dict) -> dict:
 def _handle_consolidate(args: dict) -> dict:
     """Handle consolidate command: apoptosis + graph consolidation."""
     try:
-        import hippocampus
+        from cognitive_twin import hippocampus
         from ..daemon.config import DB_PATH, DEFAULT_EPSILON, ensure_data_dirs
 
         ensure_data_dirs()
@@ -294,7 +294,7 @@ def _handle_consolidate(args: dict) -> dict:
 def _handle_trace(args: dict) -> dict:
     """Handle trace lookup by ID."""
     try:
-        import hippocampus
+        from cognitive_twin import hippocampus
         from ..daemon.config import DB_PATH, ensure_data_dirs
 
         ensure_data_dirs()

@@ -7,7 +7,7 @@ import json
 import os
 import tempfile
 
-import hippocampus
+from cognitive_twin import hippocampus
 
 
 class TestApoptosisIntegration:

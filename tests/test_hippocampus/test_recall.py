@@ -13,7 +13,7 @@ import os
 import tempfile
 import time
 
-import hippocampus
+from cognitive_twin import hippocampus
 
 
 def _temp_db():

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-_DEPTH_CONFIG_PATH = Path(__file__).parent.parent.parent / "config" / "verification_depth.yaml"
+_DEPTH_CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config" / "verification_depth.yaml"
 
 # Hardcoded fallback matching verification_depth.yaml
 _DEFAULTS = {

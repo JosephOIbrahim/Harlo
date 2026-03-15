@@ -19,8 +19,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 def main():
     """Launch the Twin daemon."""
-    from src.daemon.config import PID_FILE, ensure_data_dirs
-    from src.daemon.lifecycle import is_daemon_running, write_pid_file
+    from cognitive_twin.daemon.config import PID_FILE, ensure_data_dirs
+    from cognitive_twin.daemon.lifecycle import is_daemon_running, write_pid_file
 
     ensure_data_dirs()
 
@@ -40,7 +40,7 @@ def _start_foreground() -> int:
     """Start daemon in foreground (blocks until exit)."""
     print("Starting Twin daemon (foreground)...")
 
-    from src.daemon.main import run_socket_activated
+    from cognitive_twin.daemon.main import run_socket_activated
     try:
         run_socket_activated()
     except KeyboardInterrupt:

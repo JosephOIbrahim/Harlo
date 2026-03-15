@@ -6,7 +6,7 @@ import tempfile
 
 from click.testing import CliRunner
 
-from src.cli.main import cli
+from cognitive_twin.cli.main import cli
 
 
 class TestRecallCommand:

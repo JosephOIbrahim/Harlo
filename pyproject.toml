@@ -11,11 +11,17 @@ dependencies = [
     "jsonschema>=4.0",
     "numpy>=1.26",
     "maturin>=1.5",
+    "mcp>=1.0",
 ]
+
+[project.scripts]
+cognitive-twin = "cognitive_twin.mcp_server:main"
 
 [tool.maturin]
 manifest-path = "crates/hippocampus/Cargo.toml"
 features = ["pyo3/extension-module"]
+python-source = "python"
+module-name = "cognitive_twin.hippocampus"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

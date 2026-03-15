@@ -16,7 +16,7 @@ from mcp.server import FastMCP
 # Resolve paths before anything else
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 DB_PATH = str(DATA_DIR / "twin.db")
 
@@ -54,7 +54,7 @@ def twin_recall(query: str, depth: str = "normal") -> str:
     try:
         from encoder import semantic_recall
     except ImportError:
-        from src.encoder import semantic_recall
+        from cognitive_twin.encoder import semantic_recall
 
     try:
         result = semantic_recall(DB_PATH, query, depth=depth)
@@ -86,7 +86,7 @@ def twin_store(message: str, tags: list[str] | None = None, domain: str | None =
     try:
         from encoder import semantic_store
     except ImportError:
-        from src.encoder import semantic_store
+        from cognitive_twin.encoder import semantic_store
 
     trace_id = uuid.uuid4().hex[:16]
 
@@ -134,8 +134,8 @@ def twin_ask(question: str) -> str:
             from provider import get_provider
             from bridge.generate import generate
         except ImportError:
-            from src.provider import get_provider
-            from src.bridge.generate import generate
+            from cognitive_twin.provider import get_provider
+            from cognitive_twin.bridge.generate import generate
 
         provider = get_provider("claude")
         result = generate(
@@ -171,7 +171,7 @@ def twin_patterns() -> str:
     try:
         from modulation.detector import PatternDetector
     except ImportError:
-        from src.modulation.detector import PatternDetector
+        from cognitive_twin.modulation.detector import PatternDetector
 
     try:
         detector = PatternDetector(DB_PATH)
@@ -197,7 +197,7 @@ def twin_session_status() -> str:
     try:
         from session.manager import SessionManager
     except ImportError:
-        from src.session.manager import SessionManager
+        from cognitive_twin.session.manager import SessionManager
 
     try:
         mgr = SessionManager(DB_PATH)

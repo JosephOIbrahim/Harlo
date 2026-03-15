@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 import jsonschema
 
-_SCHEMA_PATH = Path(__file__).resolve().parents[2] / "config" / "barrier_schema.json"
+_SCHEMA_PATH = Path(__file__).resolve().parents[3] / "config" / "barrier_schema.json"
 _schema_cache: dict | None = None
 
 

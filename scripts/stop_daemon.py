@@ -21,7 +21,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 def main():
     """Stop the Twin daemon gracefully."""
-    from src.daemon.lifecycle import read_pid_file, remove_pid_file, is_daemon_running
+    from cognitive_twin.daemon.lifecycle import read_pid_file, remove_pid_file, is_daemon_running
 
     pid = read_pid_file()
     if pid is None:

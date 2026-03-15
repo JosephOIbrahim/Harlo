@@ -122,7 +122,7 @@ def _recall_context(
 
     # Lexical path via Rust — fall back to semantic if unavailable
     try:
-        import hippocampus
+        from cognitive_twin import hippocampus
         return hippocampus.py_recall(query, depth=depth, db_path=db_path)
     except ImportError:
         from ..encoder import semantic_recall

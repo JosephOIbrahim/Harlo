@@ -10,7 +10,7 @@ import tempfile
 
 import pytest
 
-from src.session.manager import Session, SessionManager
+from cognitive_twin.session.manager import Session, SessionManager
 
 
 @pytest.fixture
@@ -223,7 +223,7 @@ class TestSessionClose:
         session = mgr.create()
         mock_teardown = MagicMock()
 
-        with patch("src.daemon.dmn_teardown.get_teardown", return_value=mock_teardown):
+        with patch("cognitive_twin.daemon.dmn_teardown.get_teardown", return_value=mock_teardown):
             mgr.close(session.session_id, trigger_dmn=True)
 
         mock_teardown.start.assert_called_once()
@@ -415,7 +415,7 @@ class TestRouterIntegration:
 
     def test_router_session_start(self):
         """Router should handle session_start command."""
-        from src.daemon.router import route_command
+        from cognitive_twin.daemon.router import route_command
 
         result = route_command("session_start", {})
         assert result["status"] == "ok"
@@ -423,7 +423,7 @@ class TestRouterIntegration:
 
     def test_router_session_status(self):
         """Router should handle session_status command."""
-        from src.daemon.router import route_command
+        from cognitive_twin.daemon.router import route_command
 
         start = route_command("session_start", {})
         sid = start["result"]["session_id"]
@@ -434,7 +434,7 @@ class TestRouterIntegration:
 
     def test_router_session_close(self):
         """Router should handle session_close command."""
-        from src.daemon.router import route_command
+        from cognitive_twin.daemon.router import route_command
 
         start = route_command("session_start", {})
         sid = start["result"]["session_id"]
@@ -445,7 +445,7 @@ class TestRouterIntegration:
 
     def test_router_session_list(self):
         """Router should handle session_list command."""
-        from src.daemon.router import route_command
+        from cognitive_twin.daemon.router import route_command
 
         route_command("session_start", {})
         result = route_command("session_list", {})
@@ -454,7 +454,7 @@ class TestRouterIntegration:
 
     def test_router_session_close_missing_id(self):
         """Router should reject session_close without session_id."""
-        from src.daemon.router import route_command
+        from cognitive_twin.daemon.router import route_command
 
         result = route_command("session_close", {})
         assert result["status"] == "error"
@@ -462,7 +462,7 @@ class TestRouterIntegration:
 
     def test_router_session_status_not_found(self):
         """Router should handle session_status for non-existent session."""
-        from src.daemon.router import route_command
+        from cognitive_twin.daemon.router import route_command
 
         result = route_command("session_status", {"session_id": "nonexistent"})
         assert result["status"] == "error"
@@ -478,13 +478,13 @@ class TestCLIRegistration:
 
     def test_session_command_registered(self):
         """session command should be registered in CLI."""
-        from src.cli.main import cli
+        from cognitive_twin.cli.main import cli
 
         assert "session" in cli.commands
 
     def test_session_subcommands(self):
         """session should have start, close, status, list subcommands."""
-        from src.cli.commands.session import session
+        from cognitive_twin.cli.commands.session import session
 
         subcommands = set(session.commands.keys())
         assert {"start", "close", "status", "list"} <= subcommands
@@ -500,13 +500,13 @@ class TestCompliance:
     def test_no_sleep_in_session(self):
         """Rule 1: No sleep() in session code."""
         import inspect
-        from src.session import manager
+        from cognitive_twin.session import manager
         source = inspect.getsource(manager)
         assert "sleep(" not in source
 
     def test_no_while_true_in_session(self):
         """Rule 1: No while True in session code."""
         import inspect
-        from src.session import manager
+        from cognitive_twin.session import manager
         source = inspect.getsource(manager)
         assert "while True" not in source

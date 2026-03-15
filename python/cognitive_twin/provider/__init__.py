@@ -5,7 +5,7 @@ any LLM backend (Claude, OpenAI-compatible, etc.) without coupling to
 a specific API.
 
 Usage:
-    from src.provider import get_provider
+    from cognitive_twin.provider import get_provider
     provider = get_provider("claude")
     response = provider.generate("What is memory?", context=[...])
 """

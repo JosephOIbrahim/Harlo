@@ -221,11 +221,11 @@ S8. SINCERITY GATE: User responses classified as sincere/sarcastic/
 ## Compliance Checks (auto-run by VERIFY agent)
 
 ```bash
-grep -r "sleep(" src/              # MUST return 0 results
-grep -r "while True" src/          # MUST return 0 results
-grep -r "float32" crates/          # MUST return 0 results
-grep -r "cosine" crates/           # MUST return 0 results
-grep -r "DELETE.*audit" src/       # MUST return 0 results
-grep -r "reasoning_trace" src/aletheia/verifier.py  # Must be None/absent
-grep -r "store_reflex" src/        # Must check verification_state
+grep -r "sleep(" python/cognitive_twin/              # MUST return 0 results
+grep -r "while True" python/cognitive_twin/          # MUST return 0 results
+grep -r "float32" crates/                            # MUST return 0 results
+grep -r "cosine" crates/                             # MUST return 0 results
+grep -r "DELETE.*audit" python/cognitive_twin/       # MUST return 0 results
+grep -r "reasoning_trace" python/cognitive_twin/aletheia/verifier.py  # Must be None/absent
+grep -r "store_reflex" python/cognitive_twin/        # Must check verification_state
 ```

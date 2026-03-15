@@ -27,13 +27,13 @@ class TestProviderProtocol:
 
     def test_protocol_is_runtime_checkable(self):
         """Provider protocol should be runtime-checkable."""
-        from src.provider import Provider
+        from cognitive_twin.provider import Provider
         assert hasattr(Provider, "__protocol_attrs__") or hasattr(Provider, "__abstractmethods__") or True
         # Runtime-checkable protocols support isinstance checks
 
     def test_mock_provider_satisfies_protocol(self):
         """A mock with generate/stream/model_name should satisfy Provider."""
-        from src.provider import Provider
+        from cognitive_twin.provider import Provider
 
         class MockProvider:
             @property
@@ -51,7 +51,7 @@ class TestProviderProtocol:
 
     def test_incomplete_mock_fails_protocol(self):
         """A class missing methods should NOT satisfy Provider."""
-        from src.provider import Provider
+        from cognitive_twin.provider import Provider
 
         class Incomplete:
             pass
@@ -60,7 +60,7 @@ class TestProviderProtocol:
 
     def test_get_provider_unknown_raises(self):
         """get_provider with unknown name should raise ValueError."""
-        from src.provider import get_provider
+        from cognitive_twin.provider import get_provider
 
         with pytest.raises(ValueError, match="Unknown provider"):
             get_provider("nonexistent")
@@ -75,7 +75,7 @@ class TestClaudeProvider:
 
     def test_init_requires_api_key(self):
         """Claude provider should raise if no API key is available."""
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         # Clear env var if set
         with patch.dict(os.environ, {}, clear=True):
@@ -85,7 +85,7 @@ class TestClaudeProvider:
 
     def test_init_accepts_api_key_param(self):
         """Claude provider should accept api_key parameter."""
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         with patch("anthropic.Anthropic"):
             provider = ClaudeProvider(api_key="test-key-123")
@@ -93,7 +93,7 @@ class TestClaudeProvider:
 
     def test_init_reads_env_var(self):
         """Claude provider should read ANTHROPIC_API_KEY from env."""
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "env-key-456"}):
             with patch("anthropic.Anthropic"):
@@ -102,7 +102,7 @@ class TestClaudeProvider:
 
     def test_custom_model(self):
         """Claude provider should accept custom model ID."""
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         with patch("anthropic.Anthropic"):
             provider = ClaudeProvider(api_key="k", model="claude-opus-4-20250514")
@@ -110,7 +110,7 @@ class TestClaudeProvider:
 
     def test_build_messages_simple(self):
         """_build_messages should create proper message list."""
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         with patch("anthropic.Anthropic"):
             provider = ClaudeProvider(api_key="k")
@@ -120,7 +120,7 @@ class TestClaudeProvider:
 
     def test_build_messages_with_context(self):
         """_build_messages should prepend context messages."""
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         with patch("anthropic.Anthropic"):
             provider = ClaudeProvider(api_key="k")
@@ -136,7 +136,7 @@ class TestClaudeProvider:
 
     def test_generate_calls_api(self):
         """generate() should call the Anthropic messages.create API."""
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -155,7 +155,7 @@ class TestClaudeProvider:
 
     def test_generate_with_system_prompt(self):
         """generate() should pass system prompt to API."""
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -174,8 +174,8 @@ class TestClaudeProvider:
 
     def test_provider_satisfies_protocol(self):
         """ClaudeProvider should satisfy the Provider protocol."""
-        from src.provider import Provider
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider import Provider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         with patch("anthropic.Anthropic"):
             provider = ClaudeProvider(api_key="k")
@@ -191,7 +191,7 @@ class TestOpenAIProvider:
 
     def test_init_requires_api_key(self):
         """OpenAI provider should raise if no API key."""
-        from src.provider.openai import OpenAIProvider
+        from cognitive_twin.provider.openai import OpenAIProvider
 
         with patch.dict(os.environ, {}, clear=True):
             os.environ.pop("OPENAI_API_KEY", None)
@@ -200,7 +200,7 @@ class TestOpenAIProvider:
 
     def test_init_requires_openai_package(self):
         """OpenAI provider should raise ImportError if openai not installed."""
-        from src.provider.openai import OpenAIProvider
+        from cognitive_twin.provider.openai import OpenAIProvider
         import sys
 
         # Temporarily hide openai from imports
@@ -244,7 +244,7 @@ class TestGeneratePipeline:
 
     def test_generate_returns_response(self):
         """generate() should return the provider's response."""
-        from src.bridge.generate import generate
+        from cognitive_twin.bridge.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -262,7 +262,7 @@ class TestGeneratePipeline:
 
     def test_generate_includes_verification(self):
         """generate() should include Aletheia verification result."""
-        from src.bridge.generate import generate
+        from cognitive_twin.bridge.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -280,8 +280,8 @@ class TestGeneratePipeline:
 
     def test_generate_with_recalled_context(self):
         """generate() should use semantic recall for context."""
-        from src.bridge.generate import generate
-        from src.encoder import semantic_store
+        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.encoder import semantic_store
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -305,8 +305,8 @@ class TestGeneratePipeline:
 
     def test_generate_context_injected_in_prompt(self):
         """generate() should inject recalled context into the prompt."""
-        from src.bridge.generate import generate
-        from src.encoder import semantic_store
+        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.encoder import semantic_store
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -330,7 +330,7 @@ class TestGeneratePipeline:
 
     def test_generate_empty_db_still_works(self):
         """generate() should work with empty database (no context)."""
-        from src.bridge.generate import generate
+        from cognitive_twin.bridge.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -349,7 +349,7 @@ class TestGeneratePipeline:
 
     def test_generate_confidence_range(self):
         """Confidence should be between 0.0 and 1.0."""
-        from src.bridge.generate import generate
+        from cognitive_twin.bridge.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -370,7 +370,7 @@ class TestGenerateWithBarrier:
 
     def test_barrier_validates_json_output(self):
         """When validate_barrier=True, valid JSON should pass."""
-        from src.bridge.generate import generate
+        from cognitive_twin.bridge.generate import generate
 
         valid_json = json.dumps({
             "core_memory": {
@@ -397,7 +397,7 @@ class TestGenerateWithBarrier:
 
     def test_barrier_rejects_invalid_json(self):
         """When validate_barrier=True, non-JSON output should fail validation."""
-        from src.bridge.generate import generate
+        from cognitive_twin.bridge.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -416,7 +416,7 @@ class TestGenerateWithBarrier:
 
     def test_barrier_not_applied_by_default(self):
         """By default, barrier validation should not be applied."""
-        from src.bridge.generate import generate
+        from cognitive_twin.bridge.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -437,7 +437,7 @@ class TestGenerateGVR:
 
     def test_gvr_runs_on_output(self):
         """GVR should run on the generated output."""
-        from src.bridge.generate import generate
+        from cognitive_twin.bridge.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -460,7 +460,7 @@ class TestGenerateGVR:
 
     def test_gvr_uses_provider_for_revision(self):
         """If output is FIXABLE, GVR should use provider for revision."""
-        from src.bridge.generate import generate
+        from cognitive_twin.bridge.generate import generate
 
         # Empty response triggers FIXABLE, then provider used for revision
         revision_provider = MockProvider("")  # Empty = FIXABLE
@@ -485,8 +485,8 @@ class TestGenerateFactory:
 
     def test_get_provider_claude(self):
         """get_provider('claude') should return ClaudeProvider."""
-        from src.provider import get_provider
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider import get_provider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         with patch("anthropic.Anthropic"):
             provider = get_provider("claude", api_key="test-key")
@@ -494,8 +494,8 @@ class TestGenerateFactory:
 
     def test_get_provider_claude_default(self):
         """get_provider() should default to Claude."""
-        from src.provider import get_provider
-        from src.provider.claude import ClaudeProvider
+        from cognitive_twin.provider import get_provider
+        from cognitive_twin.provider.claude import ClaudeProvider
 
         with patch("anthropic.Anthropic"):
             provider = get_provider(api_key="test-key")
@@ -507,7 +507,7 @@ class TestRouterAsk:
 
     def test_router_has_ask_command(self):
         """Router should recognise 'ask' as a valid command."""
-        from src.daemon.router import route_command
+        from cognitive_twin.daemon.router import route_command
 
         result = route_command("ask", {"question": "test"})
         # Should NOT be "Unknown command" — it's a registered handler
@@ -515,11 +515,11 @@ class TestRouterAsk:
 
     def test_router_ask_with_mock_provider(self):
         """Router ask command should work when provider is mocked."""
-        from src.daemon.router import route_command
+        from cognitive_twin.daemon.router import route_command
 
         mock_prov = MockProvider("A detailed response about the test topic with relevant information")
 
-        with patch("src.provider.get_provider", return_value=mock_prov):
+        with patch("cognitive_twin.provider.get_provider", return_value=mock_prov):
             result = route_command("ask", {"question": "test question"})
             assert result["status"] == "ok"
             assert "result" in result
@@ -531,14 +531,14 @@ class TestCLIAsk:
 
     def test_ask_command_registered(self):
         """ask command should be registered in CLI."""
-        from src.cli.main import cli
+        from cognitive_twin.cli.main import cli
 
         command_names = [cmd for cmd in cli.commands]
         assert "ask" in command_names
 
     def test_ask_command_has_options(self):
         """ask command should have expected options."""
-        from src.cli.commands.ask import ask
+        from cognitive_twin.cli.commands.ask import ask
 
         param_names = [p.name for p in ask.params]
         assert "question" in param_names
@@ -572,21 +572,21 @@ class TestCompliance:
     def test_no_sleep_in_generate(self):
         """Rule 1: No sleep() in generate module."""
         import inspect
-        from src.bridge import generate as gen_module
+        from cognitive_twin.bridge import generate as gen_module
         source = inspect.getsource(gen_module)
         assert "sleep(" not in source
 
     def test_no_while_true_in_generate(self):
         """Rule 1: No while True in generate module."""
         import inspect
-        from src.bridge import generate as gen_module
+        from cognitive_twin.bridge import generate as gen_module
         source = inspect.getsource(gen_module)
         assert "while True" not in source
 
     def test_verify_not_called_with_trace(self):
         """Rule 11: generate pipeline must NOT pass reasoning_trace to verify."""
         import inspect
-        from src.bridge import generate as gen_module
+        from cognitive_twin.bridge import generate as gen_module
         source = inspect.getsource(gen_module)
         # The generate module should never set reasoning_trace
         assert "reasoning_trace=" not in source or "reasoning_trace=None" in source

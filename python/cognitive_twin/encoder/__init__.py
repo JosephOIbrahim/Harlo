@@ -43,7 +43,7 @@ def encode(text: str, encoder_type: str = "lexical") -> bytes:
         enc = get_semantic_encoder()
         return enc.encode(text)
     elif encoder_type == "lexical":
-        import hippocampus
+        from cognitive_twin import hippocampus
         # Rust encoder is internal to py_recall/py_store_trace;
         # no direct encode export. For lexical, callers should use
         # hippocampus.py_store_trace / py_recall directly.

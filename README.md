@@ -100,13 +100,13 @@ python scripts/setup_semantic_encoder.py
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # First question
-python -m src.cli.main ask "What patterns do you notice in my recent traces?"
+python -m cognitive_twin.cli.main ask "What patterns do you notice in my recent traces?"
 ```
 
 ## Project Structure
 
 ```
-src/
+python/cognitive_twin/
 ├── aletheia/          Verification engine — GVR loop, spec-gaming, trace exclusion
 ├── bridge/            Generation pipeline — recall → context → LLM → verify → respond
 ├── cli/               Click CLI — 29 commands, human + JSON output
@@ -128,10 +128,10 @@ tests/                 17 test modules across all subsystems
 
 ## Testing
 
-**402 tests** (361 Python + 41 Rust), all passing.
+**404 tests** (363 Python + 41 Rust), all passing.
 
 ```bash
-pytest tests/ -v                   # Python tests (361)
+pytest tests/ -v                   # Python tests (363)
 cargo test -p hippocampus          # Rust tests (41)
 pytest tests/test_integration/ -v  # Integration + compliance checks
 ```
@@ -155,6 +155,93 @@ The architecture is constrained by 33 inviolable rules covering biological fidel
 The Cognitive Twin is a self-evolving dialogue between a human and their externalized cognition, where both participants transform through the interaction, and the intelligence lives in the relationship — not in either party alone.
 
 You own your mind. AI models just rent access to it.
+
+## MCP Quick Reference
+
+The Cognitive Twin exposes 5 tools via [Model Context Protocol](https://modelcontextprotocol.io). Works with Claude Desktop, Claude Code, and any MCP-compatible client.
+
+### `twin_store` — Save a memory trace
+
+```
+twin_store(message, domain?, tags?)
+```
+
+| Param | Type | Required | Example |
+|-------|------|----------|---------|
+| `message` | string | yes | `"Resolved Python 3.12 path issue by installing mcp into PATH Python"` |
+| `domain` | string | no | `"technical"`, `"debugging"`, `"architecture"`, `"decision"` |
+| `tags` | string[] | no | `["mcp", "python-path", "resolved"]` |
+
+### `twin_recall` — Semantic search over stored traces
+
+```
+twin_recall(query, depth?)
+```
+
+| Param | Type | Required | Example |
+|-------|------|----------|---------|
+| `query` | string | yes | `"Python import issues"` |
+| `depth` | `"normal"` \| `"deep"` | no | `"normal"` (top 5) or `"deep"` (top 15) |
+
+Returns matching traces ranked by SDR hamming distance with strength scores and confidence.
+
+### `twin_ask` — Full generation pipeline
+
+```
+twin_ask(question)
+```
+
+| Param | Type | Required | Example |
+|-------|------|----------|---------|
+| `question` | string | yes | `"What problems did I hit getting MCP working?"` |
+
+Pipeline: semantic recall → context injection → LLM generation → Aletheia GVR verification → response.
+
+> Requires `ANTHROPIC_API_KEY` in the server environment.
+
+### `twin_patterns` — Detect clusters and escalation
+
+```
+twin_patterns()
+```
+
+No arguments. Runs all detection algorithms:
+- **Recurring themes** — semantic clustering via SDR hamming distance
+- **Temporal patterns** — trace co-occurrence within 24h windows
+- **Allostatic load** — escalation tracking across sessions
+
+### `twin_session_status` — Active session info
+
+```
+twin_session_status()
+```
+
+No arguments. Returns active sessions with exchange count, allostatic load, domain, and timing.
+
+### Setup
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "cognitive-twin": {
+      "command": "cognitive-twin",
+      "env": {
+        "ANTHROPIC_API_KEY": "sk-ant-..."
+      }
+    }
+  }
+}
+```
+
+### How It Works
+
+- **Encoder**: BGE embeddings → LSH → 2048-bit Sparse Distributed Representations
+- **Search**: XOR + popcount (Hamming distance) — sub-2ms recall
+- **Decay**: Lazy (computed on read, not background jobs)
+- **Verification**: Aletheia GVR loop (trace-excluded, max 3 cycles)
+- **Hot path**: Rust via PyO3 (`hippocampus` crate)
 
 ## License
 

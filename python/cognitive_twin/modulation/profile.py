@@ -14,7 +14,7 @@ except ImportError:
     _HAS_YAML = False
 
 
-_DEFAULT_PATH = Path(__file__).resolve().parents[2] / "config" / "default_profile.yaml"
+_DEFAULT_PATH = Path(__file__).resolve().parents[3] / "config" / "default_profile.yaml"
 
 
 @dataclass
