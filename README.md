@@ -1,51 +1,161 @@
-# The Cognitive Twin v6.0-MOTOR
+# Cognitive Twin
 
-A biologically-architected AI memory and action system.
+A persistent cognitive layer that sits between you and any LLM, modeling not what you know — but how you think.
 
-**Author:** Joseph O. Ibrahim
-**Date:** March 2026
-**License:** Proprietary
+## The Problem
 
-## What Is This?
+LLM conversations are stateless. Every session starts from zero. Your context, your patterns of thought, your evolving understanding — all evaporated the moment the window closes. Current "memory" solutions bolt on vector databases that store what you said, not how you reason. The Cognitive Twin inverts this: it builds a living model of your cognition that any LLM can consult, verify against, and evolve through.
 
-The Cognitive Twin is a persistent, provider-agnostic cognitive layer
-that sits between you and any LLM (Claude, GPT, Gemini). It models
-not what you know — but how you think.
+## How It Works
 
-It remembers (Association Engine), resolves conflicts (Composition
-Engine), verifies its own output (Aletheia), asks you questions that
-help you understand yourself (Inquiry Engine), and takes actions on
-your behalf with safety-gated execution (Motor Cortex).
+```
+                          COGNITIVE TWIN v6.0-MOTOR
+                          =========================
 
-It idles at 0 watts. It uses 1-bit binary vectors for memory search.
-It decays memories lazily. It physically deletes what's no longer
-needed. And its default state for action is: locked.
+  You ──► CLI (Click, 29 commands)
+           │
+           ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  BRIDGE (Corpus Callosum + Amygdala)                           │
+  │                                                                │
+  │  query ──► Semantic Recall ──► Context Injection ──► Provider  │
+  │               │                                        │       │
+  │               │                              ┌─────────┘       │
+  │               ▼                              ▼                 │
+  │  ┌──────────────────────┐     ┌──────────────────────────┐     │
+  │  │  ASSOCIATION ENGINE  │     │  ALETHEIA VERIFICATION   │     │
+  │  │  (Right Hemisphere)  │     │  (GVR Loop, max 3)       │     │
+  │  │                      │     │                          │     │
+  │  │  Rust (PyO3)         │     │  Verify ──► Revise ──►┐  │     │
+  │  │  2048-bit SDR encode │     │    ▲                  │  │     │
+  │  │  XOR + popcount kNN  │     │    └──────────────────┘  │     │
+  │  │  Lazy decay on read  │     │                          │     │
+  │  │  <2ms hot recall     │     │  Spec-gaming detection   │     │
+  │  └──────────────────────┘     │  Trace-excluded verify   │     │
+  │               │               │  UNPROVABLE with dignity │     │
+  │               │               └──────────────────────────┘     │
+  │               ▼                              │                 │
+  │  ┌──────────────────────┐                    ▼                 │
+  │  │  COMPOSITION ENGINE  │          ┌───────────────────┐       │
+  │  │  (Left Hemisphere)   │          │  MOTOR CORTEX     │       │
+  │  │                      │          │                   │       │
+  │  │  Merkle stages       │          │  Premotor plan    │       │
+  │  │  LIVRPS resolution   │          │  Basal Ganglia    │       │
+  │  │  Conflict detection  │          │  (5-check gate,   │       │
+  │  │  Append-only audit   │          │   inhibit-default)│       │
+  │  └──────────────────────┘          │  ONE action/cycle │       │
+  │                                    └───────────────────┘       │
+  │  ┌──────────────────────┐     ┌──────────────────────────┐     │
+  │  │  MODULATION LAYER    │     │  INQUIRY ENGINE (DMN)    │     │
+  │  │  (Brainstem)         │     │                          │     │
+  │  │                      │     │  Pattern detection       │     │
+  │  │  Allostatic load     │     │  Apophenia guard         │     │
+  │  │  Gain + anchors      │     │  Sincerity gate          │     │
+  │  │  Blood-Brain Barrier │     │  Rupture & repair        │     │
+  │  │  Pattern detection   │     │  Crystallization         │     │
+  │  └──────────────────────┘     │  DMN teardown (<50ms)    │     │
+  │                               └──────────────────────────┘     │
+  └─────────────────────────────────────────────────────────────────┘
+           │
+           ▼
+  Response (verified, contextual, with confidence score)
+```
 
-## Architecture
+The system is event-driven and socket-activated. It idles at 0 watts. No polling, no `sleep()`, no background threads. The daemon wakes on command, does its work, and exits.
 
-- **Right Hemisphere** — Association Engine (Rust, 1-bit, <2ms)
-- **Left Hemisphere** — Composition Engine (Python, Merkle, LIVRPS)
-- **Bridge** — Corpus Callosum + Amygdala (escalation, expertise)
-- **Modulation** — Brainstem (gain, allostatic load, Blood-Brain Barrier)
-- **Verification** — Aletheia (GVR, trace exclusion, spec-gaming)
-- **Inquiry** — Default Mode Network (co-evolution, safeguarded)
-- **Motor** — Premotor + Basal Ganglia + Executor (inhibition-default)
+## Key Design Decisions
+
+**1-bit SDR bitvectors, not float embeddings.** Memory search uses 2048-bit Sparse Distributed Representations. Hamming distance via XOR + popcount. No cosine similarity, no float32 storage. The Rust hot path processes these at <2ms for recall.
+
+**Dual encoding paths.** The Rust encoder uses n-gram hashing for lexical SDRs. The Python encoder uses BGE-small-en-v1.5 sentence embeddings projected through LSH into binary vectors. Both produce the same 2048-bit format. The system falls back gracefully between them.
+
+**Lazy decay, not polling.** Trace strength is computed on retrieval: `strength = initial * e^(-lambda * dt) + sum(boosts)`. No background jobs. Traces below epsilon are physically deleted (apoptosis) with `VACUUM` — the database actually shrinks.
+
+**Aletheia verification pipeline.** Every LLM response runs through Generate-Verify-Revise. Max 3 cycles (ADHD guard). The verifier never sees reasoning traces (structural constraint). Spec-gaming detection catches correct answers to wrong questions. Unresolvable outputs are parked as UNPROVABLE with full metadata — not silently dropped.
+
+**Inhibition-default motor cortex.** The Basal Ganglia gate defaults to INHIBIT ALL. Every action requires all five checks (anchor, consent, verification, reversibility, scope). Financial transactions and irreversible deletions are structurally locked. RED state halts everything.
+
+**Session-aware allostatic load.** Token velocity and prompt frequency track cognitive fatigue across sessions. DEPLETED state downgrades motor consent levels. The system protects you from yourself when you're running hot.
+
+**DMN inquiry engine.** Pattern detection surfaces co-evolutionary inquiries. Evidence-gated (minimum 5-25 observations by depth). A sincerity gate classifies your responses before acting on them. Rejection is a permanent, non-decaying trace. Three rejections and it offers to stop. The system learns from how you push back, not just what you say.
 
 ## Quick Start
 
 ```bash
-./bootstrap.sh
-cd cognitive-twin
-claude --dangerously-skip-permissions
-> Read AGENTS.md. You are the Build Orchestrator.
-> Execute Phase 1 autonomously. Report only unresolvable errors.
+git clone <repo-url> && cd cognitive-twin
+
+# Python environment
+python -m venv .venv && source .venv/bin/activate   # or .venv\Scripts\activate on Windows
+pip install -e .
+pip install anthropic sentence-transformers
+
+# Build Rust hot path (optional — system falls back to Python encoding)
+pip install maturin
+maturin develop -r
+
+# Download the semantic encoder model (~130MB, one-time)
+python scripts/setup_semantic_encoder.py
+
+# Set your LLM provider key
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# First question
+python -m src.cli.main ask "What patterns do you notice in my recent traces?"
 ```
+
+## Project Structure
+
+```
+src/
+├── aletheia/          Verification engine — GVR loop, spec-gaming, trace exclusion
+├── bridge/            Generation pipeline — recall → context → LLM → verify → respond
+├── cli/               Click CLI — 29 commands, human + JSON output
+│   └── commands/      Individual command implementations
+├── composition/       Left hemisphere — Merkle stages, LIVRPS resolution, audit trail
+├── daemon/            Socket-activated daemon — router, config, lifecycle, connection pool
+├── encoder/           Dual-path encoding — semantic (BGE+LSH) and lexical (Rust n-gram)
+├── inquiry/           Default Mode Network — pattern surfacing, safeguards, co-evolution
+├── modulation/        Brainstem — allostatic load, gain, barrier, pattern detection
+├── motor/             Motor cortex — premotor planning, Basal Ganglia gate, executor
+├── provider/          LLM abstraction — Protocol-based, Claude and OpenAI adapters
+└── session/           Session lifecycle — SQLite-backed, history, expiration
+
+crates/hippocampus/    Rust hot path — SDR encode, XOR search, lazy decay, apoptosis
+config/                Barrier schema, verification depth, default profile
+scripts/               Daemon start/stop, model download
+tests/                 17 test modules across all subsystems
+```
+
+## Testing
+
+**402 tests** (361 Python + 41 Rust), all passing.
+
+```bash
+pytest tests/ -v                   # Python tests (361)
+cargo test -p hippocampus          # Rust tests (41)
+pytest tests/test_integration/ -v  # Integration + compliance checks
+```
+
+Coverage spans: SDR encoding, hamming search, lazy decay, GVR protocol, Merkle stages, session lifecycle, pattern detection, Basal Ganglia gating, consent levels, connection pooling, CLI commands, daemon lifecycle, provider abstraction, and compliance with all 33 architectural rules.
+
+## Status
+
+**What works:** Full generation pipeline (recall → augment → generate → verify → respond). Semantic and lexical encoding. Session management with allostatic tracking. Pattern detection. Motor cortex with 5-check inhibition gate. Aletheia GVR with spec-gaming detection. DMN inquiry engine with all safeguards. Export/import. 29 CLI commands. Cross-platform daemon lifecycle.
+
+**What's experimental:** The co-evolutionary inquiry loop (DMN) works mechanically but needs extended real-world sessions to tune thresholds. The Rust hot path is feature-complete but the semantic encoder (Python-side BGE+LSH) handles most recall in practice until the Rust module is compiled.
+
+**What's next:** Systemd/launchd socket activation units for true 0W idle. Persistent action plan storage in Composition stages. Multi-session pattern synthesis. Expanded provider support.
+
+## The 33 Rules
+
+The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), and motor safety (inhibition default, one action at a time, RED kills everything). These aren't guidelines — they're structural constraints enforced by tests. See `CLAUDE.md` for the full specification.
 
 ## Philosophy
 
-The Cognitive Twin is a self-evolving dialogue between a human and
-their externalized cognition, where both participants transform
-through the interaction, and the intelligence lives in the
-relationship — not in either party alone.
+The Cognitive Twin is a self-evolving dialogue between a human and their externalized cognition, where both participants transform through the interaction, and the intelligence lives in the relationship — not in either party alone.
 
 You own your mind. AI models just rent access to it.
+
+## License
+
+Proprietary. Copyright Joseph O. Ibrahim, 2026.
