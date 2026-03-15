@@ -63,6 +63,153 @@ LLM conversations are stateless. Every session starts from zero. Your context, y
 
 The system is event-driven and socket-activated. It idles at 0 watts. No polling, no `sleep()`, no background threads. The daemon wakes on command, does its work, and exits.
 
+### Generation Pipeline
+
+How a query flows through the system end-to-end:
+
+```mermaid
+flowchart TD
+    Q["🔍 Query"] --> R["Semantic Recall\nSDR encode → XOR kNN\n< 2ms"]
+    R --> C{"Confidence ≥\nthreshold?"}
+    C -->|Yes| INJ["Context Injection"]
+    C -->|No| ESC["Escalate to Composition\nLIVRPS + Merkle resolve"]
+    ESC --> INJ
+    INJ --> LLM["LLM Generation\nProvider API call"]
+    LLM --> AMY{"Amygdala\ntrigger?"}
+    AMY -->|"Safety / Consent"| REF["1-shot Permanent Reflex\nSkip GVR entirely"]
+    AMY -->|No| GVR["Aletheia GVR Loop"]
+    GVR --> V{"Verdict?"}
+    V -->|VERIFIED| CONS["Consolidate → Reflex cache"]
+    V -->|SPEC_GAMED| SGOUT["Return to user\n⚠ never consolidate"]
+    V -->|"FIXABLE\ncycle < 3"| REV["Revise output"] --> GVR
+    V -->|UNPROVABLE| PARK["Park with dignity\nreason + what_would_help"]
+    CONS --> MOD["Modulation\nGain · Anchors · Barrier"]
+    PARK --> MOD
+    REF --> MOD
+    SGOUT --> MOD
+    MOD --> RESP["✅ Response\nverified · contextual · confidence score"]
+
+    style Q fill:#4a9eff,color:#fff
+    style RESP fill:#2ea043,color:#fff
+    style REF fill:#d4380d,color:#fff
+    style SGOUT fill:#cf222e,color:#fff
+    style PARK fill:#9a6700,color:#fff
+```
+
+### Aletheia Verification States
+
+The Generate-Verify-Revise loop and its four terminal states:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Verify: intent + output\n(reasoning_trace = None)
+
+    Verify --> VERIFIED: Sound and\nanswers original intent
+    Verify --> SPEC_GAMED: Correct answer\nwrong question
+    Verify --> FIXABLE: Detectable flaw
+
+    FIXABLE --> Revise: cycle < 3
+    Revise --> Verify: patched output
+    FIXABLE --> UNPROVABLE: cycle ≥ 3\n(ADHD guard)
+
+    VERIFIED --> [*]: Consolidate to reflex
+    SPEC_GAMED --> [*]: Return — never consolidate
+    UNPROVABLE --> [*]: Park with metadata\n(reason, what_would_help, partial_progress)
+
+    note right of Verify: Rule 11 — verifier NEVER\nsees reasoning traces
+    note right of SPEC_GAMED: Rule 15 — dominant failure mode\ndetected via topic drift + deflection
+    note left of UNPROVABLE: Rule 16 — first-class state\nwith dignity, not silent drop
+```
+
+### Trace Lifecycle
+
+From storage through decay to apoptosis — the database actually shrinks:
+
+```mermaid
+flowchart LR
+    S["Store\ntrace + metadata"] -->|"SDR encode\n2048 bits"| DB[("SQLite\ntwin.db")]
+    DB -->|"XOR kNN\nHamming distance"| R["Recall"]
+    R -->|"Computed on read\n(Rule 4: no polling)"| D{"strength = initial · e⁻ᵏᵗ\n+ Σ(boost · e⁻ᵏᵗᵇ)"}
+    D -->|"strength ≥ ε"| RET["Return traces\nranked by strength"]
+    D -->|"strength < ε"| APO["Apoptosis\nDELETE + VACUUM"]
+    R -->|"Each access"| B["Boost\n+retrieval strength"]
+    B --> DB
+    APO -->|"DB file shrinks"| DB
+
+    style APO fill:#d4380d,color:#fff
+    style RET fill:#2ea043,color:#fff
+    style DB fill:#0d1117,color:#c9d1d9,stroke:#30363d
+```
+
+### Motor Cortex Decision Gate
+
+Inhibition-default: every action must pass ALL five checks or it's blocked.
+
+```mermaid
+flowchart TD
+    ACT["Planned Action"] --> BG{"BASAL GANGLIA GATE\n(default: INHIBIT ALL)"}
+    BG --> C1["① Anchor alignment"]
+    BG --> C2["② Consent level"]
+    BG --> C3["③ Aletheia verified"]
+    BG --> C4["④ Reversibility"]
+    BG --> C5["⑤ Scope boundaries"]
+
+    C1 & C2 & C3 & C4 & C5 --> CHK{"All 5 pass?"}
+
+    CHK -->|"All pass"| DIS["DISINHIBIT\nExecute ONE action"]
+    CHK -->|"Consent insufficient"| ESC["ESCALATE\nRequest higher consent"]
+    CHK -->|"Level 3 detected"| LOCK["LOCKED\nGate welded shut\n(financial · irreversible · others' data)"]
+    CHK -->|"Any other failure"| INH["INHIBIT\nAction blocked"]
+
+    DIS --> LOOP["Return to full\ncognitive loop\n(Rule 24: one action at a time)"]
+
+    INH -.->|"Even cached reflexes\nre-check every time\n(Rule 26)"| BG
+
+    style BG fill:#d4380d,color:#fff
+    style DIS fill:#2ea043,color:#fff
+    style LOCK fill:#6e40c9,color:#fff
+    style INH fill:#cf222e,color:#fff
+    style ESC fill:#9a6700,color:#fff
+```
+
+### Co-Evolution Spiral
+
+How the Twin and the human transform each other through interaction:
+
+```mermaid
+sequenceDiagram
+    participant H as Human
+    participant T as Twin (Bridge)
+    participant A as Aletheia
+    participant D as DMN (Inquiry)
+
+    H->>T: "I'm a decisive person"
+    T->>T: Store trace (self_reported)
+    T->>A: Verify in Composition
+    A->>A: Evidence shows 12 deferred decisions
+    A-->>T: Emit perception_gap trace
+
+    T->>D: DMN synthesis window (≤30s)
+    D->>D: Apophenia guard: 12 obs ≥ 8 threshold ✓
+    D->>D: Alt hypothesis: "maybe only in high-stakes"
+    D->>H: "You describe yourself as decisive, but I see<br/>12 deferred decisions this month. What's your read?"
+
+    alt Sincere engagement
+        H->>T: "Huh — I think I defer on things I don't care about"
+        T->>T: Both learn. Model refines.
+        Note over T: Trace updated: decisive on high-stakes,<br/>delegates low-stakes
+    else Rejection
+        H->>T: "That's not right"
+        T->>T: Permanent rejection trace (weight 2.0)
+        Note over T: 3 rejections → offer to stop asking<br/>90-day half-life → gently retry later
+    else Blind spot acceptance (Rule 33)
+        H->>T: "I know. I'm okay with that."
+        T->>T: Tag: blind_spot_accepted
+        Note over T,A: Aletheia keeps objective truth internally<br/>DMN never raises this specific claim again
+        Note over T: "The Twin chooses the relationship<br/>over the truth"
+    end
+```
+
 ## Key Design Decisions
 
 **1-bit SDR bitvectors, not float embeddings.** Memory search uses 2048-bit Sparse Distributed Representations. Hamming distance via XOR + popcount. No cosine similarity, no float32 storage. The Rust hot path processes these at <2ms for recall.
