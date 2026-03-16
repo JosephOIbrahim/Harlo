@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\lazy.py
+# hypothesis_version: 6.151.2
+
+['LazyModuleMixin', '_initialize_hook', '_load_hook']

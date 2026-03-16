@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_strobelight\compile_time_profiler.py
+# hypothesis_version: 6.151.2
+
+[10000000.0, 500, 10000, '%Y-%m-%d-%H:%M:%S', '-30 days', '0', '1', 'America/Los_Angeles', 'DEFAULT', 'USER', 'USERNAME', 'aggregateList', 'aggregation_field', 'all', 'anchor', 'async_stack_complete', 'b_constraints', 'c_constraints', 'cols', 'column', 'compare', 'constraints', 'count', 'derivedCols', 'dim', 'edge', 'end', 'enumCols', 'false', 'fburl', 'filterMode', 'hideEmptyColumns', 'is_timeseries', 'mappedCols', 'metric', 'modifiers', 'namespace_id', 'namespace_process_id', 'none', 'now', 'op', 'order', 'order_desc', 'param', 'param_dimensions', 'profiler is not set', 'profiling frame %s', 'pt2-profiler/', 'purposes', 'py_async_stack', 'return_remainder', 'sample_tags', 'samplingRatio', 'should_pivot', 'start', 'strobeclient', 'timezone', 'top', 'true', 'utf-8', 'value', 'weight']

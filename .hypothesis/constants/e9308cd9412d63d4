@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\tqdm\cli.py
+# hypothesis_version: 6.151.2
+
+[b'\\n', 256, 1024, '\n  --{0}  : {2}{3}', '\nError:\n', ' : ', ' or ', '-', '--', '--help', '--log', '--log=', '--version', '-h', '-v', 'B', 'False', 'INFO', 'True', '^\\\\\\w+$', '_', 'args:', 'bool', 'buf_size', 'buffer', 'bytes', 'chr', 'completion.sh', 'comppath', 'delim', 'file', 'float', 'flush', 'gui', 'int', 'iterable', 'log', 'main', 'manpath', 'null', 'out', 'str', 'tee', 'tqdm', 'tqdm.1', 'tqdm_completion.sh', 'unit', 'unit_divisor', 'unit_scale', 'update', 'update_to', 'written:%s']

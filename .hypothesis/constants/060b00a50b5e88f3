@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\accelerator\memory.py
+# hypothesis_version: 6.151.2
+
+['empty_cache', 'max_memory_allocated', 'max_memory_reserved', 'memory_allocated', 'memory_reserved', 'memory_stats']

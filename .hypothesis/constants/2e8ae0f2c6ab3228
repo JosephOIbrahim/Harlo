@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\amp\grad_scaler.py
+# hypothesis_version: 6.151.2
+
+[0.0, 0.5, 1.0, 2.0, 2000, 'GradScaler', 'OptState', '_growth_tracker', '_init_growth_tracker', '_init_scale', '_scale', 'backoff_factor', 'closure', 'cuda', 'found_inf_per_device', 'grad_scale', 'grad_scaler', 'growth_factor', 'growth_interval', 'mps:0', 'params', 'scale', 'stage', 'step', 'unscale_', 'update']

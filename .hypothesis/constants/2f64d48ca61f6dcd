@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\quantized\dynamic\modules\rnn.py
+# hypothesis_version: 6.151.2
+
+[0.0, 0.1, '(', ')', '): ', ', bias={bias}', ', dropout={dropout}', 'DynamicQuantizedGRU', 'DynamicQuantizedLSTM', 'DynamicQuantizedRNN', 'GRU', 'GRUCell', 'LSTM', 'LSTMCell', 'PackedParameter', 'RNNBase', 'RNNCell', 'RNNCellBase', '[0]', '[1]', '_packed_weight_hh', '_packed_weight_ih', '_reverse', 'apply_permutation', 'bias', 'bias_hh', 'bias_ih', 'forward', 'forward_packed', 'forward_tensor', 'hh', 'hidden_size', 'ih', 'input_size', 'nonlinearity', 'pack_weight_bias', 'param', 'qconfig', 'relu', 'tanh', 'version', 'weight', 'weight_hh', 'weight_ih', 'weight_ih_dtype', 'weight_ih_l0_dtype']

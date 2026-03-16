@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\quantized\modules\embedding_ops.py
+# hypothesis_version: 6.151.2
+
+[2.0, '.from_float ', 'Embedding', 'EmbeddingBag', 'QuantizedEmbedding', '_packed_weight', 'dtype', 'nnq.', 'qconfig', 'sum', 'weight_fake_quant']

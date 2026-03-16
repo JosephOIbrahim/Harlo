@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\autograd\profiler.py
+# hypothesis_version: 6.151.2
+
+[1.0, 1000000000.0, 100, 211, 1000, 'EnforceUnique', 'EventList', 'FunctionEvent', 'KinetoStepTracker', 'MemRecordsAcc', 'cbid', 'cuda', 'duplicate key: ', 'emit_itt', 'emit_nvtx', 'end_time', 'hpu', 'id', 'is_hidden_event', 'kernel_end', 'kernel_name', 'kernel_start', 'load_nvprof', 'marker_id', 'mtia', 'name', 'parse_nvprof_trace', 'privateuseone', 'profile', 'record_function', 'runtime_id', 'self_cpu_time_total', 'start_time', 'synchronize', 'value', 'xpu']

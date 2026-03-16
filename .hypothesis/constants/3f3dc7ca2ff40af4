@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\antlr4\atn\ATNState.py
+# hypothesis_version: 6.151.2
+
+['BASIC', 'BLOCK_END', 'BLOCK_START', 'INVALID', 'LOOP_END', 'PLUS_BLOCK_START', 'PLUS_LOOP_BACK', 'RULE_START', 'RULE_STOP', 'STAR_BLOCK_START', 'STAR_LOOP_BACK', 'STAR_LOOP_ENTRY', 'TOKEN_START', 'atn', 'decision', 'endState', 'isPrecedenceDecision', 'isPrecedenceRule', 'loopBackState', 'nextTokenWithinRule', 'nonGreedy', 'ruleIndex', 'startState', 'stateNumber', 'stateType', 'stopState', 'transitions']

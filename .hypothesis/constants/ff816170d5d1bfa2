@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_lobpcg.py
+# hypothesis_version: 6.151.2
+
+[-0.5, 0.0, 2.23e-16, 1.2e-07, 0.5, 1000, 'A_norm', 'B_norm', 'LOPBCG:', 'X_norm', '_', '_rerr', 'batch_index', 'converged_count', 'converged_end', 'force_stop', 'inf', 'istep', 'iterations_left', 'k', 'largest', 'lobpcg', 'm', 'n', 'niter', 'ortho', 'ortho_', 'ortho_i', 'ortho_i_max', 'ortho_j', 'ortho_j_max', 'ortho_tol', 'ortho_tol_drop', 'ortho_tol_replace', 'ortho_use_drop', 'rerr', 'tol']

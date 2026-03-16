@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\recall.py
+# hypothesis_version: 6.151.2
+
+[0.0, '-', '--depth', '--json', 'Recall depth', 'Unknown error', 'as_json', 'confidence', 'context', 'deep', 'depth', 'distance', 'domain', 'error', 'message', 'normal', 'query', 'recall', 'result', 'status', 'strength', 'traces']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\quantization\qconfig.py
+# hypothesis_version: 6.151.2
+
+[-128, 127, 255, 'QConfig', 'QConfigAny', 'QConfigDynamic', 'Version number: ', 'activation', 'averaging_constant', 'backend: ', 'default_qat_qconfig', 'default_qconfig', 'device', 'fbgemm', 'get_default_qconfig', 'observer', 'onednn', 'qconfig_equals', 'qnnpack', 'weight', 'x86']

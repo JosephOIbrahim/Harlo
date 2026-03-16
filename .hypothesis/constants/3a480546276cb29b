@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\package\importer.py
+# hypothesis_version: 6.151.2
+
+["'sys_importer'", 'Importer', 'ObjMismatchError', 'ObjNotFoundError', 'OrderedImporter', '__file__', '__main__', '__module__', '__mp_main__', '__path__', '__qualname__', '__reduce__', '__torch_package__']

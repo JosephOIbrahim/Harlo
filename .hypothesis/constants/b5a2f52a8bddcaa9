@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\dill\session.py
+# hypothesis_version: 6.151.2
+
+[256, ' imported', '%r is not a module', '-type object', '.', 'BINUNICODE', 'GLOBAL', 'PyCapsuleType', 'SHORT_BINUNICODE', 'UNICODE', '__dill_imported', '__dill_imported_as', '__loader__', '__main__', '__module__', '__mp_main__', '__runtime__.', '__runtime__.%s', '_import_module', '_lookup_module', '_module_map', '_restore_modules', '_stash_modules', 'byref', 'ctypes', 'dump_module', 'dump_session', 'flush', 'load_module', 'load_module_asdict', 'load_session', 'main', 'module', 'peek', 'protocol', 'rb', 'read', 'refimported', 'seek', 'session.pkl', 'subprocess', 'tell', 'threading', 'typing', 'wb', 'write']

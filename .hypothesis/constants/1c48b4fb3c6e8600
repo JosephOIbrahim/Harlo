@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\data\datapipes\dataframe\dataframes.py
+# hypothesis_version: 6.151.2
+
+[10000, 'Attempting to get ', 'Capture', 'CaptureA', 'CaptureAdd', 'CaptureCall', 'CaptureControl', 'CaptureDataFrame', 'CaptureF', 'CaptureGetAttr', 'CaptureGetItem', 'CaptureInitial', 'CaptureLikeMock', 'CaptureMul', 'CaptureSetItem', 'CaptureSub', 'CaptureVariable', 'DataFrameTracedOps', 'DataFrameTracer', '__deepcopy__', '__setstate__', '_dataframes_concat', '_dataframes_filter', '_dataframes_per_row', '_dataframes_shuffle', 'apply_sharding', 'args', 'batch', 'concat', 'disable_capture', 'get_val', 'groupby', 'is_shardable', 'kwarg', 'kwargs', 'map', 'no kwargs!', 'operations', 'real_attribute', 'schema_df', 'shuffle', 'to_datapipe', 'trace_as_dataframe', 'value', 'variable', 'variables']

@@ -244,7 +244,7 @@ class TestGeneratePipeline:
 
     def test_generate_returns_response(self):
         """generate() should return the provider's response."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -262,7 +262,7 @@ class TestGeneratePipeline:
 
     def test_generate_includes_verification(self):
         """generate() should include Aletheia verification result."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -280,7 +280,7 @@ class TestGeneratePipeline:
 
     def test_generate_with_recalled_context(self):
         """generate() should use semantic recall for context."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
         from cognitive_twin.encoder import semantic_store
 
         db = tempfile.mktemp(suffix=".db")
@@ -305,7 +305,7 @@ class TestGeneratePipeline:
 
     def test_generate_context_injected_in_prompt(self):
         """generate() should inject recalled context into the prompt."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
         from cognitive_twin.encoder import semantic_store
 
         db = tempfile.mktemp(suffix=".db")
@@ -330,7 +330,7 @@ class TestGeneratePipeline:
 
     def test_generate_empty_db_still_works(self):
         """generate() should work with empty database (no context)."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -349,7 +349,7 @@ class TestGeneratePipeline:
 
     def test_generate_confidence_range(self):
         """Confidence should be between 0.0 and 1.0."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -370,7 +370,7 @@ class TestGenerateWithBarrier:
 
     def test_barrier_validates_json_output(self):
         """When validate_barrier=True, valid JSON should pass."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
 
         valid_json = json.dumps({
             "core_memory": {
@@ -397,7 +397,7 @@ class TestGenerateWithBarrier:
 
     def test_barrier_rejects_invalid_json(self):
         """When validate_barrier=True, non-JSON output should fail validation."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -416,7 +416,7 @@ class TestGenerateWithBarrier:
 
     def test_barrier_not_applied_by_default(self):
         """By default, barrier validation should not be applied."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -437,7 +437,7 @@ class TestGenerateGVR:
 
     def test_gvr_runs_on_output(self):
         """GVR should run on the generated output."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -460,7 +460,7 @@ class TestGenerateGVR:
 
     def test_gvr_uses_provider_for_revision(self):
         """If output is FIXABLE, GVR should use provider for revision."""
-        from cognitive_twin.bridge.generate import generate
+        from cognitive_twin.brainstem.generate import generate
 
         # Empty response triggers FIXABLE, then provider used for revision
         revision_provider = MockProvider("")  # Empty = FIXABLE
@@ -572,21 +572,21 @@ class TestCompliance:
     def test_no_sleep_in_generate(self):
         """Rule 1: No sleep() in generate module."""
         import inspect
-        from cognitive_twin.bridge import generate as gen_module
+        from cognitive_twin.brainstem import generate as gen_module
         source = inspect.getsource(gen_module)
         assert "sleep(" not in source
 
     def test_no_while_true_in_generate(self):
         """Rule 1: No while True in generate module."""
         import inspect
-        from cognitive_twin.bridge import generate as gen_module
+        from cognitive_twin.brainstem import generate as gen_module
         source = inspect.getsource(gen_module)
         assert "while True" not in source
 
     def test_verify_not_called_with_trace(self):
         """Rule 11: generate pipeline must NOT pass reasoning_trace to verify."""
         import inspect
-        from cognitive_twin.bridge import generate as gen_module
+        from cognitive_twin.brainstem import generate as gen_module
         source = inspect.getsource(gen_module)
         # The generate module should never set reasoning_trace
         assert "reasoning_trace=" not in source or "reasoning_trace=None" in source

@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\verify.py
+# hypothesis_version: 6.151.2
+
+['-', '--depth', '--json', 'UNKNOWN', 'Unknown error', 'Verification depth', 'as_json', 'deep', 'depth', 'description', 'error', 'flaws', 'id', 'intent_alignment', 'message', 'quick', 'result', 'severity', 'stage_id', 'standard', 'state', 'status', 'type', 'unknown', 'verify']

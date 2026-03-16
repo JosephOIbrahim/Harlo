@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\brainstem\generate.py
+# hypothesis_version: 6.151.2
+
+[0.0, 'barrier', 'confidence', 'context', 'context_traces', 'core_memory', 'error', 'general', 'last_output', 'model', 'normal', 'response', 'semantic', 'traces', 'valid', 'verification']

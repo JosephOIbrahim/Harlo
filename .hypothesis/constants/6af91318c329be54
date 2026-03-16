@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\intake\questionnaire.py
+# hypothesis_version: 6.151.2
+
+[0.5, 'analogies', 'answers', 'associativity', 'attention', 'big picture first', 'completed', 'connect to many', 'current_index', 'default', 'detail', "doesn't matter", 'doesnt matter', "don't care", 'dont care', "i don't know", 'idk', 'just use defaults', 'meh', 'more scattered', 'n/a', 'na', 'next', 'overall structure', 'pass', 'precise definitions', 'q1_assoc', 'q2_detail', 'q3_attention', 'q4_stress', 'q5_assoc2', 'q6_detail2', 'raw_answers', 'sharper', 'short bursts', 'skip', 'specific details', 'specifics first', 'step by step', 'stress', 'sustained focus', 'use defaults', 'user_disengaged', 'whatever']

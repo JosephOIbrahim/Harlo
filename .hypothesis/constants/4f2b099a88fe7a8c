@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\cuda\jiterator.py
+# hypothesis_version: 6.151.2
+
+['(?P<return_type>\\w+)', '\\s*', '\\s+', 'function_body', 'function_name', 'function_params', 'return_type', 'template', 'template_params']

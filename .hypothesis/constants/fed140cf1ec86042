@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_functorch\predispatch.py
+# hypothesis_version: 6.151.2
+
+['1', 'FuncTorchBatched', 'IMPL', 'PYTORCH_JIT', 'aten']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\dill\settings.py
+# hypothesis_version: 6.151.2
+
+['byref', 'fmode', 'ignore', 'protocol', 'recurse']

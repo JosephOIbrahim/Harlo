@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\cuda\tunable.py
+# hypothesis_version: 6.151.2
+
+[0.1, 0.25, 0.75, 0.8, 0.9, '%d', ',', '.', '0', '1', '?', '?.', 'BFloat16', 'Float8_e4m3fn', 'Float8_e4m3fnuz', 'Float8_e5m2', 'Float8_e5m2fnuz', 'Gemm', 'GemmAndBiasTunableOp', 'GemmTunableOp', 'Half', 'None', 'ScaledGemm', 'ScaledGemmTunableOp', 'T', 'Validator', '_', '_full0', 'bias', 'c10::complex<double>', 'c10::complex<float>', 'cuda:', 'double', 'enable', 'float', 'get_filename', 'get_results', 'get_validators', 'is_enabled', 'ld', 'read_file', 'rw', 'set_filename', 'spawn', 'tf32', 'tune_gemm_in_file', 'tuning_enable', 'tuning_is_enabled', 'w', 'write_file', 'write_file_on_exit']

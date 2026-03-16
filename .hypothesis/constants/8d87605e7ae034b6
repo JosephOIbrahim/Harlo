@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\optim\_adafactor.py
+# hypothesis_version: 6.151.2
+
+[-0.8, 0.0, 0.001, 0.01, 0.5, 1.0, 'Adafactor', 'adafactor', 'beta2_decay', 'col_var', 'cpu', 'd', 'eps', 'foreach', 'found_inf', 'grad_scale', 'lr', 'maximize', 'params', 'row_var', 'step', 'variance', 'weight_decay']

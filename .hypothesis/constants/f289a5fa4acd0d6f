@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\jit\__init__.py
+# hypothesis_version: 6.151.2
+
+['Attribute', 'CompilationUnit', 'Error', 'Future', 'ScriptFunction', 'ScriptModule', 'annotate', 'enable_onednn_fusion', 'export', 'export_opnames', 'fork', 'freeze', 'ignore', 'interface', 'isinstance', 'load', 'save', 'script', 'script_if_tracing', 'set_fusion_strategy', 'strict_fusion', 'torch.jit', 'trace', 'trace_module', 'unused', 'wait']

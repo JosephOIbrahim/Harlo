@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fx\experimental\const_fold.py
+# hypothesis_version: 6.151.2
+
+['(.*)_(\\d+)$', 'FoldedGraphModule', '[^0-9a-zA-Z_]+', '_', '_1', 'call_module', 'cpu', 'cuda', 'fill_value', 'get_attr', 'multiple_outputs', 'output', 'placeholder', 'submod_0', 'submod_1']

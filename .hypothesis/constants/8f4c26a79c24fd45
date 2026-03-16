@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_subclasses\fake_impls.py
+# hypothesis_version: 6.151.2
+
+['Meta', 'aten', 'aten::_foreach_', 'attempt fast', 'bias_sizes', 'cpu', 'device', 'dilation', 'error', 'fast channels_last', 'fast is_contiguous', 'get_fast_op_impls', 'groups', 'has_meta', 'hpu', 'input', 'meta', 'names', 'no contiguity match', 'output_padding', 'padding', 'prim', 'prims', 'stride', 'stride_incorrect_op', 'transposed', 'values', 'weight']

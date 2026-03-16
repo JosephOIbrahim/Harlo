@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\stuck.py
+# hypothesis_version: 6.151.2
+
+['-', '--json', 'UNKNOWN', 'Unknown error', 'as_json', 'error', 'items', 'message', 'partial_progress', 'reason', 'result', 'stage_id', 'state', 'status', 'stuck', 'unknown', 'what_would_help']

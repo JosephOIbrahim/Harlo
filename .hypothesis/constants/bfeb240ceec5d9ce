@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\multiprocessing\spawn.py
+# hypothesis_version: 6.151.2
+
+['.pickle', '0', '1', 'ProcessContext', 'ProcessException', 'SpawnContext', 'error_index', 'error_pid', 'exit_code', 'forkserver', 'pytorch-errorfile-', 'rb', 'spawn', 'start_processes', 'wb']

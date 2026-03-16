@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\jaxtyping\_decorator.py
+# hypothesis_version: 6.151.2
+
+[' jaxtyping.', ' typing.', "'", "'>", "'jaxtyping.", "'typing.", '*', '**', ', ', '/', "<class '", '<no name found>', '<no qualname found>', 'T', '[', '[jaxtyping.', '[typing.', '_Params', '_Return', '_T', '_TypeOrCallable', '__annotations__', '__module__', '__name__', '__no_type_check__', '__qualname__', '__wrapped__', 'check_single_arg', 'context', 'default', 'pass', 'ret', 'return', 'return ', 'self', 'sentinel', 'value']

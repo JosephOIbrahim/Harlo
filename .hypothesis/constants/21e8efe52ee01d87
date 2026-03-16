@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\resolve.py
+# hypothesis_version: 6.151.2
+
+['-', '--json', '--stage', '?', 'Stage ID to resolve', 'Unknown error', 'as_json', 'attribute', 'conflicts', 'error', 'layers', 'merkle_root', 'message', 'n/a', 'resolve', 'resolved_attributes', 'result', 'stage_id', 'status']

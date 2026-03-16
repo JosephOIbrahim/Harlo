@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\distance.py
+# hypothesis_version: 6.151.2
+
+[1e-08, 1e-06, 2.0, 'CosineSimilarity', 'PairwiseDistance', 'dim', 'eps', 'keepdim', 'norm']

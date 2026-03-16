@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\module.py
+# hypothesis_version: 6.151.2
+
+[' has no attribute `', '(', ')', '): ', ', ', '.', 'IncompatibleKeys', 'Module', 'Parameter', 'T', 'T_destination', 'Tensor', '__func__', '__torch_function__', '_backward_hooks', '_backward_pre_hooks', '_buffers', '_compiled_call_impl', '_extra_state', '_forward_hooks', '_forward_pre_hooks', '_from_public_api', '_is_replica', '_metadata', '_modules', '_parameters', '_state_dict_hooks', '`', '` is not a buffer', 'copying', 'get_extra_state', 'hook', 'missing_keys', 'module', 'persistent', 'python.nn_module', 'set_extra_state', 'swapping', 'training', 'unexpected_keys', 'with_module']

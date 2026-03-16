@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\intake\__init__.py
+# hypothesis_version: 6.151.2
+
+['IntakeQuestion', 'IntakeSession', 'QUESTION_BANK', 'derive_multipliers', 'detect_disengagement', 'get_next_question', 'process_answer', 'score_answer']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\jaxtyping\__init__.py
+# hypothesis_version: 6.151.2
+
+['0.7.2', '2', '2.13.3', 'Array', 'ArrayLike', 'DTypeLike', 'PRNGKeyArray', 'PyTree', 'PyTreeDef', 'Scalar', 'ScalarLike', 'argname', 'bar', 'builtins', 'expected_type', 'foo', 'globals', 'jax', 'jaxtyping', 'locals', 'memo', 'typeguard', 'value']

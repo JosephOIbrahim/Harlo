@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\data\datapipes\utils\decoder.py
+# hypothesis_version: 6.151.2
+
+[255.0, '.', 'Decoder', 'ImageHandler', 'MatHandler', '_', 'audiohandler', 'basichandlers', 'extension_extract_fn', 'f', 'flac', 'float', 'handle_extension', 'imagehandler', 'json jsn', 'l', 'l8', 'm4a', 'mat', 'mathandler', 'mp3', 'numpy', 'ogg', 'pil', 'pill', 'pilrgb', 'pilrgba', 'pt', 'pyd pickle', 'rgb', 'rgb8', 'rgba', 'rgba8', 'sox', 'torch', 'torchl', 'torchl8', 'torchrgb', 'torchrgb8', 'torchrgba', 'torchrgba8', 'txt text transcript', 'uint8', 'utf-8', 'videohandler', 'wav', 'wb', 'wma']

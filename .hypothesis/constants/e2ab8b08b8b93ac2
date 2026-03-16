@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\antlr4\atn\ATNConfigSet.py
+# hypothesis_version: 6.151.2
+
+[',conflictingAlts=', ',hasSemanticContext=', ',uniqueAlt=', 'This set is readonly', 'cachedHashCode', 'configLookup', 'configs', 'conflictingAlts', 'dipsIntoOuterContext', 'fullCtx', 'hasSemanticContext', 'readonly', 'uniqueAlt']

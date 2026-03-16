@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\quantization\quantize_jit.py
+# hypothesis_version: 6.151.2
+
+['convert_dynamic_jit', 'convert_jit', 'forward', 'fuse_conv_bn_jit', 'observe_', 'prepare_dynamic_jit', 'prepare_jit', 'quantize_', 'quantize_dynamic_jit', 'quantize_jit', 'script_qconfig', 'script_qconfig_dict', 'xpu']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\compiler\__init__.py
+# hypothesis_version: 6.151.2
+
+['CacheInfo', 'F', 'TENSOR_MATCH', '_P', '_R', 'allow_in_graph', 'compile', 'config', 'debug', 'default', 'disable', 'experimental', 'is_compiling', 'is_dynamo_compiling', 'is_exporting', 'list_backends', 'load_cache_artifacts', 'reset', 'save_cache_artifacts', 'set_stance', 'substitute_in_graph', 'wrap_numpy']

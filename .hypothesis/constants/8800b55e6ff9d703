@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_custom_op\impl.py
+# hypothesis_version: 6.151.2
+
+['.', '::', 'Autograd', 'AutogradCPU', 'AutogradCUDA', 'BackendSelect', 'CPU', 'CUDA', 'CustomOp', 'FRAGMENT', 'List[Tensor]', 'Meta', 'SymInt', 'Tensor', 'Undefined', 'abstract', 'at', 'aten', 'autograd', 'backward', 'bool', 'cpu', 'cuda', 'custom_op', 'default', 'factory', 'float', 'get_ctx', 'int', 'prim', 'prims', 'pytorch', 'save_for_backward', 'torch']

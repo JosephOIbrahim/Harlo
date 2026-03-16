@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\mps\__init__.py
+# hypothesis_version: 6.151.2
+
+['Event', 'MPS is not available', '_mps_compileShader', '_mps_is_in_bad_fork', 'compile_shader', 'device_count', 'empty_cache', 'get_rng_state', 'include', 'is_available', 'manual_seed', 'mps', 'profiler', 'seed', 'set_rng_state', 'synchronize']

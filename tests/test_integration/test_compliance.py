@@ -235,7 +235,7 @@ class TestRule12_VerifiedOnly:
     """Rule 12: Only VERIFIED resolutions become reflexes."""
 
     def test_verified_consolidates(self, tmp_path, monkeypatch):
-        from cognitive_twin.bridge import consolidation
+        from cognitive_twin.brainstem import consolidation
 
         monkeypatch.setattr(consolidation, "_REFLEX_DIR", tmp_path / "reflexes")
 
@@ -248,7 +248,7 @@ class TestRule12_VerifiedOnly:
 
     @pytest.mark.parametrize("state", ["fixable", "spec_gamed", "unprovable", "deferred"])
     def test_unverified_rejected(self, state, tmp_path, monkeypatch):
-        from cognitive_twin.bridge import consolidation
+        from cognitive_twin.brainstem import consolidation
 
         monkeypatch.setattr(consolidation, "_REFLEX_DIR", tmp_path / "reflexes")
 
@@ -551,28 +551,28 @@ class TestSafeguardS2_EpistemologicalBypass:
     """S2: Inquiry outputs bypass truth, composition does not."""
 
     def test_inquiry_source_bypasses(self):
-        from cognitive_twin.bridge.epistemological_bypass import should_bypass_aletheia
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
 
         assert should_bypass_aletheia(
             source="inquiry", tags=[], consumer="inquiry"
         ) is True
 
     def test_self_reported_inquiry_bypasses(self):
-        from cognitive_twin.bridge.epistemological_bypass import should_bypass_aletheia
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
 
         assert should_bypass_aletheia(
             source="user", tags=["self_reported"], consumer="inquiry"
         ) is True
 
     def test_self_reported_composition_no_bypass(self):
-        from cognitive_twin.bridge.epistemological_bypass import should_bypass_aletheia
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
 
         assert should_bypass_aletheia(
             source="user", tags=["self_reported"], consumer="composition"
         ) is False
 
     def test_composition_gets_standard_verification(self):
-        from cognitive_twin.bridge.epistemological_bypass import should_bypass_aletheia
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
 
         assert should_bypass_aletheia(
             source="composition", tags=[], consumer="composition"

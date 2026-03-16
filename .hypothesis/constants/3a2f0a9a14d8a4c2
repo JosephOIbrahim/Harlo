@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\conflicts.py
+# hypothesis_version: 6.151.2
+
+['-', '--json', '--stage', '?', 'Unknown error', 'arc_type', 'as_json', 'attribute', 'conflicts', 'error', 'layer_count', 'message', 'result', 'stage_id', 'status', 'value', 'values', 'winning_arc', 'winning_value']

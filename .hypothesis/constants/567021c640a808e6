@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\overrides.py
+# hypothesis_version: 6.151.2
+
+[-1.0, 0.0, 1e-15, 1e-12, 1e-10, 1e-08, 1e-06, 1e-05, 0.0001, 0.01, 0.1, 0.125, 0.3333333333333333, 0.5, 0.75, 1.0, 2.0, -100, 100, 'L', 'TorchFunctionMode', '_', '_P', '_R', '__', '__get__', '__i', '__r', '__self__', '__torch_function__', '__weakref__', 'bilinear', 'bitwise_', 'constant', 'fan_in', 'fro', 'has_torch_function', 'ignore', 'is_tensor_like', 'leaky_relu', 'linear', 'max', 'mean', 'nearest', 'none', 'reduced', 'reflect', 'resolve_name', 'torch', 'torch.Tensor', 'torch.fft', 'torch.functional', 'torch.linalg', 'torch.nn.functional', 'torch.nn.init', 'torch.special', 'unique_dim', 'wrap_torch_function', 'zeros']

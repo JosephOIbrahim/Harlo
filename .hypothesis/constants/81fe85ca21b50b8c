@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fx\passes\splitter_base.py
+# hypothesis_version: 6.151.2
+
+[100, ',', '--allow-non-tensor', '--allow_non_tensor', '--max-acc-splits', '--max_acc_splits', '--skip-fusion', '--skip_fusion', '0', '1', '2', '3', 'AliceBlue', 'Checking inputs...\n', 'Checking outputs...\n', 'FxNetAccNodesFinder', 'NodeEvent', 'NodeEventTracker', 'SplitResult', 'Subgraph', '_', '_all.txt', '_fx_net_tracker', '_nodes.txt', '_run_on_cpu_', 'acc', 'artifact', 'call_module', 'chartreuse1', 'crimson', 'default', 'dtype', 'encoding', 'fillcolor', 'get_attr', 'json', 'name', 'node_support', 'node_support.dot', 'output', 'placeholder', 'preview', 'store_true', 'supported', 'tag', 'tensor_meta', 'unsupported', 'w', '| ', '|-']

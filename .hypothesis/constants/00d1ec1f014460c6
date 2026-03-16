@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\quantized\modules\__init__.py
+# hypothesis_version: 6.151.2
+
+['BatchNorm2d', 'BatchNorm3d', 'Conv1d', 'Conv2d', 'Conv3d', 'ConvTranspose1d', 'ConvTranspose2d', 'ConvTranspose3d', 'DeQuantize', 'Dropout', 'ELU', 'Embedding', 'EmbeddingBag', 'FXFloatFunctional', 'FloatFunctional', 'GroupNorm', 'Hardswish', 'InstanceNorm1d', 'InstanceNorm2d', 'InstanceNorm3d', 'LSTM', 'LayerNorm', 'LeakyReLU', 'Linear', 'MultiheadAttention', 'PReLU', 'QFunctional', 'Quantize', 'ReLU6', 'Sigmoid', 'Softmax', 'dtype', 'scale', 'zero_point']

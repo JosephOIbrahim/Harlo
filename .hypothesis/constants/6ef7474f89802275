@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\transformer.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1e-05, 0.1, 512, 2048, '-inf', 'Transformer', 'TransformerDecoder', 'TransformerEncoder', '_forward_hooks', '_forward_pre_hooks', 'activation', 'autocast is enabled', 'cpu', 'cuda', 'device', 'dtype', 'encoder_layer', 'gelu', 'mask', 'mask_check', 'norm', 'norm_first', 'num_head is odd', 'relu', 'self.layers[0]', 'src_key_padding_mask', 'src_mask', 'training is enabled', 'use_nested_tensor']

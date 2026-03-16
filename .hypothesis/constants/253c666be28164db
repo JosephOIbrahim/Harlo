@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_weights_only_unpickler.py
+# hypothesis_version: 6.151.2
+
+['.', '<H', '<I', '<i', '>d', 'ASCII', 'String is too long', '__self__', '__setstate__', '_codecs.encode', 'builtins', 'builtins.bytearray', 'builtins.complex', 'builtins.set', 'bytes', 'collections.Counter', 'negative argument', 'nt', 'os', 'posix', 'sparse', 'storage', 'strict', 'surrogatepass', 'sys', 'torch.Size', 'torch.Tensor', 'torch.device', 'utf-8']

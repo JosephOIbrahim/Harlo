@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\aletheia\states.py
+# hypothesis_version: 6.151.2
+
+['VerificationResult', 'cycle_count', 'deferred', 'fixable', 'flaw', 'original_intent', 'partial_progress', 'spec_gamed', 'state', 'unprovable', 'unprovable_reason', 'verified', 'what_would_help']

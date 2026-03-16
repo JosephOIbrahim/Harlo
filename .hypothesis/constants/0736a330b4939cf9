@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\export\unflatten.py
+# hypothesis_version: 6.151.2
+
+['%', '(@\\d+)?$', '.', '0', ':', '<unknown location>', '@', 'Checking mutability', 'FlatArgsAdapter', 'InterpreterModule', 'STEP', 'UnflattenedModule', '__module__', '_call_modules', '_operator', 'buffer', 'call_function', 'call_module', 'constant', 'copying', 'get_attr', 'graph', 'graph_module', 'ivals', 'module', 'name', 'nn_module_stack', 'outlining', 'output', 'parameter', 'placeholder', 'torch.nn.Module', 'unflatten', 'unflattened_module', 'val']

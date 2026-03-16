@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\profiler\_utils.py
+# hypothesis_version: 6.151.2
+
+[0.0, 0.6, 1000, 'Optimizable events:\n', 'Unknown Event Type', '\\.py\\(.*\\)', '__cudaLaunchKernel', 'alloc', 'cpy', 'cudaLaunchKernel', 'cudaLaunchKernelExC', 'free', 'mem', 'name', 'start_ns', 'start_time_ns', 'start_us']

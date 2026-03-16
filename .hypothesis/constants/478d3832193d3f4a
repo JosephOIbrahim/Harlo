@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_higher_order_ops\effects.py
+# hypothesis_version: 6.151.2
+
+['Ordered', 'call_function', 'placeholder', 'tangents_token', 'with_effects']

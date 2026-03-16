@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\deferred.py
+# hypothesis_version: 6.151.2
+
+['-', '--flush', '--json', 'UNKNOWN', 'Unknown error', 'as_json', 'deferred', 'deferred_at', 'error', 'flush', 'flushed', 'items', 'message', 'reason', 'result', 'results', 'stage_id', 'state', 'status', 'unknown']

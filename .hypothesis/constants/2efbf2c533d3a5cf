@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\hydra\core\utils.py
+# hypothesis_version: 6.151.2
+
+['%(message)s', '(?u)[^-\\w.]', '.yaml', '.yml', '1.2', 'JobReturn', 'UNKNOWN_NAME', '_', 'config.yaml', 'hydra', 'hydra.', 'hydra.yaml', 'major', 'micro', 'minor', 'name', 'now', 'overrides.yaml', 'python_version', 'root', 'utf-8', 'w']

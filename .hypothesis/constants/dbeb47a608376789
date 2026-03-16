@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\omegaconf\grammar_parser.py
+# hypothesis_version: 6.151.2
+
+['([^$]|\\$(?!{))+', 'DEFAULT_MODE', 'Empty Stack', '[$\\w]+', '[a-zA-Z_][\\w\\-]*', 'configValue', 'data']

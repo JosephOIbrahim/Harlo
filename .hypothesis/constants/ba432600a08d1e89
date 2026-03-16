@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fx\node.py
+# hypothesis_version: 6.151.2
+
+['%', '(default=', ')', ',', ', ', '...', '<lambda>', '=', 'Argument', 'ArgumentT', 'Graph', 'Node', 'Target', '_', '_P', '_R', '__module__', '__name__', '_args', '_custom_fx_repr_fn', '_erased', '_input_nodes', '_is_impure', '_kwargs', '_next', '_operator', '_prev', '_replace_hooks', '_repr_fn', '_schema', '_sort_key', 'builtins', 'call_function', 'call_method', 'call_module', 'example_value', 'get_attr', 'graph', 'has_side_effect', 'inf', 'map_aggregate', 'map_arg', 'meta', 'name', 'op', 'output', 'placeholder', 'root', 'segment_reduce', 'stack_trace', 'target', 'tensor_meta', 'torch', 'torch._ops', 'torch.ops', 'type', 'users', 'val']

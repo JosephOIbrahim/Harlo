@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\export\graph_signature.py
+# hypothesis_version: 6.151.2
+
+['ConstantArgument', 'CustomObjArgument', 'ExportGraphSignature', 'GraphSignature', 'InputKind', 'InputSpec', 'OutputKind', 'OutputSpec', 'SymBoolArgument', 'SymFloatArgument', 'SymIntArgument', 'TensorArgument', 'output', 'placeholder', 'torch.fx.GraphModule', 'val']

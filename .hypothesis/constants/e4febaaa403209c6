@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torchtyping\typechecker.py
+# hypothesis_version: 6.151.2
+
+[', ', '[', ']', '__name__', '__qualname__', '__torchtyping__', 'argname', 'cls_name', 'details', 'expected_type', 'memo', 'name_to_shape', 'name_to_size', 'value', 'value_info']

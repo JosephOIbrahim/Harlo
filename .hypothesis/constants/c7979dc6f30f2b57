@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\quantization\fuser_method_mappings.py
+# hypothesis_version: 6.151.2
+
+['fuse_conv_bn', 'fuse_conv_bn_relu', 'fuse_linear_bn', 'get_fuser_method', 'get_fuser_method_new']

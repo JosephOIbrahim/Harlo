@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\omegaconf\_utils.py
+# hypothesis_version: 6.151.2
+
+['${', "'", '(\\.)*[^.[]*', ', ', '-+0123456789.', '.', '...', '0', '1', '???', 'Any', 'FALSE', 'False', 'ForwardRef', 'N', 'NO', 'No', 'OC_CAUSE', 'OFF', 'ON', 'Off', 'On', 'TRUE', 'True', 'Y', 'YES', 'Yes', '[', '\\.([^.[]*)|\\[(.*?)\\]', '_DEFAULT_MARKER_', '__args__', '__base__', '__module__', '__name__', '__orig_bases__', '__origin__', '_name', 'allow_objects', 'attr.Attribute[Any]', 'builtins', 'false', 'n', 'no', 'off', 'omegaconf.', 'omegaconf_ignore', 'on', 'true', 'typing', 'typing.', 'y', 'yes']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\motor_reflexes.py
+# hypothesis_version: 6.151.2
+
+['-', '--invalidate', '--json', '--list', '?', 'Unknown error', 'action', 'as_json', 'description', 'do_list', 'error', 'hash', 'invalidate', 'list', 'message', 'motor-reflexes', 'motor_reflexes', 'reflexes', 'result', 'status']

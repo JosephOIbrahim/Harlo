@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\sparse\quantized\linear.py
+# hypothesis_version: 6.151.2
+
+[1.0, 'Linear', 'LinearPackedParams', '_packed_params', 'dtype', 'op_type', 'qconfig', 'scale', 'sparse_block_shape', 'sparse_params', 'version', 'zero_point']

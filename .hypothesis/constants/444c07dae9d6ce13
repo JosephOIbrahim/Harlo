@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\quantization\qconfig_mapping.py
+# hypothesis_version: 6.151.2
+
+['\n)', ' (', 'QConfigMapping', 'fbgemm', 'global_qconfig', 'hardsigmoid', 'hardsigmoid_', 'module_name', 'module_name_qconfigs', 'module_name_regex', 'object_type', 'object_type_qconfigs', 'qnnpack', 'reshape', 'sigmoid', 'sigmoid_', 'tanh', 'tanh_', 'x86']

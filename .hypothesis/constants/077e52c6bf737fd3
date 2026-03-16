@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\composition\audit.py
+# hypothesis_version: 6.151.2
+
+['a', 'data/audit.log', 'gvr_state', 'id', 'merkle_root', 'outcome', 'r', 'stage_id', 'timestamp', 'utf-8']

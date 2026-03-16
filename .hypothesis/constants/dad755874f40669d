@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\hub.py
+# hypothesis_version: 6.151.2
+
+[128, 300, 404, 1024, '-([a-f0-9]*)\\.', '.', '.partial', '.zip', '/', ':', 'Accept', 'Authorization', 'B', 'Content-Length', 'GITHUB_TOKEN', 'TORCH_HOME', 'TORCH_HUB', 'TORCH_MODEL_ZOO', 'User-Agent', 'XDG_CACHE_HOME', '_', 'a', 'check', 'checkpoints', 'commit', 'dependencies', 'download_url_to_file', 'facebookincubator', 'facebookresearch', 'fairinternal', 'get_dir', 'getheaders', 'github', 'help', 'hub', 'hubconf.py', 'list', 'load', 'local', 'main', 'master', 'n', 'name', 'no', 'pytorch', 'set_dir', 'sha', 'torch', 'torch.hub', 'trusted_list', 'utf-8', 'w+b', 'y', 'yes', '~/.cache']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\hydra\_internal\defaults_list.py
+# hypothesis_version: 6.151.2
+
+['\nConfig search path:', '${', '/', '1', '1.2', '???', '@', '_dummy_empty_config_', '_self_', 'defaults', 'hydra', 'hydra/', 'hydra/config', 'package']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\autograd\graph.py
+# hypothesis_version: 6.151.2
+
+['GradientEdge', 'Node', 'None', 'OpOverload', 'all', 'any', 'cuda', 'get_gradient_edge', 'increment_version', 'out', 'save_on_cpu', 'saved_tensors_hooks']

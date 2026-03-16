@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_torch_docs.py
+# hypothesis_version: 6.151.2
+
+['\\n\\s{4}(?!\\s)', 'abs', 'acos', 'asin', 'atan', 'ceil', 'cos', 'cosh', 'erf', 'erfc', 'exp', 'expm1', 'floor', 'frac', 'keepdim_details', 'lgamma', 'log', 'log10', 'log1p', 'log2', 'neg', 'opt_dim', 'opt_dim_all_reduce', 'opt_dim_without_none', 'opt_keepdim', 'reciprocal', 'rocm_fp16_note', 'round', 'sigmoid', 'sin', 'sinh', 'sparse_beta_warning', 'sqrt', 'tan', 'tanh', 'tf32_note', 'torch', 'trunc', 'zero']

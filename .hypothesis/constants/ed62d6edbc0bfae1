@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\consolidate.py
+# hypothesis_version: 6.151.2
+
+['-', '--json', '--verbose', 'Unknown error', 'as_json', 'clusters', 'consolidate', 'consolidation', 'edges_created', 'error', 'message', 'microglia', 'size_after', 'size_before', 'status', 'traces_deleted', 'verbose']

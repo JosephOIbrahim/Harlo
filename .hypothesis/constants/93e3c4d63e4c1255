@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\compiler\config.py
+# hypothesis_version: 6.151.2
+
+['TORCH_COMPILE_JOB_ID', 'TORCH_CUDAGRAPH_GC', 'job_id']

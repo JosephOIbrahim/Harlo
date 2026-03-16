@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\quantized\reference\modules\rnn.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1.0, 'GRU', 'GRUCell', 'LSTM', 'LSTMCell', 'RNNBase', 'RNNCell', 'RNNCellBase', '_axis', '_axis_int', '_dtype', '_qscheme', '_scale', '_zero_point', 'axis', 'device', 'dtype', 'get_quantized_weight', 'is_decomposed', 'proj_size', 'qscheme', 'relu', 'scale', 'tanh', 'weight', 'weight_hh', 'weight_ih', 'weight_qparams_dict', 'zero_point']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_jit_internal.py
+# hypothesis_version: 6.151.2
+
+['()', ',', '.', '<', '<lambda>', '>', 'Dict', 'List', 'Optional', 'Tuple', 'Union', '[', ']', '_', '_P', '_R', '__annotations__', '__base__', '__code__', '__func__', '__globals__', '__main__', '__module__', '__name__', '__torch__', '__torch__.', '_field_defaults', '_fields', '_lambda', 'arg_name', 'builtins', 'default', 'dict', 'drop_on_export', 'ict', 'if_false', 'if_true', 'index', 'list', 'torch._classes', 'tuple', 'typing', 'typing_extensions']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_higher_order_ops\strict_mode.py
+# hypothesis_version: 6.151.2
+
+['call_function', 'eager', 'pre_dispatch', 'strict_graph_', 'strict_mode', 'torch']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\checkpoint.py
+# hypothesis_version: 6.151.2
+
+[',', 'CheckpointError', 'CheckpointFunction', 'CheckpointPolicy', 'DefaultDeviceType', 'Linux', 'SAC_IGNORED_OPS', '__torch_dispatch__', '_initialized', 'cache_enabled', 'checkpoint', 'cpu', 'cuda', 'default', 'detach_variable', 'device', 'dtype', 'enabled', 'get_device_states', 'meta', 'name', 'none', 'noop_context_fn', 'original', 'preserve_rng_state', 'recompute', 'set_device_states', 'shape', 'x86_64']

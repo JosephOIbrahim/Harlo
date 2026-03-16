@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\distributed\rendezvous.py
+# hypothesis_version: 6.151.2
+
+['&', '0', '1', '=', 'MASTER_ADDR', 'MASTER_PORT', 'RANK', 'USE_LIBUV', 'WORLD_SIZE', 'env', 'env:// rendezvous: ', 'file', 'file:// rendezvous: ', 'path missing', 'port number missing', 'rank', 'rendezvous', 'tcp', 'tcp:// rendezvous: ', 'use_libuv', 'win32', 'world_size']

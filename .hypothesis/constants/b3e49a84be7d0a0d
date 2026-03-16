@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\autograd\functional.py
+# hypothesis_version: 6.151.2
+
+['back', 'back_trick', 'double', 'double_back', 'double_back_trick', 'forward-mode', 'grad_inputs', 'hessian', 'hvp', 'inputs', 'jacobian', 'jvp', 'outputs', 'reverse-mode', 'v', 'vhp', 'vjp']

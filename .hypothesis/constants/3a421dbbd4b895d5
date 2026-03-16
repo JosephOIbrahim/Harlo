@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\cuda\profiler.py
+# hypothesis_version: 6.151.2
+
+[b'\n', '.', 'ascii', 'conckerneltrace', 'csv', 'cuda', 'cudaOutputMode', 'enableonstart 0', 'gpuendtimestamp', 'gpustarttimestamp', 'gridsize3d', 'init', 'key_value', 'profile', 'start', 'stop', 'streamid', 'threadblocksize']

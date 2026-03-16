@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\hebbian\training_data.py
+# hypothesis_version: 6.151.2
+
+[b'no_profile', 0.0, 10000, '%Y%m%dT%H%M%S_%f', 'SYSTEM_1', 'a', 'allostatic_threshold', 'confidence_score', 'cycle_count', 'data', 'detail_orientation', 'domain', 'general', 'hebbian_alpha', 'intent_hash', 'output_hash', 'r', 'retrieval_path', 'surprise_threshold', 'timestamp', 'utf-8', 'verification_state']

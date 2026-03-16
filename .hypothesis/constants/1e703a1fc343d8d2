@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\brainstem\adapters.py
+# hypothesis_version: 6.151.2
+
+[0.0, 2048, 'action', 'approved', 'confidence', 'content_hash', 'context', 'cycle_count', 'deferred', 'description', 'distance', 'exchange_count', 'executing', 'fixable', 'gate_status', 'hypothesis', 'inhibited', 'sdr', 'session_id', 'spec_gamed', 'state', 'strength', 'trace_id', 'traces', 'unprovable', 'value', 'verified']

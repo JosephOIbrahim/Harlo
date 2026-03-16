@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fft\__init__.py
+# hypothesis_version: 6.151.2
+
+['Tensor', 'fft', 'fft2', 'fftfreq', 'fftn', 'fftshift', 'hfft', 'ifft', 'ifft2', 'ifftn', 'ifftshift', 'ihfft', 'irfft', 'irfft2', 'irfftn', 'rfft', 'rfft2', 'rfftfreq', 'rfftn']

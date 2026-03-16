@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\quantized\modules\normalization.py
+# hypothesis_version: 6.151.2
+
+[1e-05, 0.1, 'GroupNorm', 'InstanceNorm1d', 'InstanceNorm2d', 'InstanceNorm3d', 'LayerNorm', 'QuantizedGroupNorm', 'QuantizedLayerNorm', 'affine', 'device', 'dtype', 'eps', 'num_channels', 'num_groups', 'scale', 'zero_point']

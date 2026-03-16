@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\autograd\gradcheck.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1e-06, 1e-05, 0.001, 1.0, ' Got: ', ' but expected: ', ' is not ', ' when input: ', ')', 'GradcheckError', '_coo', 'cpu', 'device', 'dtype', 'gradcheck', 'gradgradcheck', 'ignore', 'imaginary', 'inf', 'inputs', 'layout', 'on index {idx} ', 'outputs', 'raise_exception', 'real', 'torch.']

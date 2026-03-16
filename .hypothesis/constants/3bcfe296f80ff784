@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\session.py
+# hypothesis_version: 6.151.2
+
+['--domain', '--encoder', '--json', 'Encoder type', 'No active sessions.', 'Session domain', 'Unknown error', 'as_json', 'close', 'domain', 'encoder_type', 'error', 'general', 'lexical', 'list', 'message', 'result', 'semantic', 'session_close', 'session_id', 'session_list', 'session_start', 'session_status', 'sessions', 'start', 'status']

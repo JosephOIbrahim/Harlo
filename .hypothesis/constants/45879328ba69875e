@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\antlr4\atn\LexerATNSimulator.py
+# hypothesis_version: 6.151.2
+
+[127, 2147483647, ' -> ', ' start: ', ' upon ', "'", ')', ':', 'ACTION', 'DEFAULT_MODE', 'DFA after matchATN: ', 'EDGE ', 'EOF', 'EVAL rule ', 'MAX_CHAR_VALUE', 'at', 'closure at', 'closure at rule stop', 'closure(', 'column', 'decisionToDFA', 'dfaState', 'edge to', 'index', 'line', 'matchATN mode ', 'mode', 'prevAccept', 'recog', 'reuse state', 'rule stop', 'start state closure=', 'startIndex', 'testing']

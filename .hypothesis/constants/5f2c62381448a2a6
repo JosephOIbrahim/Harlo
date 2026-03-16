@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\data\dataloader.py
+# hypothesis_version: 6.151.2
+
+[', ', 'DataLoader', 'Dataloader', 'True', '_T', '_T_co', '_pin_memory_thread', 'batch_sampler', 'batch_size', 'dataset', 'default_collate', 'default_convert', 'drop_last', 'enabled', 'get_worker_info', 'gloo', 'mps', 'persistent_workers', 'python.data_loader', 'sampler', 'sched_getaffinity', '{} cannot be pickled']

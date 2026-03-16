@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\antlr4\atn\Transition.py
+# hypothesis_version: 6.151.2
+
+[' >= _p', "'", "'..'", '.', ':', 'ACTION', 'ATOM', 'EPSILON', 'INVALID', 'NOT_SET', 'PRECEDENCE', 'PREDICATE', 'RANGE', 'RULE', 'SET', 'WILDCARD', 'actionIndex', 'action_', 'epsilon', 'followState', 'isCtxDependent', 'isEpsilon', 'label', 'label_', 'precedence', 'predIndex', 'pred_', 'ruleIndex', 'serializationType', 'start', 'stop', 'target', '~']

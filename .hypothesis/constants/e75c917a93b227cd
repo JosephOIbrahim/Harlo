@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\multiprocessing\__init__.py
+# hypothesis_version: 6.151.2
+
+['__del__', 'darwin', 'file_descriptor', 'file_system', 'get_sharing_strategy', 'set_sharing_strategy', 'win32']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fx\passes\tools_common.py
+# hypothesis_version: 6.151.2
+
+[', ', 'Expect op types of ', '_base_class_origin', 'acc_ops', 'call_function', 'call_method', 'call_module', 'get_acc_ops_name', 'get_node_target', 'legalize_graph', 'tensor_meta', 'torch._ops', 'torch.ops', 'type']

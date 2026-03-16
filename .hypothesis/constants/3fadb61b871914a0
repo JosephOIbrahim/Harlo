@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\park.py
+# hypothesis_version: 6.151.2
+
+[',', '--domain', '--json', '--tags', 'Comma-separated tags', 'Knowledge domain', 'Unknown error', 'as_json', 'cli:park', 'domain', 'error', 'idea', 'message', 'parked', 'source', 'status', 'store', 'tags', 'trace_id']

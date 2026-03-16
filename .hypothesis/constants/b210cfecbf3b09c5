@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\hydra\conf\__init__.py
+# hypothesis_version: 6.151.2
+
+[',', '.hydra', '=', 'basic', 'callbacks', 'config', 'default', 'env', 'help', 'hydra', 'hydra_help', 'hydra_logging', 'job_logging', 'launcher', 'output', 'sweeper']

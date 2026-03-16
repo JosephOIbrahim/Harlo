@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\data\_utils\pin_memory.py
+# hypothesis_version: 6.151.2
+
+['_fields', 'pin_memory', 'pt_data_pin']

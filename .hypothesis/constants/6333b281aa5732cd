@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\random.py
+# hypothesis_version: 6.151.2
+
+['_is_in_bad_fork', 'cuda', 'devices', 'fork_rng', 'manual_seed_all', 'meta']

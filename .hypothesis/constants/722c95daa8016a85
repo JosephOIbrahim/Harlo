@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\signal\windows\windows.py
+# hypothesis_version: 6.151.2
+
+[0.0106411, 0.08, 0.1365995, 0.3635819, 0.42, 0.4891775, 0.5, 0.54, 1.0, 2.0, 12.0, '_T', 'bartlett', 'blackman', 'cosine', 'exponential', 'gaussian', 'general_cosine', 'general_hamming', 'hamming', 'hann', 'kaiser', 'normalization', 'nuttall']

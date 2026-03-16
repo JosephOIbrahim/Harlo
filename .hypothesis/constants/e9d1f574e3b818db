@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\profile.py
+# hypothesis_version: 6.151.2
+
+['-', '--json', 'Modulation Profile', 'Unknown error', 'as_json', 'error', 'message', 'profile', 'result', 'status']

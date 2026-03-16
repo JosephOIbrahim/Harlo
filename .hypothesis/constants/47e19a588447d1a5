@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\inquire.py
+# hypothesis_version: 6.151.2
+
+['-', '--depth', '--json', 'Inquiry depth', 'Unknown error', 'as_json', 'deep', 'depth', 'error', 'inquire', 'inquiries', 'light', 'message', 'priority', 'question', 'result', 'standard', 'status']

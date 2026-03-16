@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\masked\maskedtensor\reductions.py
+# hypothesis_version: 6.151.2
+
+['all', 'amax', 'amin', 'argmax', 'argmin', 'mask', 'mean', 'norm', 'prod', 'std', 'sum', 'var']

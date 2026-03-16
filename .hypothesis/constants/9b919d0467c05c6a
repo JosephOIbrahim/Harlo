@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fx\passes\net_min_base.py
+# hypothesis_version: 6.151.2
+
+[' . ', '*', '=', 'Finish Pass 1', 'Finish Pass 2', 'No culprits found', 'Run and compare ...', 'Visit node: %s', '_acc', '_cpu', 'accumulate', 'binary', 'block', 'defined', 'main_0', 'main_1', 'minimize', 'output', 'placeholder', 'sequential', 'skip']

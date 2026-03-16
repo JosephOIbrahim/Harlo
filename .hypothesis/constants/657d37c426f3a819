@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_higher_order_ops\flex_attention.py
+# hypothesis_version: 6.151.2
+
+['call_function', 'flex_attention', 'fw_graph', 'inf', 'joint_graph', 'mask_graph', 'mode', 'sdpa_mask', 'sdpa_score']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\profiler\_memory_profiler.py
+# hypothesis_version: 6.151.2
+
+[0.7, 1000.0, 1000, 1024, '.png', '::', 'DataFlowGraph', 'Key', 'Memory (GB)', 'TensorKey', 'Time (ms)', 'Unknown', 'aten::add_', 'aten::detach', 'black', 'darkgreen', 'goldenrod', 'grey', 'is_write', 'matplotlib', 'mediumblue', 'mediumpurple', 'png', 'rb', 'red', 'royalblue', 'utf-8', 'w', 'wb']
