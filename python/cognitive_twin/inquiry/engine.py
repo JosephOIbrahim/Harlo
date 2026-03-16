@@ -11,7 +11,7 @@ Orchestrates all inquiry subsystems:
 - Consent
 - DMN window (S6)
 
-S2: Inquiry outputs bypass Aletheia truth (tone only). Handled by bridge.
+S2: Inquiry outputs bypass Aletheia truth (tone only). Handled by brainstem.
 S4: Utility mode mutes DMN. Behavioral traces invisible.
 Rule 1: No blocking waits, no infinite loops.
 """
