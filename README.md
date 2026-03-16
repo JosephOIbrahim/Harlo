@@ -77,43 +77,147 @@ The system is event-driven and socket-activated. It idles at 0 watts. No polling
 The v7.0 architecture as a dependency graph. The Brainstem is the central translation layer — every subsystem reads and writes through it via USD-Lite stages.
 
 ```mermaid
-graph TD
-    USER["User / MCP Client"] --> CLI["CLI / MCP Server\n5 tools"]
-    CLI --> BS["BRAINSTEM\nLossless Translation\n+ Metacognitive Routing"]
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
+graph TB
+    CLI["CLI · Click"]:::entry
+    MCP["MCP Server · 5 Tools"]:::entry
+    DAEMON["Daemon\nSocket-activated · 0W idle"]:::core
 
-    BS --> USD["USD-LITE STAGE\n17 typed prim dataclasses\n.usda serialization"]
+    CLI --> DAEMON
+    MCP --> DAEMON
 
-    BS --> HIPP["HIPPOCAMPUS\n(Rust / PyO3)\nSDR encode\nXOR + popcount\n< 2ms recall"]
+    subgraph BRAINSTEM["🧠 BRAINSTEM · Lossless Translation Layer"]
+        direction TB
+        ADAPT["Adapter Pairs\nnative ↔ USD prims"]:::brainstem
+        ROUTE["Z-Score Surprise Router\nSystem 1 / System 2"]:::brainstem
+        GEN["Generation Pipeline"]:::brainstem
+        PROV["Structured Provenance\n5 source types"]:::brainstem
+        AMYG["Amygdala Reflexes\npermanent prims"]:::brainstem
+        CONSOL["Consolidation"]:::brainstem
+        ESCAL["Escalation"]:::brainstem
 
-    BS --> ROUTE{"Surprise\nZ-score"}
-    ROUTE -->|"z <= threshold"| SYS1["SYSTEM 1\nAssociation Engine\nFast hamming search"]
-    ROUTE -->|"z > threshold"| SYS2["SYSTEM 2\nComposition Engine\nLIVRPS + Merkle resolve"]
+        ADAPT --> ROUTE
+        ROUTE --> GEN
+        GEN --> PROV
+    end
 
-    SYS1 --> USD
-    SYS2 --> USD
+    DAEMON --> BRAINSTEM
 
-    BS --> ALE["ALETHEIA\nGVR verification\nSpec-gaming detection\nTrace-excluded"]
-    BS --> MOTOR["MOTOR CORTEX\nBasal Ganglia gate\nInhibit-default\n5-check gate"]
-    BS --> DMN["INQUIRY / DMN\nPattern detection\nCo-evolution spiral"]
+    subgraph RIGHT["Association Engine · Right Hemisphere"]
+        direction TB
+        ENC["Encoder\nBGE + LSH → 2048-bit SDR"]:::right
+        RUST["Rust Hot Path · PyO3\nXOR + popcount kNN\n< 2ms recall"]:::right
+        DECAY["Lazy Decay\ncomputed on read"]:::right
+        ENC --> RUST --> DECAY
+    end
 
-    USD --> HEBB["HEBBIAN ENGINE\nDual-mask SDR evolution\nEpisodic reconstruction\nTraining data pipeline"]
-    USD --> SKILLS["SKILLS OBSERVER\nIncremental cursor\nGrowth arcs\nGap detection"]
-    USD --> PROFILE["COGNITIVE PROFILE\nAdaptive intake\nPersonal multipliers\nContinuous scoring"]
+    subgraph LEFT["Composition Engine · Left Hemisphere"]
+        direction TB
+        MERKLE["Merkle Stages\nisolated hash trees"]:::left
+        LIVRPS["LIVRPS Resolution\nstrongest opinion wins"]:::left
+        AUDIT["Audit Trail"]:::left
+        MERKLE --> LIVRPS --> AUDIT
+    end
 
-    BS --> PROV["PROVENANCE\n5 source types\nDeterministic hashing"]
+    subgraph ALETHEIA["Aletheia Verification"]
+        direction TB
+        GVR["GVR Loop\nmax 3 cycles"]:::verify
+        SPEC["Spec-Gaming Detection"]:::verify
+        TRACE_EX["Trace-Excluded Verify\nblinded verifier"]:::verify
+        UNPR["UNPROVABLE\nwith dignity"]:::verify
+        GVR --> SPEC
+        GVR --> TRACE_EX
+        GVR --> UNPR
+    end
 
-    HEBB -->|"[V] Variant layer"| USD
-    SKILLS -->|"Ghost window\nO(new_traces)"| USD
-    PROFILE -->|"Calibrates thresholds"| ROUTE
+    subgraph MOTOR["Motor Cortex"]
+        direction TB
+        PREMOTOR["Premotor Planning"]:::motor
+        BG["Basal Ganglia Gate\n5-check · inhibit-default"]:::motor
+        EXEC["Executor\nONE action/cycle"]:::motor
+        PREMOTOR --> BG --> EXEC
+    end
 
-    style BS fill:#4a9eff,color:#fff
-    style USD fill:#0d1117,color:#c9d1d9,stroke:#30363d
-    style HIPP fill:#d4380d,color:#fff
-    style ROUTE fill:#9a6700,color:#fff
-    style SYS1 fill:#2ea043,color:#fff
-    style SYS2 fill:#6e40c9,color:#fff
-    style HEBB fill:#cf222e,color:#fff
-    style ALE fill:#1f6feb,color:#fff
+    subgraph HEBBIAN["Hebbian Engine"]
+        direction TB
+        DUAL["Dual-Mask SDR Evolution\nstrengthen + weaken"]:::hebbian
+        RECON["Episodic Reconstruction\nvia co-activations"]:::hebbian
+        HOMEO["Homeostatic Plasticity\n3%–5% density"]:::hebbian
+        TRAIN["Training Data Pipeline\nJSONL · O(1) rotation"]:::hebbian
+        DUAL --> RECON
+        DUAL --> HOMEO
+        DUAL --> TRAIN
+    end
+
+    subgraph INQUIRY["Inquiry Engine · DMN"]
+        direction TB
+        PATTERN["Pattern Detection"]:::inquiry
+        APOPH["Apophenia Guard"]:::inquiry
+        SINC["Sincerity Gate"]:::inquiry
+        RUPTURE["Rupture & Repair"]:::inquiry
+        CRYSTAL["Crystallization"]:::inquiry
+        PATTERN --> APOPH --> SINC
+    end
+
+    subgraph USD["USD-Lite Container"]
+        direction TB
+        PRIMS["17 Typed Prim Dataclasses"]:::usd
+        USDA[".usda Serialization\nround-trip fidelity"]:::usd
+        HEX["Hex SDR · 512 chars"]:::usd
+        PRIMS --> USDA --> HEX
+    end
+
+    subgraph PROFILE["Cognitive Profile"]
+        direction TB
+        INTAKE["Adaptive Intake\nneuropsych-informed"]:::profile
+        SCORING["Continuous 0,1 Scoring\nlinear interpolation"]:::profile
+        BASELINE["Personal Baselines\nsurprise thresholds"]:::profile
+        SKILLS["Skills Observer\n4 query patterns"]:::profile
+        INTAKE --> SCORING --> BASELINE
+    end
+
+    subgraph SESSION["Session Management"]
+        direction TB
+        SQLITE["SQLite-Backed"]:::session
+        HIST["History Tracking"]:::session
+        EXPIRE["Expiration"]:::session
+    end
+
+    subgraph PROVIDER["LLM Provider"]
+        direction TB
+        PROTO["Protocol-Based Interface"]:::provider
+        CLAUDE_A["Claude Adapter"]:::provider
+        OPENAI_A["OpenAI Adapter"]:::provider
+        PROTO --> CLAUDE_A
+        PROTO --> OPENAI_A
+    end
+
+    %% All subsystems read/write through Brainstem via USD-Lite
+    BRAINSTEM <-->|"USD prims"| USD
+    BRAINSTEM --> RIGHT
+    BRAINSTEM --> LEFT
+    BRAINSTEM --> ALETHEIA
+    BRAINSTEM --> MOTOR
+    BRAINSTEM --> HEBBIAN
+    BRAINSTEM --> INQUIRY
+    BRAINSTEM --> PROFILE
+    BRAINSTEM --> SESSION
+    GEN --> PROVIDER
+
+    %% Styles
+    classDef entry fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
+    classDef core fill:#1a1a2e,stroke:#7c3aed,color:#c4b5fd,font-weight:bold
+    classDef brainstem fill:#0f3460,stroke:#3b82f6,color:#93c5fd
+    classDef right fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0
+    classDef left fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
+    classDef verify fill:#1a3a4a,stroke:#06b6d4,color:#a5f3fc
+    classDef motor fill:#5c1a1a,stroke:#ef4444,color:#fca5a5
+    classDef hebbian fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef inquiry fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
+    classDef usd fill:#1a2a1a,stroke:#22c55e,color:#bbf7d0
+    classDef profile fill:#3a1a4a,stroke:#d946ef,color:#f0abfc
+    classDef session fill:#1a1a2e,stroke:#6b7280,color:#9ca3af
+    classDef provider fill:#1a1a2e,stroke:#7c3aed,color:#c4b5fd
 ```
 
 ### Generation Pipeline
@@ -121,32 +225,72 @@ graph TD
 How a query flows through the system end-to-end:
 
 ```mermaid
-flowchart TD
-    Q["Query"] --> R["Semantic Recall\nSDR encode + XOR kNN\n< 2ms"]
-    R --> S{"Surprise\nZ-score"}
-    S -->|"z <= threshold\n(System 1)"| INJ["Context Injection"]
-    S -->|"z > threshold\n(System 2)"| ESC["Escalate to Composition\nLIVRPS + Merkle resolve"]
-    ESC --> INJ
-    INJ --> LLM["LLM Generation\nProvider API call"]
-    LLM --> AMY{"Amygdala\ntrigger?"}
-    AMY -->|"Safety / Consent"| REF["1-shot Permanent Reflex\nSkip GVR entirely"]
-    AMY -->|No| GVR["Aletheia GVR Loop"]
-    GVR --> V{"Verdict?"}
-    V -->|VERIFIED| CONS["Consolidate + Reflex cache"]
-    V -->|SPEC_GAMED| SGOUT["Return to user\nnever consolidate"]
-    V -->|"FIXABLE\ncycle < 3"| REV["Revise output"] --> GVR
-    V -->|UNPROVABLE| PARK["Park with dignity\nreason + what_would_help"]
-    CONS --> HEBB["Hebbian Update\nCo-activation + Dual masks"]
-    HEBB --> RESP["Response\nverified + contextual + confidence"]
-    PARK --> RESP
-    REF --> RESP
-    SGOUT --> RESP
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph LR
+    Q["Query"]:::input
 
-    style Q fill:#4a9eff,color:#fff
-    style RESP fill:#2ea043,color:#fff
-    style REF fill:#d4380d,color:#fff
-    style SGOUT fill:#cf222e,color:#fff
-    style PARK fill:#9a6700,color:#fff
+    subgraph RECALL["Semantic Recall"]
+        direction TB
+        ENCODE["BGE + LSH\n→ 2048-bit SDR"]:::recall
+        SEARCH["XOR + popcount\nHamming kNN"]:::recall
+        MATCH["Top-K Traces\nranked by distance"]:::recall
+        ENCODE --> SEARCH --> MATCH
+    end
+
+    subgraph SURPRISE["Surprise Scoring"]
+        direction TB
+        ZSCORE["Z-Score\nvs personal baseline"]:::surprise
+        SYS1{"Z < threshold?"}:::decision
+        ZSCORE --> SYS1
+    end
+
+    subgraph SYSTEM1["System 1 · Fast"]
+        direction TB
+        ASSOC["Association Engine\nSDR hot recall\n< 2ms"]:::fast
+    end
+
+    subgraph SYSTEM2["System 2 · Deliberate"]
+        direction TB
+        COMPOSE["Composition Engine\nLIVRPS resolution"]:::deliberate
+        CONTEXT["Context Injection\nUSD stage merge"]:::deliberate
+        LLM["LLM Generation\nClaude / OpenAI"]:::deliberate
+        COMPOSE --> CONTEXT --> LLM
+    end
+
+    subgraph VERIFY["Aletheia GVR"]
+        direction TB
+        GEN_V["Generate"]:::verify
+        VER_V["Verify\ntrace-excluded"]:::verify
+        REV_V["Revise"]:::verify
+        SPEC_V["Spec-Gaming\nCheck"]:::verify
+        GEN_V --> VER_V
+        VER_V -->|"fail · ≤3 cycles"| REV_V --> GEN_V
+        VER_V --> SPEC_V
+    end
+
+    subgraph GATE["Motor Cortex"]
+        direction TB
+        BG_V["Basal Ganglia\n5-check gate"]:::gate
+    end
+
+    RESP["Verified Response\ncontextual · calibrated"]:::output
+
+    Q --> RECALL --> SURPRISE
+    SYS1 -->|"yes · familiar"| SYSTEM1
+    SYS1 -->|"no · surprising"| SYSTEM2
+    SYSTEM1 --> VERIFY
+    SYSTEM2 --> VERIFY
+    VER_V -->|"pass"| GATE --> RESP
+
+    classDef input fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
+    classDef output fill:#22c55e,stroke:#4ade80,color:#fff,font-weight:bold
+    classDef recall fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0
+    classDef surprise fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef decision fill:#4a3a1a,stroke:#f59e0b,color:#fde68a,font-weight:bold
+    classDef fast fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0
+    classDef deliberate fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
+    classDef verify fill:#1a3a4a,stroke:#06b6d4,color:#a5f3fc
+    classDef gate fill:#5c1a1a,stroke:#ef4444,color:#fca5a5
 ```
 
 ### Aletheia Verification States
@@ -154,24 +298,43 @@ flowchart TD
 The Generate-Verify-Revise loop and its four terminal states:
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
 stateDiagram-v2
-    [*] --> Verify: intent + output\n(reasoning_trace = None)
+    direction TB
 
-    Verify --> VERIFIED: Sound and\nanswers original intent
-    Verify --> SPEC_GAMED: Correct answer\nwrong question
-    Verify --> FIXABLE: Detectable flaw
+    [*] --> Generate: Input query + context
 
-    FIXABLE --> Revise: cycle < 3
-    Revise --> Verify: patched output
-    FIXABLE --> UNPROVABLE: cycle >= 3\n(ADHD guard)
+    Generate --> Verify: Response candidate
 
-    VERIFIED --> [*]: Consolidate to reflex
-    SPEC_GAMED --> [*]: Return — never consolidate
-    UNPROVABLE --> [*]: Park with metadata\n(reason, what_would_help, partial_progress)
+    state Verify {
+        direction LR
+        [*] --> TraceExcluded: Verifier NEVER\nsees reasoning traces
+        TraceExcluded --> SpecGaming: Check correct answer\nto wrong question?
+        SpecGaming --> ScoreResult
+    }
 
-    note right of Verify: Rule 11 — verifier NEVER\nsees reasoning traces
-    note right of SPEC_GAMED: Rule 15 — dominant failure mode\ndetected via topic drift + deflection
-    note left of UNPROVABLE: Rule 16 — first-class state\nwith dignity, not silent drop
+    Verify --> Revise: FAIL · cycle ≤ 3
+    Revise --> Generate: Revised prompt
+
+    Verify --> VERIFIED: PASS\nAll checks clear
+    Verify --> UNVERIFIED: Cycle limit hit\nbut usable
+    Verify --> UNPROVABLE: Cannot resolve\nparked with metadata
+    Verify --> REFUSED: Safety violation\nor scope breach
+
+    VERIFIED --> [*]: ✅ Delivered to user
+    UNVERIFIED --> [*]: ⚠️ Delivered with caveat
+    UNPROVABLE --> [*]: 🔒 Parked with dignity\nnot silently dropped
+    REFUSED --> [*]: 🛑 Blocked by\nBasal Ganglia gate
+
+    note right of Generate
+        Max 3 GVR cycles
+        (ADHD guard)
+    end note
+
+    note right of UNPROVABLE
+        Full metadata preserved:
+        query, attempts, failure mode
+    end note
 ```
 
 ### Trace Lifecycle
@@ -179,51 +342,74 @@ stateDiagram-v2
 The full journey of a memory trace — from storage through encoding, recall, Hebbian evolution, reconstruction, and eventual apoptosis. The reconsolidation boost creates a feedback loop that saves degraded traces from death when users actually retrieve their reconstructed episodes.
 
 ```mermaid
-flowchart TD
-    STORE["Store\nmessage + domain + tags"] --> ENCODE["Encode\nBGE-small-en-v1.5\n384-dim embedding"]
-    ENCODE --> LSH["LSH Projection\ntop-80 bits active"]
-    LSH --> SDR["2048-bit SDR\nhex-packed (512 chars)"]
-    SDR --> DB[("SQLite\ntwin.db\nbase SDR pristine")]
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph TB
+    STORE["twin_store()\nNew trace created"]:::input
 
-    DB -->|"Query arrives"| RECALL["Recall\nXOR + popcount\nHamming distance\n< 2ms"]
-    RECALL --> ZSCORE{"Surprise\nZ-score =\n(hamming - mean)\n/ max(std, 1.0)"}
-    ZSCORE -->|"z <= threshold\nSystem 1"| FAST["Fast Return\nAssociation only"]
-    ZSCORE -->|"z > threshold\nSystem 2"| DELIBERATE["Escalate\nComposition LIVRPS\n+ Merkle resolve"]
+    subgraph ENCODING["Encoding"]
+        direction LR
+        BGE["BGE Semantic\nEmbedding"]:::encode
+        LSH["LSH Projection\n→ 2048-bit SDR"]:::encode
+        SQLITE["Base SDR\nstored in SQLite\n🔒 pristine"]:::encode
+        BGE --> LSH --> SQLITE
+    end
 
-    RECALL -->|"Top-K co-fire"| COACT["Co-activation\ntrace_a.co_activations[b] += 1"]
-    RECALL -->|"Domain conflict"| COMPETE["Competition\ntrace_a.competitions[b] += 1"]
+    subgraph RECALL_PHASE["Recall · Lazy Decay"]
+        direction TB
+        QUERY["twin_recall()"]:::recall
+        COMPUTE["strength = initial × e^(-λ·Δt)\n+ Σ(boosts)\n+ Σ(hebbian_boosts)"]:::recall
+        THRESHOLD{"strength >\nepsilon?"}:::decision
+        QUERY --> COMPUTE --> THRESHOLD
+    end
 
-    COACT --> STRENGTHEN["Hebbian Strengthen\nP(set) = alpha * (count / max)\nBits added to strengthen_mask"]
-    COMPETE --> WEAKEN["Anti-Hebbian Weaken\nP(clear) = beta * (count / max)\nBits added to weaken_mask"]
+    subgraph HEBBIAN_PHASE["Hebbian Evolution"]
+        direction TB
+        COACT["Co-Activation\nDetected"]:::hebbian
+        SMASK["strengthen_mask\nshared bits ON"]:::hebbian
+        WMASK["weaken_mask\ncompeting bits OFF"]:::hebbian
+        EFFECTIVE["effective_sdr =\n(base | strengthen) & ~weaken"]:::hebbian
+        VARIANT["Stored in USD\nVariant layer"]:::hebbian
+        COACT --> SMASK
+        COACT --> WMASK
+        SMASK --> EFFECTIVE
+        WMASK --> EFFECTIVE
+        EFFECTIVE --> VARIANT
+    end
 
-    STRENGTHEN --> VARIANT["[V] Variant Layer\neffective = (base | str) & ~wk\nConflict: weaken wins"]
-    WEAKEN --> VARIANT
-    VARIANT --> HOMEO{"Homeostatic\nPlasticity"}
-    HOMEO -->|"density < 3%"| UNDO_W["Undo weakening"]
-    HOMEO -->|"3% - 5%"| OK["Within band"]
-    HOMEO -->|"density > 5%"| UNDO_S["Undo strengthening"]
+    subgraph RECON["Episodic Reconstruction"]
+        direction TB
+        DEGRADE{"Below recon\nthreshold?"}:::decision
+        REBUILD["Reconstruct from\nHebbian co-activations\nvia LIVRPS composition"]:::recon
+        BOOST["Reconsolidation Boost\n🔑 fires ONLY on\nuser-facing retrieval"]:::recon
+        DEGRADE -->|"yes"| REBUILD --> BOOST
+    end
 
-    DB -->|"On read\nRule 4: lazy"| DECAY{"Decay\nstrength = init * e^(-kt)\n+ retrieval_boosts\n+ hebbian_boosts"}
-    DECAY -->|"strength >= epsilon"| ALIVE["Alive\nreturn in results"]
-    DECAY -->|"epsilon < strength\n< recon_threshold"| RECON["Episodic\nReconstruction"]
-    DECAY -->|"strength < epsilon"| APO["Apoptosis\nDELETE + VACUUM\nDB shrinks"]
+    subgraph DEATH["Apoptosis"]
+        direction TB
+        CLAMP["Apoptosis Clamp\nmax(apoptosis + 0.05, threshold)\nprevents race condition"]:::death
+        DELETE["Physical DELETE\n+ VACUUM\nDB actually shrinks"]:::death
+        CLAMP --> DELETE
+    end
 
-    RECON --> PULL["Pull top-N\nHebbian-linked traces"]
-    PULL --> COMPOSE["LIVRPS compose\nreconstructed episode"]
-    COMPOSE --> MARK["Mark reconstructed: true\nprovenance: HEBBIAN_DERIVED\ncontributing_traces: [ids]"]
-    MARK -->|"Surfaced to user?"| DECISION{"User-facing\nretrieval?"}
-    DECISION -->|"Yes"| BOOST["Reconsolidation\nBoost +0.1\nto all contributors"]
-    DECISION -->|"No (internal only)"| NOOP["No boost\ntraces cannot\nself-bootstrap"]
-    BOOST -->|"Saves fragments\nfrom apoptosis"| DB
+    HOMEO["Homeostatic Plasticity\nclamp density → 3%–5%"]:::homeo
 
-    style DB fill:#0d1117,color:#c9d1d9,stroke:#30363d
-    style APO fill:#d4380d,color:#fff
-    style ALIVE fill:#2ea043,color:#fff
-    style RECON fill:#9a6700,color:#fff
-    style BOOST fill:#1f6feb,color:#fff
-    style VARIANT fill:#6e40c9,color:#fff
-    style ZSCORE fill:#4a9eff,color:#fff
-    style NOOP fill:#6e7681,color:#fff
+    STORE --> ENCODING
+    ENCODING --> RECALL_PHASE
+    THRESHOLD -->|"yes · alive"| HEBBIAN_PHASE
+    THRESHOLD -->|"no · dying"| RECON
+    DEGRADE -->|"no · too far gone"| DEATH
+    BOOST -->|"rescued"| RECALL_PHASE
+    HEBBIAN_PHASE --> HOMEO
+    HOMEO -->|"next retrieval"| RECALL_PHASE
+
+    classDef input fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
+    classDef encode fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0
+    classDef recall fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
+    classDef decision fill:#4a3a1a,stroke:#f59e0b,color:#fde68a,font-weight:bold
+    classDef hebbian fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef recon fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
+    classDef death fill:#5c1a1a,stroke:#ef4444,color:#fca5a5
+    classDef homeo fill:#1a3a4a,stroke:#06b6d4,color:#a5f3fc
 ```
 
 ### Motor Cortex Decision Gate
@@ -231,30 +417,57 @@ flowchart TD
 Inhibition-default: every action must pass ALL five checks or it's blocked.
 
 ```mermaid
-flowchart TD
-    ACT["Planned Action"] --> BG{"BASAL GANGLIA GATE\n(default: INHIBIT ALL)"}
-    BG --> C1["Anchor alignment"]
-    BG --> C2["Consent level"]
-    BG --> C3["Aletheia verified"]
-    BG --> C4["Reversibility"]
-    BG --> C5["Scope boundaries"]
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph TB
+    ACTION["Proposed Action"]:::input
 
-    C1 & C2 & C3 & C4 & C5 --> CHK{"All 5 pass?"}
+    DEFAULT["🛑 DEFAULT STATE: INHIBIT ALL\nEvery action blocked until all 5 pass"]:::inhibit
 
-    CHK -->|"All pass"| DIS["DISINHIBIT\nExecute ONE action"]
-    CHK -->|"Consent insufficient"| ESC["ESCALATE\nRequest higher consent"]
-    CHK -->|"Level 3 detected"| LOCK["LOCKED\nGate welded shut\n(financial / irreversible / others' data)"]
-    CHK -->|"Any other failure"| INH["INHIBIT\nAction blocked"]
+    ACTION --> DEFAULT
 
-    DIS --> LOOP["Return to full\ncognitive loop\n(Rule 24: one action at a time)"]
+    subgraph CHECKS["Basal Ganglia · 5-Check Gate"]
+        direction TB
+        C1{"1. Anchor Check\nAligned with\ncore principles?"}:::check
+        C2{"2. Consent Check\nUser authorized\nthis action?"}:::check
+        C3{"3. Verification Check\nAletheia verified\nthe reasoning?"}:::check
+        C4{"4. Reversibility Check\nCan this be\nundone?"}:::check
+        C5{"5. Scope Check\nWithin declared\nboundaries?"}:::check
 
-    INH -.->|"Even cached reflexes\nre-check every time\n(Rule 26)"| BG
+        C1 -->|"✅ pass"| C2
+        C2 -->|"✅ pass"| C3
+        C3 -->|"✅ pass"| C4
+        C4 -->|"✅ pass"| C5
+    end
 
-    style BG fill:#d4380d,color:#fff
-    style DIS fill:#2ea043,color:#fff
-    style LOCK fill:#6e40c9,color:#fff
-    style INH fill:#cf222e,color:#fff
-    style ESC fill:#9a6700,color:#fff
+    DEFAULT --> C1
+
+    EXECUTE["✅ EXECUTE\nONE action per cycle"]:::pass
+    C5 -->|"✅ all 5 pass"| EXECUTE
+
+    BLOCK["🛑 BLOCKED\nAction inhibited"]:::fail
+    C1 -->|"❌ fail"| BLOCK
+    C2 -->|"❌ fail"| BLOCK
+    C3 -->|"❌ fail"| BLOCK
+    C4 -->|"❌ fail"| BLOCK
+    C5 -->|"❌ fail"| BLOCK
+
+    subgraph STRUCTURAL_LOCKS["🔒 Structurally Locked · Cannot Pass Gate"]
+        direction LR
+        FINANCIAL["Financial\nTransactions"]:::locked
+        IRREVERSIBLE["Irreversible\nDeletions"]:::locked
+    end
+
+    RED["🔴 RED STATE\nHalts everything\nNo exceptions"]:::red
+
+    RED -->|"overrides all"| BLOCK
+
+    classDef input fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
+    classDef inhibit fill:#5c1a1a,stroke:#ef4444,color:#fca5a5,font-weight:bold,stroke-width:3px
+    classDef check fill:#1a1a2e,stroke:#f59e0b,color:#fde68a,font-weight:bold
+    classDef pass fill:#1a4a1a,stroke:#22c55e,color:#bbf7d0,font-weight:bold,stroke-width:3px
+    classDef fail fill:#5c1a1a,stroke:#ef4444,color:#fca5a5
+    classDef locked fill:#3a1a1a,stroke:#991b1b,color:#fca5a5,stroke-width:3px,stroke-dasharray: 5 5
+    classDef red fill:#7f1d1d,stroke:#ef4444,color:#fff,font-weight:bold,stroke-width:3px
 ```
 
 ### Co-Evolution Spiral
@@ -262,37 +475,43 @@ flowchart TD
 How the Twin and the human transform each other through interaction:
 
 ```mermaid
-sequenceDiagram
-    participant H as Human
-    participant T as Twin (Brainstem)
-    participant A as Aletheia
-    participant D as DMN (Inquiry)
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph TB
+    subgraph CYCLE["Co-Evolution · Twin ↔ Human"]
+        direction TB
 
-    H->>T: "I'm a decisive person"
-    T->>T: Store trace (self_reported)
-    T->>A: Verify in Composition
-    A->>A: Evidence shows 12 deferred decisions
-    A-->>T: Emit perception_gap trace
+        H1["🧑 Human acts\nqueries, decisions, patterns"]:::human
+        T1["🤖 Twin observes\nSDR encoding, trace storage"]:::twin
+        T2["🤖 Twin learns\nHebbian evolution,\nskills tracking,\npattern detection"]:::twin
+        T3["🤖 Twin reflects\nDMN inquiry,\ncrystallization,\nallostatic monitoring"]:::twin
+        T4["🤖 Twin surfaces\npatterns, gaps,\nescalation warnings"]:::twin
+        H2["🧑 Human integrates\nnew awareness,\nadjusted behavior"]:::human
+        H3["🧑 Human transforms\nnew patterns emerge,\nold ones decay"]:::human
 
-    T->>D: DMN synthesis window (<=30s)
-    D->>D: Apophenia guard: 12 obs >= 8 threshold
-    D->>D: Alt hypothesis: "maybe only in high-stakes"
-    D->>H: "You describe yourself as decisive, but I see<br/>12 deferred decisions this month. What's your read?"
-
-    alt Sincere engagement
-        H->>T: "Huh — I think I defer on things I don't care about"
-        T->>T: Both learn. Model refines.
-        Note over T: Trace updated: decisive on high-stakes,<br/>delegates low-stakes
-    else Rejection
-        H->>T: "That's not right"
-        T->>T: Permanent rejection trace (weight 2.0)
-        Note over T: 3 rejections -> offer to stop asking<br/>90-day half-life -> gently retry later
-    else Blind spot acceptance (Rule 33)
-        H->>T: "I know. I'm okay with that."
-        T->>T: Tag: blind_spot_accepted
-        Note over T,A: Aletheia keeps objective truth internally<br/>DMN never raises this specific claim again
-        Note over T: "The Twin chooses the relationship<br/>over the truth"
+        H1 --> T1
+        T1 --> T2
+        T2 --> T3
+        T3 --> T4
+        T4 --> H2
+        H2 --> H3
+        H3 -->|"new patterns\nfeed back"| H1
     end
+
+    subgraph SAFEGUARDS["Inquiry Safeguards"]
+        direction LR
+        APOPH["Apophenia Guard\ndon't hallucinate\npatterns"]:::guard
+        SINC["Sincerity Gate\nonly surface what's\ngenuinely there"]:::guard
+        RUPTURE["Rupture & Repair\nwhen surfacing\ncauses friction"]:::guard
+    end
+
+    T3 --> SAFEGUARDS
+
+    INTELLIGENCE["The intelligence lives in\nthe relationship —\nnot in either party alone"]:::philosophy
+
+    classDef human fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
+    classDef twin fill:#1a3a4a,stroke:#06b6d4,color:#a5f3fc,font-weight:bold
+    classDef guard fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef philosophy fill:#1a1a2e,stroke:#7c3aed,color:#c4b5fd,font-style:italic
 ```
 
 ## Key Design Decisions
@@ -306,31 +525,54 @@ sequenceDiagram
 Pixar's USD composition ordering adapted for brain state. Strongest opinion wins per attribute. Permanent prims (Amygdala reflexes) override everything.
 
 ```mermaid
-graph LR
-    L["[L] LOCAL\nStrongest\nDirect opinion"]
-    I["[I] INHERIT\nInherited from\nparent prim"]
-    V["[V] VARIANT\nHebbian deltas\n(dual masks)"]
-    R["[R] REFERENCE\nExternal data\npointer"]
-    P["[P] PAYLOAD\nAttached data"]
-    S["[S] SUBLAYER\nWeakest\nSQLite projection"]
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph TB
+    QUERY["Attribute Query\nWhich value wins?"]:::input
 
-    L -->|"overrides"| I
-    I -->|"overrides"| V
-    V -->|"overrides"| R
-    R -->|"overrides"| P
-    P -->|"overrides"| S
+    subgraph LIVRPS["LIVRPS Precedence · Strongest Opinion Wins"]
+        direction TB
+        L["🔒 [L] Local Overrides\nDirect user corrections\n⬆ STRONGEST"]:::L
+        I["[I] Inherits\nBase trait inheritance"]:::I
+        V["[V] Variants\nHebbian dual-mask layer\nstrengthen_mask + weaken_mask"]:::V
+        R["[R] References\nCross-trace links\nepistemic provenance"]:::R
+        P["[P] Payloads\nRaw ingested data\ntrace content"]:::P
+        S["[S] Specializes\nDomain-specific refinements\n⬇ WEAKEST"]:::S
 
-    PERM["PERMANENT\n(Amygdala reflex)\nOverrides all\narc types"]
+        L --- I --- V --- R --- P --- S
+    end
 
-    PERM -.->|"always wins"| L
+    PERM["⚡ Permanent Prims\nAmygdala reflexes\nOVERRIDE EVERYTHING\nincluding [L]"]:::perm
 
-    TIE["Same arc type?\nLater timestamp wins"]
+    QUERY --> LIVRPS
+    PERM -->|"structural override"| L
 
-    style L fill:#d4380d,color:#fff
-    style S fill:#6e7681,color:#fff
-    style PERM fill:#6e40c9,color:#fff
-    style V fill:#9a6700,color:#fff
-    style TIE fill:#0d1117,color:#c9d1d9,stroke:#30363d
+    subgraph PROVENANCE["Typed Provenance · Every Layer"]
+        direction LR
+        P1["USER_DIRECT"]:::prov
+        P2["EXTERNAL_REFERENCE"]:::prov
+        P3["SYSTEM_INFERRED"]:::prov
+        P4["HEBBIAN_DERIVED"]:::prov
+        P5["INTAKE_CALIBRATED"]:::prov
+    end
+
+    subgraph RESOLUTION["Resolution Rules"]
+        direction LR
+        R1["Per-attribute\nnot per-prim"]:::rule
+        R2["Conflict:\nhigher layer wins"]:::rule
+        R3["Float tolerance:\nmath.isclose()"]:::rule
+        R4["Merkle hash:\nbase traces only"]:::rule
+    end
+
+    classDef input fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
+    classDef L fill:#7f1d1d,stroke:#ef4444,color:#fca5a5,font-weight:bold,stroke-width:3px
+    classDef I fill:#5c1a1a,stroke:#ef4444,color:#fca5a5
+    classDef V fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef R fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
+    classDef P fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0
+    classDef S fill:#1a1a2e,stroke:#6b7280,color:#9ca3af
+    classDef perm fill:#4a1a4a,stroke:#d946ef,color:#f0abfc,font-weight:bold,stroke-width:3px
+    classDef prov fill:#1a1a2e,stroke:#7c3aed,color:#c4b5fd
+    classDef rule fill:#1a2a4a,stroke:#6366f1,color:#c7d2fe
 ```
 
 **Brainstem lossless translation.** Each subsystem gets one adapter pair (native to/from USD prims). Round-trip fidelity proven by Hypothesis property-based testing. Z-score surprise metric drives dual-process routing: System 1 (fast hamming search) escalates to System 2 (deliberative LIVRPS) when surprise exceeds the user's personal threshold.
