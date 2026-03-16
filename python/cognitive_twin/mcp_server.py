@@ -24,7 +24,7 @@ DB_PATH = str(DATA_DIR / "twin.db")
 server = FastMCP(
     name="cognitive-twin",
     instructions=(
-        "Cognitive Twin v6.0 — biologically-architected AI memory. "
+        "Cognitive Twin v7.0 — biologically-architected AI memory. "
         "Use twin_recall to search memory, twin_store to save traces, "
         "twin_ask for full generation pipeline, twin_patterns for "
         "pattern detection, twin_session_status for session info."

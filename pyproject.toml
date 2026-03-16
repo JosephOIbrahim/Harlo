@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "cognitive-twin"
-version = "6.0.0"
+version = "7.0.0"
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.0",

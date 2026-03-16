@@ -133,7 +133,7 @@ class TestRouterImport:
         try:
             # Create a valid import file
             import_data = {
-                "version": "6.0.0",
+                "version": "7.0.0",
                 "traces": [
                     {"id": "imp_t1", "message": "imported trace", "created_at": 1000,
                      "tags": ["test"], "domain": "testing", "source": "import"},
@@ -178,7 +178,7 @@ class TestRouterImport:
             assert os.path.exists(export_path)
 
             data = json.loads(Path(export_path).read_text(encoding="utf-8"))
-            assert data["version"] == "6.0.0"
+            assert data["version"] == "7.0.0"
 
             # Import back (to a different DB would be ideal, but at least verify it runs)
             result = route_command("import", {"path": export_path})

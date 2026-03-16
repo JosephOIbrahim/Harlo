@@ -1,4 +1,4 @@
-"""Cognitive Twin v6.0-MOTOR — biologically-architected AI memory and action system."""
+"""Cognitive Twin v7.0 — biologically-architected AI memory and action system."""
 
 from cognitive_twin.hippocampus import (
     py_recall,

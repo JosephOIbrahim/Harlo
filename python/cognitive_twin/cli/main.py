@@ -36,9 +36,9 @@ from .commands.verify import verify
 
 
 @click.group()
-@click.version_option(version="6.0.0", prog_name="twin")
+@click.version_option(version="7.0.0", prog_name="twin")
 def cli():
-    """The Cognitive Twin v6.0-MOTOR — biologically-architected AI memory."""
+    """The Cognitive Twin v7.0 — biologically-architected AI memory."""
     pass
 
 
