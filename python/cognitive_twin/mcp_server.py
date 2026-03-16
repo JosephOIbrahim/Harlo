@@ -211,5 +211,10 @@ def twin_session_status() -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the cognitive-twin console script."""
     server.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()
