@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\distributions\constraints.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1e-06, 1.0, '()', 'Constraint', '_DependentProperty', 'boolean', 'cat', 'corr_cholesky', 'dependent', 'dependent_property', 'greater_than', 'greater_than_eq', 'half_open_interval', 'independent', 'integer_interval', 'interval', 'is_dependent', 'less_than', 'lower_cholesky', 'lower_triangular', 'multinomial', 'nonnegative', 'nonnegative_integer', 'one_hot', 'positive', 'positive_definite', 'positive_integer', 'real', 'real_vector', 'simplex', 'square', 'stack', 'symmetric', 'unit_interval']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_subclasses\fake_tensor.py
+# hypothesis_version: 6.151.2
+
+['    %-*s %s', '  cache_bypasses:', '  cache_hits: %s', '  cache_misses: %s', '%s %s %s', '.', '.not_implemented', '0', '1', '::', 'T', '_PySymInputStub', '_SymIntOutputStub', 'aten', 'constant attribute', 'cpu', 'create_mode 0x%x', 'cuda', 'debugprims', 'device', 'dynamic output shape', 'fbgemm::gmm', 'function argument', 'hierarchical_compile', 'hpu', 'indices', 'inplace view', 'input', 'invoke_subgraph', 'kwarg aliases output', 'lift', 'meta', 'meta converter nyi', 'missing_fake_kernel', 'mps', 'non-builtin', 'non-fake tensor', 'not our fake', 'not_implemented', 'op', 'prim_meta_impl', 'prims', 'prims::', 'quantized', 'reason', 'self', 'sparse output', 'symbolic shape', 'tags', 'torch._decomp', 'torchaudio', 'torchtext', 'unsafe view', 'vision', 'xla', 'xpu']

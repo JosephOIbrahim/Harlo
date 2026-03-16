@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\ns\fx\utils.py
+# hypothesis_version: 6.151.2
+
+['call_function', 'call_method', 'call_module', 'dequantize', 'fqn', 'funs_io_type_fp16', 'funs_io_type_fp32', 'funs_io_type_int8', 'mods_io_type_fp32', 'mods_io_type_int8', 'ref_node_name', 'to']

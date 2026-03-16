@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\activation.py
+# hypothesis_version: 6.151.2
+
+[-1.0, 0.0, 0.01, 0.25, 0.5, 1.0, 6.0, 20.0, ', inplace=True', 'CELU', 'ELU', 'GELU', 'GLU', 'Hardshrink', 'Hardsigmoid', 'Hardswish', 'Hardtanh', 'LeakyReLU', 'LogSigmoid', 'LogSoftmax', 'Mish', 'MultiheadAttention', 'PReLU', 'RReLU', 'ReLU', 'ReLU6', 'SELU', 'SiLU', 'Sigmoid', 'Softmax', 'Softmax2d', 'Softmin', 'Softplus', 'Softshrink', 'Softsign', 'Tanh', 'Tanhshrink', 'Threshold', '_qkv_same_embed_dim', 'alpha', 'approximate', 'attn_mask', 'autocast is enabled', 'batch_first', 'beta', 'cpu', 'cuda', 'device', 'dim', 'dtype', 'in_proj_bias', 'in_proj_weight', 'inplace', 'inplace=True', 'k_proj_weight', 'key_padding_mask', 'lambd', 'lower', 'max_val', 'min_val', 'negative_slope', 'none', 'num_parameters', 'q_proj_weight', 'threshold', 'training is enabled', 'upper', 'v_proj_weight', 'value']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\hebbian\learning.py
+# hypothesis_version: 6.151.2
+
+[0.005, 0.01, 0.02, 0.03, 0.05, 2.0, 2048]

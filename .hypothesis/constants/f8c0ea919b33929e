@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\intake\multipliers.py
+# hypothesis_version: 6.151.2
+
+[0.0, 0.005, 0.015, 0.15, 0.3, 0.5, 1.0, 1.5, '1.0', 'allostatic_threshold', 'associativity', 'attention', 'detail', 'detail_orientation', 'hebbian_alpha', 'q1_assoc', 'q2_detail', 'q3_attention', 'q4_stress', 'q5_assoc2', 'q6_detail2', 'stress', 'surprise_threshold']

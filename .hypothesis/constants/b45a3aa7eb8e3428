@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\yaml\events.py
+# hypothesis_version: 6.151.2
+
+['%s(%s)', '%s=%r', ', ', 'anchor', 'implicit', 'tag', 'value']

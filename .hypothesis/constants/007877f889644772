@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\sparse\quantized\dynamic\linear.py
+# hypothesis_version: 6.151.2
+
+[' nnq.', 'Linear', '_packed_params.bias', 'bias', 'mask', 'op_type', 'qconfig', 'sparse', 'sparse_dynamic', 'version', 'weight']

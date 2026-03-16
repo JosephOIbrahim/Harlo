@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\quantized\modules\linear.py
+# hypothesis_version: 6.151.2
+
+[1.0, ', ', 'Linear', 'LinearPackedParams', 'QuantizedLinear', '_packed_params', '_packed_params.bias', 'bias', 'dtype', 'qconfig', 'scale', 'version', 'weight', 'weight_fake_quant', 'zero_point']

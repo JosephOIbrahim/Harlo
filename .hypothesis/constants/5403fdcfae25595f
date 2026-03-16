@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_functorch\autograd_function.py
+# hypothesis_version: 6.151.2
+
+['_pt_current_level', '_pt_inner_ctx', '_pt_input_shapes', '_pt_out_dims', '_pt_reserved_attrs', 'args_tensor_mask', 'backward', 'custom_function_call', 'forward', 'generate_vmap_rule', 'jvp', 'not specified', 'setup_context']

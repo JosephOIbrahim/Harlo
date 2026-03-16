@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\trace.py
+# hypothesis_version: 6.151.2
+
+['-', '--json', 'Trace not found.', 'Unknown error', 'as_json', 'created_at', 'error', 'id', 'message', 'result', 'status', 'tags', 'trace', 'trace_id']

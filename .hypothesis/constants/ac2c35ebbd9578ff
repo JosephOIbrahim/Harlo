@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\batchnorm.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1e-05, 0.1, 1.0, 'BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LazyBatchNorm1d', 'LazyBatchNorm2d', 'LazyBatchNorm3d', 'SyncBatchNorm', 'affine', 'bias', 'cuda', 'device', 'dtype', 'eps', 'meta', 'momentum', 'num_batches_tracked', 'num_features', 'qconfig', 'running_mean', 'running_var', 'track_running_stats', 'version', 'weight', 'xpu']

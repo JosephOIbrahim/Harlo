@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\rnn.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1.0, ', bias={bias}', ', dropout={dropout}', 'GRU', 'GRUCell', 'LSTM', 'LSTMCell', 'RNN', 'RNNBase', 'RNNCell', 'RNNCellBase', 'RNN_RELU', 'RNN_TANH', '_flat_weight_refs', '_flat_weights_names', '_reverse', 'all_weights', 'batch_first', 'bias', 'bias_hh', 'bias_hh_l{}{}', 'bias_ih', 'bias_ih_l{}{}', 'bidirectional', 'device', 'dropout', 'dtype', 'hidden_size', 'input_size', 'mode', 'nonlinearity', 'num_layers', 'proj_size', 'relu', 'tanh', 'weight_hh_l{}{}', 'weight_hr_l{}{}', 'weight_ih_l{}{}']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\sparse\_semi_structured_ops.py
+# hypothesis_version: 6.151.2
+
+['fallback_dispatcher', 'semi_sparse_addmm', 'semi_sparse_detach', 'semi_sparse_indices', 'semi_sparse_linear', 'semi_sparse_mm', 'semi_sparse_t', 'semi_sparse_values', 'semi_sparse_view']

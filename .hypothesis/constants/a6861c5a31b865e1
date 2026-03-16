@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\linear.py
+# hypothesis_version: 6.151.2
+
+['Bilinear', 'Identity', 'LazyLinear', 'Linear', 'bias', 'device', 'dtype', 'in1_features', 'in2_features', 'in_features', 'out_features']

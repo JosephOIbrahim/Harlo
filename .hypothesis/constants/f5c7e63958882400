@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\sparse.py
+# hypothesis_version: 6.151.2
+
+[2.0, ', mode={mode}', ', sparse=True', 'Embedding', 'EmbeddingBag', 'device', 'dtype', 'embedding_dim', 'include_last_offset', 'max_norm', 'mean', 'mode', 'norm_type', 'num_embeddings', 'padding_idx', 'scale_grad_by_freq', 'sparse']

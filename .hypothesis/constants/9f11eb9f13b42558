@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\optim\_muon.py
+# hypothesis_version: 6.151.2
+
+[-4.775, 0.0, 1e-07, 0.001, 0.1, 0.2, 0.95, 1.0, 2.0315, 3.4445, 100, 'Muon', 'adjust_lr_fn', 'eps', 'lr', 'match_rms_adamw', 'momentum', 'momentum_buffer', 'nesterov', 'ns_coefficients', 'ns_steps', 'original', 'params', 'weight_decay']

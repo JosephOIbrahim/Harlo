@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\_backport_slots.py
+# hypothesis_version: 6.151.2
+
+['DataclassInstance', '_T', '__dict__', '__dictrefoffset__', '__getstate__', '__next__', '__qualname__', '__setstate__', '__slots__', '__weakref__', '__weakrefoffset__', 'dataclass_slots', 'weakref_slot']

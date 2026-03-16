@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\data\datapipes\_typing.py
+# hypothesis_version: 6.151.2
+
+['[', ']', '_T_co', '__args__', '__init_subclass__', '__iter__', '__origin__', '__type_class__', 'reset', 'return', 'type']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\antlr4\tree\ParseTreePatternMatcher.py
+# hypothesis_version: 6.151.2
+
+[' in pattern: ', ':', '<', '>', 'Unknown rule ', 'Unknown token ', '\\', 'escape', 'invalid tag: ', 'lexer', 'parser', 'start', 'stop', 'tree cannot be null']

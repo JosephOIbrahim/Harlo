@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\optim\lbfgs.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1e-10, 1e-09, 1e-07, 0.0001, 0.01, 0.1, 0.9, 1.0, 2.0, 100, 'H_diag', 'LBFGS', 'al', 'd', 'func_evals', 'history_size', 'line_search_fn', 'lr', 'max_eval', 'max_iter', 'n_iter', 'old_dirs', 'old_stps', 'params', 'prev_flat_grad', 'prev_loss', 'ro', 'strong_wolfe', 't', 'tolerance_change', 'tolerance_grad']

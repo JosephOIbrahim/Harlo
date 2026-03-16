@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\pytest_cov\plugin.py
+# hypothesis_version: 6.151.2
+
+[100, '--cov', '--cov-append', '--cov-branch', '--cov-config', '--cov-context', '--cov-fail-under', '--cov-report', '--cov-reset', '--no-cov', '--no-cov-on-fail', '.coveragerc', ':', '?', 'CONTEXT', 'COV_CORE_CONTEXT', 'FAIL ', 'MIN', 'PATH', 'SOURCE', 'TYPE', '_cov', '_cov_contexts', 'annotate', 'append', 'bold', 'cov', 'cov_source', 'dist', 'distload', 'fail_under', 'fixturenames', 'green', 'html', 'json', 'lcov', 'markers', 'no', 'no_cov', 'no_cover', 'not reached', 'numprocesses', 'reached', 'red', 'run', 'setup', 'skip-covered', 'store', 'store_const', 'store_true', 'teardown', 'term', 'term-missing', 'terminalreporter', 'test', 'workerid', 'workerinput', 'xml']

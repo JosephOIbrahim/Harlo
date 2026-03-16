@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_custom_ops.py
+# hypothesis_version: 6.151.2
+
+['cpu', 'cuda', 'custom_op', 'get_ctx', 'impl', 'impl_abstract', 'impl_backward']

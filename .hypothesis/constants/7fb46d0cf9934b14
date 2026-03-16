@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\ask.py
+# hypothesis_version: 6.151.2
+
+[0.0, '--depth', '--domain', '--json', '--provider', '--stream', '=', 'Context recall depth', 'LLM provider', 'Stream the response', 'Unknown error', 'as_json', 'ask', 'claude', 'confidence', 'context_traces', 'deep', 'depth', 'do_stream', 'domain', 'error', 'general', 'message', 'model', 'normal', 'openai', 'provider', 'question', 'response', 'result', 'state', 'status', 'unknown', 'verification']

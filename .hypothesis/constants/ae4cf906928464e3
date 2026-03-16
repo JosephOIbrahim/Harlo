@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\masked\maskedtensor\core.py
+# hypothesis_version: 6.151.2
+
+[1e-08, 1e-05, '\n)', '\n]', ')', ',\n', ', ', '--', 'MaskedTensor', 'MaskedTensor(', 'MaskedTensor(\n', '[', '[\n', ']', 'device', 'dispatch_layout', 'dtype', 'is_masked_tensor', 'layout', 'requires_grad', 'strides', '{0:8.4f}']

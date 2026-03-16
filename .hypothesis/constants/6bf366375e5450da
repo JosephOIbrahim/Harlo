@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\utils\fusion.py
+# hypothesis_version: 6.151.2
+
+['ConvT', 'LinearT', 'fuse_conv_bn_eval', 'fuse_conv_bn_weights', 'fuse_linear_bn_eval', 'torch.nn.Linear']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\quantization\observer.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1e-05, 0.01, 0.5, 1.0, 2.0, 256.0, -127, 127, 128, 255, 2048, '-inf', '.', 'ABC', 'FixedQParamsObserver', 'Granularity', 'HistogramObserver', 'MappingType', 'MinMaxObserver', 'NoopObserver', 'ObserverBase', 'PerAxis', 'PerBlock', 'PerGroup', 'PerRow', 'PerTensor', 'PerToken', 'PlaceholderObserver', 'RecordingObserver', 'ReuseInputObserver', 'TorchAODType', 'ZeroPointDomain', '_scale', '_zero_point', 'bins mismatch', 'default_observer', 'eps', 'floor', 'get_block_size', 'granularity is None', 'histogram', 'inf', 'is_dynamic', 'max_val', 'max_vals', 'min_val', 'min_vals', 'observer', 'output_dtype', 'scale', 'tensor_val', 'version', 'zero_point']

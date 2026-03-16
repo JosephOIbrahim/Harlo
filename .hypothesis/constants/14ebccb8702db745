@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\optim\asgd.py
+# hypothesis_version: 6.151.2
+
+[0.0, 0.0001, 0.01, 0.75, 1.0, 1000000.0, 'ASGD', 'alpha', 'asgd', 'ax', 'capturable', 'cpu', 'differentiable', 'eta', 'foreach', 'lambd', 'lr', 'maximize', 'mu', 'params', 'step', 't0', 'weight_decay']

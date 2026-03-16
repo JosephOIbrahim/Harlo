@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\numa\binding.py
+# hypothesis_version: 6.151.2
+
+[',', '-', 'AffinityMode', 'Data', 'K', 'NumaOptions', 'Unified', 'V', 'apply_exception', 'apply_success', 'core-complex', 'exclusive', 'gpu_index', 'index', 'level', 'logical_cpu_indices', 'node', 'numa_binding', 'numa_options', 'shared_cpu_list', 'socket', 'traceback', 'type']

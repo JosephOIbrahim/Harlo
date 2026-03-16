@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\usd_lite\composer.py
+# hypothesis_version: 6.151.2
+
+['action', 'arc_type', 'attribute', 'blocked_by_permanent', 'kept', 'kept_layer', 'layer_id', 'loser_layer', 'override', 'permanent', 'permanent_override', 'permanent_recency', 'reason', 'rejected_arc', 'rejected_layer', 'same_arc_recency', 'set', 'stronger_arc', 'value', 'weaker', 'winner_arc', 'winner_layer']

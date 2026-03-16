@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\masked\__init__.py
+# hypothesis_version: 6.151.2
+
+['MaskedTensor', 'amax', 'amin', 'argmax', 'argmin', 'as_masked_tensor', 'cumprod', 'cumsum', 'is_masked_tensor', 'log_softmax', 'logaddexp', 'logsumexp', 'masked_tensor', 'mean', 'median', 'norm', 'normalize', 'prod', 'softmax', 'softmin', 'std', 'sum', 'var']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fx\passes\split_module.py
+# hypothesis_version: 6.151.2
+
+['%s', '-', '.', 'Missing exit node', 'Partition', '_', '_fx_partition', 'autocast must exit', 'autocast_regions: %s', 'call_function', 'call_module', 'example_value', 'get_attr', 'grad_regions: %s', 'output', 'placeholder', 'post split_module', 'pre split_module', 'split_module']

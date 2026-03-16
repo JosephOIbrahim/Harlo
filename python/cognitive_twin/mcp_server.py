@@ -132,10 +132,10 @@ def twin_ask(question: str) -> str:
     try:
         try:
             from provider import get_provider
-            from bridge.generate import generate
+            from brainstem.generate import generate
         except ImportError:
             from cognitive_twin.provider import get_provider
-            from cognitive_twin.bridge.generate import generate
+            from cognitive_twin.brainstem.generate import generate
 
         provider = get_provider("claude")
         result = generate(

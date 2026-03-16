@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\optim\optimizer.py
+# hypothesis_version: 6.151.2
+
+[' (', ')', '<required parameter>', 'Optimizer', 'R', 'T', '_P', '_T', 'capturable', 'cuda', 'defaults', 'differentiable', 'foreach', 'fused', 'hooked', 'hpu', 'param_groups', 'param_names', 'params', 'python.optimizer', 'state', 'state_steps', 'step', 'with names', 'without names', 'xla', 'xpu']

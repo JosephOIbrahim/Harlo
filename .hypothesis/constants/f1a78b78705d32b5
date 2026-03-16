@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\dill\detect.py
+# hypothesis_version: 6.151.2
+
+[51052711, ' + NULL', '(', ')', 'NULL + ', '_GLOBAL', '__code__', '__func__', '__iter__', 'baditems', 'badobjects', 'badtypes', 'co_code', 'co_consts', 'code', 'errors', 'f_code', 'freevars', 'getmodule', 'globalvars', 'nestedcode', 'nestedglobals', 'outermost', 'referredglobals', 'referrednested', 'stdout', 'trace', 'values', 'varnames']

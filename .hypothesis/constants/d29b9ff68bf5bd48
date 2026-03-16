@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\dlpack.py
+# hypothesis_version: 6.151.2
+
+['DLDeviceType', '__dlpack__', 'copy', 'dl_device', 'from_dlpack', 'max_version', 'stream', 'torch.Tensor']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_guards.py
+# hypothesis_version: 6.151.2
+
+['Created at:\n%s', 'T', 'active fake mode', 'autocast_cpu_dtype', 'autocast_cpu_enabled', 'autocast_enabled', 'autocast_gpu_dtype', 'compile_context', 'fake tensor input', 'frame_summary_stack', 'grad_enabled', 'loc_in_frame', 'real_stack', 'tracing context', 'tracing_context']

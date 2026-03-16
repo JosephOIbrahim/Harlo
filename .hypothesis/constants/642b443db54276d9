@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\antlr4\atn\ParserATNSimulator.py
+# hypothesis_version: 6.151.2
+
+[' -> ', ' at ', ' exec LA(1)==', ' in ', ' line ', ' upon ', ')', ') ', ', configs=', ', conflictingAlts=', ', ctx dependent=', ', ctx=', ', input=', ', outerContext=', ', predict=', ':', '<', '<rule ', '=', '>', 'ACTION edge ', 'Atom ', 'CALL rule ', 'DFA=\n', 'EDGE ', 'EOF', 'FALLING off rule ', 'Full LL avoided', 'LL altSubSets=', 'PREDICT ', 'SLL altSubSets=', 'Set ', '_dfa', '_input', '_outerContext', '_startIndex', 'closure(', 'ctx sensitive state ', 'dead end configs: ', 'decisionToDFA', 'eval pred ', 'execATN decision ', 'mergeCache', 'no edges', 'parser', 'predictATN decision ', 'predictionMode', 'reportAmbiguity ', 's0 = ', 'testing ', '~']

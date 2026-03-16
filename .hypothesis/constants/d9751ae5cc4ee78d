@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\signal\windows\__init__.py
+# hypothesis_version: 6.151.2
+
+['bartlett', 'blackman', 'cosine', 'exponential', 'gaussian', 'general_cosine', 'general_hamming', 'hamming', 'hann', 'kaiser', 'nuttall']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\pooling.py
+# hypothesis_version: 6.151.2
+
+['AdaptiveAvgPool1d', 'AdaptiveAvgPool2d', 'AdaptiveAvgPool3d', 'AdaptiveMaxPool1d', 'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d', 'AvgPool1d', 'AvgPool2d', 'AvgPool3d', 'FractionalMaxPool2d', 'FractionalMaxPool3d', 'LPPool1d', 'LPPool2d', 'LPPool3d', 'MaxPool1d', 'MaxPool2d', 'MaxPool3d', 'MaxUnpool1d', 'MaxUnpool2d', 'MaxUnpool3d', '_random_samples', 'ceil_mode', 'count_include_pad', 'dilation', 'divisor_override', 'kernel_size', 'norm_type', 'output_ratio', 'output_size', 'padding', 'return_indices', 'stride']

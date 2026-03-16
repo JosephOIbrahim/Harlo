@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\masked\_ops.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1e-12, 1.0, 2.0, ', ', '-inf', '.', '=', 'Input', 'Optional', '_P', '_T', '__', 'amax', 'amin', 'argmax', 'argmin', 'args', 'cumprod', 'cumsum', 'cumulative_prod', 'cumulative_sum', 'descr', 'dim', 'dim__as_int', 'dtype', 'dtype=None', 'eps', 'eps=1e-12', 'example', 'example_args', 'example_input', 'example_mask', 'full_function_name', 'function_name', 'identity', 'indent_example_input', 'indent_example_mask', 'keepdim', 'keepdim=False', 'log_softmax', 'logaddexp', 'logsumexp', 'mask', 'mask=None', 'maximum', 'mean', 'median', 'minimum', 'norm', 'normalization', 'normalize', 'operation name', 'operation_args', 'operation_kwargs', 'ord', 'ord__required', 'prod', 'product', 'reduction', 'signature', 'softmax', 'softmin', 'standard_deviation', 'std', 'sum', 'unbiased', 'var', 'variance']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_export\utils.py
+# hypothesis_version: 6.151.2
+
+['(.*)_(\\d+)', '.', '::', 'ConstantAttrMap', 'ExportGraphSignature', 'ExportedProgram', 'L__self___', 'OperatorBase', '[^a-zA-Z0-9]', '_', '_proto_cls', '_schema', 'arg(\\d+)_1', 'args', 'aten', 'b_', 'c_', 'call_function', 'call_module', 'cond', 'custom', 'default', 'device', 'dtype', 'example_value', 'get_attr', 'kernel', 'layout', 'map_impl', 'meta', 'nn_module_stack', 'obj_', 'output', 'p_', 'placeholder', 'proxy', 'self', 'self_', 'stack_trace', 'token', 'val']

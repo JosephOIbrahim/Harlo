@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_tensor.py
+# hypothesis_version: 6.151.2
+
+[1000, '<V2', '<c16', '<c8', '<f2', '<f4', '<f8', '<i2', '<i4', '<i8', '<u2', '<u4', '<u8', 'CUDA', 'Optional[Tensor]', 'ROCm', 'Tensor', '_P', '_TensorLike', '__setstate__', '_subclasses', '_sym_sizes_capsule', '_sym_strides_capsule', 'align_to', 'copy', 'cpu', 'cuda', 'dl_device', 'fro', 'ipu', 'lazy', 'maia', 'max_version', 'meta', 'mps', 'mtia', 'privateuse1', 'refine_names', 'reflect', 'stream', 'torch', 'torch._C.TensorBase', 'uint8', 'volatile', 'xla', 'xpu', '|b1', '|i1', '|u1']

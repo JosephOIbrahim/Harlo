@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\status.py
+# hypothesis_version: 6.151.2
+
+['--json', 'Output as JSON', 'as_json', 'status']

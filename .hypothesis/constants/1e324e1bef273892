@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\_python_dispatch.py
+# hypothesis_version: 6.151.2
+
+['=0', '=1', '=[\\1,\\2]', '=\\[[0, ]+\\]', '=\\[[1, ]+\\]', 'Unsupported schema: ', '__tensor_flatten__', '__tensor_unflatten__', '_dispatch_key', '_mode_key', 'aten', 'aten::']

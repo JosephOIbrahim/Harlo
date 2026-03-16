@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\intrinsic\qat\modules\conv_fused.py
+# hypothesis_version: 6.151.2
+
+[1e-05, 0.1, 'ConvBn1d', 'ConvBn2d', 'ConvBn3d', 'ConvBnReLU1d', 'ConvBnReLU2d', 'ConvBnReLU3d', 'ConvReLU1d', 'ConvReLU2d', 'ConvReLU3d', 'beta', 'bias', 'bn.bias', 'bn.running_mean', 'bn.running_var', 'bn.weight', 'freeze_bn_stats', 'gamma', 'num_batches_tracked', 'qat.', 'qconfig', 'running_mean', 'running_var', 'update_bn_stats', 'version', 'zeros']

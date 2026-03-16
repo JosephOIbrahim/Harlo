@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\utils\stateless.py
+# hypothesis_version: 6.151.2
+
+['functional_call', 'torch.nn.Module']

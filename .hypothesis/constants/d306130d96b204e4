@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fx\proxy.py
+# hypothesis_version: 6.151.2
+
+['AssertionError', 'Attribute', 'GraphAppendingTracer', 'LOAD_ASSERTION_ERROR', 'LOAD_GLOBAL', 'MetaProxy', 'Optional[TracerBase]', 'POP_JUMP_IF_TRUE', 'ParameterProxy', 'Proxy', 'RAISE_VARARGS', 'Scope', 'ScopeContextManager', 'TraceError', 'TracerBase', 'UNPACK_SEQUENCE', '__call__', '__fx_create_arg__', '_fields', 'ac_graph_id', 'call_function', 'call_method', 'create_node %s', 'custom', 'forward', 'from_node', 'grad_fn_seq_nr', 'has_backward_hook', 'in_grad_fn', 'keys', 'nn_module_stack', 'node', 'original_aten', 'partitioner_tag', 'quantization_tag', 'recompute', 'seq_nr', 'source_fn_stack', 'stack_trace', 'torch/__init__.py', 'torch/_ops.py', 'torch/_tensor.py', 'torch/fx/proxy.py', 'torch_fn', 'tracer', 'val']

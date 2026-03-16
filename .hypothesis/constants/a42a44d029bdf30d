@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\storage.py
+# hypothesis_version: 6.151.2
+
+['.', '...\n', 'BFloat16Storage', 'BoolStorage', 'ByteStorage', 'CharStorage', 'ComplexDoubleStorage', 'ComplexFloatStorage', 'DoubleStorage', 'FloatStorage', 'HalfStorage', 'IntStorage', 'LongStorage', 'QInt32Storage', 'QInt8Storage', 'QUInt2x4Storage', 'QUInt4x2Storage', 'QUInt8Storage', 'ShortStorage', 'T', 'TypedStorage', 'UntypedStorage', 'cpu', 'cuda', 'file_system', 'has_warned', 'hpu', 'meta', 'mps', 'torch']

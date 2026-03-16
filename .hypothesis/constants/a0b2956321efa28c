@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nested\_internal\nested_tensor.py
+# hypothesis_version: 6.151.2
+
+['_lengths', '_max_seqlen_tensor', '_metadata_cache', '_min_seqlen_tensor', '_offsets', '_ragged_idx', '_size', '_strides', '_values', 'device', 'dtype', 'lengths', 'max_seqlen', 'meta', 'min_seqlen', 'offsets', 'ragged_idx', 'requires_grad', 'sizes', 'values']

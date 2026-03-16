@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\quantizable\modules\rnn.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1.0, 'LSTM', 'LSTMCell', 'QuantizableLSTM', 'QuantizableLSTMCell', 'batch_first', 'bias', 'bidirectional', 'cell', 'device', 'dtype', 'forget', 'hidden_size', 'input', 'input_size', 'layer_bw', 'output', 'qconfig', 'split_gates']

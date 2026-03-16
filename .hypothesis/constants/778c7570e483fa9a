@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\autograd\forward_ad.py
+# hypothesis_version: 6.151.2
+
+['1', 'PYTORCH_JIT', 'UnpackedDualTensor', 'dual_level', 'enter_dual_level', 'exit_dual_level', 'make_dual', 'unpack_dual']

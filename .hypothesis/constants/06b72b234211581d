@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_strobelight\cli_function_profiler.py
+# hypothesis_version: 6.151.2
+
+[10000000.0, 127, ',', '--async', '--duration-ms', '--event', '--pid', '--profiler', '--run-id', '--sample-interval', '--sample-tags', '/proc/{}/ns/pid', 'INFO ::1:(.*)', 'INFO Run Id: (-?\\d+)', 'PREPARING', 'RUNNING', 'Success!', '[', '_P', '_R', 'collection started', 'collection stopped', 'cycles', 'getRunStatus', 'output:\n{%s}', 'pyperf', 'run', 'running command: %s', 'stopRun', 'strobeclient', 'utf-8']

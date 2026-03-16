@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\backends\cuda\__init__.py
+# hypothesis_version: 6.151.2
+
+[', ', 'SDPAParams', 'Unknown attribute ', 'allow_tf32', 'aotriton', 'ck', 'cuBLASModule', 'cuFFTPlanCache', 'cublas', 'cublaslt', 'cuda', 'cudnn_sdp_enabled', 'cufft_plan_cache', 'cusolver', 'default', 'enable_cudnn_sdp', 'enable_flash_sdp', 'enable_math_sdp', 'flash_sdp_enabled', 'fp32_precision', 'hipblas', 'hipblaslt', 'is_built', 'magma', 'math_sdp_enabled', 'matmul', 'sdp_kernel', 'torch.backends.cuda']

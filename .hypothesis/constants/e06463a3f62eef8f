@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\execute.py
+# hypothesis_version: 6.151.2
+
+['-', '--json', '--step', '?', 'Unknown error', 'as_json', 'error', 'execute', 'executed_steps', 'message', 'plan_id', 'result', 'state', 'status', 'step', 'unknown']

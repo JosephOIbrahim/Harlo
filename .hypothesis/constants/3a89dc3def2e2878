@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\brainstem\escalation.py
+# hypothesis_version: 6.151.2
+
+[0.0, 0.7, 0.95, 1.0, '; ', 'VERIFIED', 'action', 'amygdala_reflex', 'audit_required', 'confidence', 'conflicts', 'consolidated', 'fixable', 'generator_fn', 'gvr_state', 'intent', 'intent_check', 'intent_drift', 'merkle_root', 'outcome', 'partial_progress', 'pending', 'preserved', 'profile', 'reason', 'reflex_hash', 'resolution', 'session_id', 'spec_gamed', 'stage_id', 'tags', 'trace', 'unknown', 'unprovable', 'unprovable_metadata', 'user_direct', 'user_escalation', 'verification', 'what_would_help']

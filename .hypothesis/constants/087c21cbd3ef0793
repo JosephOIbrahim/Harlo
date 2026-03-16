@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\numpy\lib\_utils_impl.py
+# hypothesis_version: 6.151.2
+
+['\n\nMethods:\n', '  %s  --  %s', '%s%s%s', '%sbig%s', '%slittle%s', '()', ',\n', ', ', '-', '=', '>', 'None', '_', '__class__', '__doc__', '__init__', '__name__', '_core', '_ppimport_attr', '_ppimport_importer', '_ppimport_module', '`%s` is deprecated!', 'aligned: ', 'baseline', 'big', 'byteorder: ', 'byteswap: ', 'class: ', 'contiguous: ', 'data pointer: %s%s', 'fortran: ', 'found', 'get_include', 'include', 'info', 'itemsize: ', 'little', 'not_found', 'numpy', 'numpy_version', 'python', 'shape: ', 'show_runtime', 'simd_extensions', 'strides: ', 'type: %s', 'uname', '|']

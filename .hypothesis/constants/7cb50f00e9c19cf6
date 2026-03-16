@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\xpu\random.py
+# hypothesis_version: 6.151.2
+
+['get_rng_state', 'get_rng_state_all', 'initial_seed', 'manual_seed', 'manual_seed_all', 'seed', 'seed_all', 'set_rng_state', 'set_rng_state_all', 'xpu']

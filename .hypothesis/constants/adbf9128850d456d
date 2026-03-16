@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\distributed\c10d_logger.py
+# hypothesis_version: 6.151.2
+
+['.', '_P', '_T', 'backend', 'default', 'error', 'func_name', 'global_rank', 'group', 'group_size', 'local_rank', 'nccl', 'nccl_version', 'pg_name', 'process_group', 'world_size']

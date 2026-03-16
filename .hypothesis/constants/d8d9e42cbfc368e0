@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\jit\annotations.py
+# hypothesis_version: 6.151.2
+
+['\nfor examples', '# type:', '# type: (...) -> ', ', ', '->', '...', 'Any', 'AnyType', 'Await', 'BroadcastingList1', 'BroadcastingList2', 'BroadcastingList3', 'CALL', 'ComplexType', 'Dict', 'DictType', 'FloatType', 'Future', 'IntType', 'List', 'ListType', 'Module', 'Optional', 'RRef', 'StringType', 'Tensor', 'TensorType', 'Tuple', 'TupleType', 'Union', 'ann_to_type', 'check_fn', 'eval', 'get_param_names', 'get_signature', 'get_type_line', 'is_dict', 'is_list', 'is_optional', 'is_tuple', 'is_union', 'parse_type_line', 'split_type_line', 'torch', 'try_ann_to_type', 'try_real_annotations', 'typing']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\boundaries.py
+# hypothesis_version: 6.151.2
+
+['-', '--add', '--json', '--remove', 'Add a boundary topic', 'Unknown error', 'action', 'add', 'add_topic', 'as_json', 'boundaries', 'error', 'list', 'message', 'remove', 'remove_topic', 'result', 'status', 'topic']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\reflexes.py
+# hypothesis_version: 6.151.2
+
+['-', '--invalidate', '--json', '--list', '?', 'List cached reflexes', 'Unknown error', 'action', 'as_json', 'description', 'do_list', 'error', 'hash', 'invalidate', 'list', 'message', 'reflexes', 'result', 'status']

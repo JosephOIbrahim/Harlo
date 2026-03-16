@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\init.py
+# hypothesis_version: 6.151.2
+
+[-2.0, 0.0, 0.01, 1.0, 2.0, 3.0, 5.0, '_P', '_R', 'calculate_gain', 'constant', 'constant_', 'conv1d', 'conv2d', 'conv3d', 'conv_transpose1d', 'conv_transpose2d', 'conv_transpose3d', 'dirac', 'dirac_', 'eye', 'eye_', 'fan_in', 'fan_out', 'kaiming_normal', 'kaiming_normal_', 'kaiming_uniform', 'kaiming_uniform_', 'leaky_relu', 'linear', 'normal', 'normal_', 'ones_', 'orthogonal', 'orthogonal_', 'relu', 'selu', 'sigmoid', 'sparse', 'sparse_', 'tanh', 'trunc_normal_', 'uniform', 'uniform_', 'xavier_normal', 'xavier_normal_', 'xavier_uniform', 'xavier_uniform_', 'zeros_']

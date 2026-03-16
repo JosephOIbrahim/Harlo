@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\func\__init__.py
+# hypothesis_version: 6.151.2
+
+['debug_unwrap', 'functional_call', 'functionalize', 'grad', 'grad_and_value', 'hessian', 'jacfwd', 'jacrev', 'jvp', 'linearize', 'stack_module_state', 'vjp', 'vmap']

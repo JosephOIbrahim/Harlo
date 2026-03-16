@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\dill\temp.py
+# hypothesis_version: 6.151.2
+
+['\n#NAME: %s\n', '#NAME:', '%s', '.py', 'alias', 'capture', 'delete', 'dump', 'dumpIO', 'dumpIO_source', 'dump_source', 'getvalue', 'load', 'loadIO', 'loadIO_source', 'load_source', 'mode', 'name', 'r', 'rb', 'stdout', 'suffix']

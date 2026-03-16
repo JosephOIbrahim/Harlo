@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_subclasses\functional_tensor.py
+# hypothesis_version: 6.151.2
+
+['FunctionalTensor', 'aten', 'cpu', 'mutations', 'mutations_and_views', 'not_implemented', 'prim']

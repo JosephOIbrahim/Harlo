@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\masked\maskedtensor\binary.py
+# hypothesis_version: 6.151.2
+
+['_', 'add', 'arctan2', 'atan2', 'bitwise_and', 'bitwise_left_shift', 'bitwise_or', 'bitwise_right_shift', 'bitwise_xor', 'div', 'divide', 'eq', 'equal', 'floor_divide', 'fmax', 'fmin', 'fmod', 'ge', 'greater', 'greater_equal', 'gt', 'le', 'less', 'less_equal', 'logaddexp', 'logaddexp2', 'lt', 'maximum', 'minimum', 'mul', 'multiply', 'ne', 'nextafter', 'not_equal', 'remainder', 'sub', 'subtract', 'true_divide']

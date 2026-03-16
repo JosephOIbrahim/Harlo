@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\jit\_trace.py
+# hypothesis_version: 6.151.2
+
+[1e-06, 1e-05, ',', '.', '. Detailed error:\n', 'ACCURACY_ERROR', 'DIRECT_EXPORT', 'FAILED_TO_EXPORT', 'FAILED_TO_RUN', 'Graph diff:\n', 'Node diff:\n', 'Node:\n', 'Output nr ', 'P', 'PYTORCH_JIT_DISABLE', 'PYTORCH_JIT_STATS', 'PYTORCH_JIT_TIME', 'Python function', 'R', 'SOURCE_TO_SOURCE', 'SUCCESS', 'Source Location:\n', 'TRACE_AND_EXPORT', '[', ']', '__module', '__self__', '_buffers', '_modules', '_name', '_parameters', 'failed to get frame', 'forward', 'ignore', 'is_nested', 'prim::Constant', 'repeated trace', 'self', 't', 'tensors', 'torch.(?!jit)', 'torch.jit.verify', 'trace', 'training', 'value']

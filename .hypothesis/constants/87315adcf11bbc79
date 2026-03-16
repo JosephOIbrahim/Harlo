@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_higher_order_ops\__init__.py
+# hypothesis_version: 6.151.2
+
+['BaseHOP', 'InvokeQuant', '_foreach_map', 'aoti_call_delegate', 'associative_scan', 'auto_functionalized', 'call_torchbind', 'cond', 'flat_apply', 'flex_attention', 'foreach_map', 'hints_wrapper', 'invoke_quant', 'invoke_quant_packed', 'invoke_subgraph', 'map', 'out_dtype', 'run_const_graph', 'scan', 'strict_mode', 'while_loop', 'with_effects', 'wrap_with_autocast']

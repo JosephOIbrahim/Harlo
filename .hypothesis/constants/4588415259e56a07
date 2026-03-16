@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\nn\quantized\functional.py
+# hypothesis_version: 6.151.2
+
+[-1.0, 0.01, 1.0, 'adaptive_avg_pool2d', 'adaptive_avg_pool3d', 'avg_pool2d', 'avg_pool3d', 'bilinear', 'celu', 'clamp', 'conv1d', 'conv2d', 'conv3d', 'elu', 'hardsigmoid', 'hardswish', 'hardtanh', 'interpolate', 'leaky_relu', 'linear', 'max_pool1d', 'max_pool2d', 'nearest', 'threshold', 'upsample', 'upsample_bilinear', 'upsample_nearest', 'zeros']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_logging\_internal.py
+# hypothesis_version: 6.151.2
+
+[1000000000.0, '\n]', '"', '%m%d %H:%M:%S', "'", '(', '+', '+help', ',', ',\n', ', ', '-', '.log', '/logs', '?)', 'All registered names', 'C', 'CRITICAL', 'DEBUG', 'E', 'ERROR', 'I', 'INFO', 'LazyTraceHandler', 'MAST_HPC_JOB_NAME', 'TORCH_DTRACE', 'TORCH_LOGS', 'TORCH_LOGS_FORMAT', 'TORCH_LOGS_OUT', 'TORCH_TRACE', 'V', 'W', 'WARNING', '[\n', '\\s+', '_P', 'all', 'aot', 'artifact', 'artifact_name', 'attempt', 'basic', 'close', 'compiled_autograd_id', 'ddp_graphs', 'dynamic', 'dynamo', 'encoding', 'failing metadata: %r', 'frame_compile_id', 'frame_id', 'fsdp', 'git_version', 'graph_breaks', 'guards', 'has_payload', 'help', 'inductor', 'metadata', 'name', 'pathname', 'payload', 'pytorch/trace:enable', 'rank', 'recompiles', 'severity', 'short', 'stack', 'thread', 'timestamp', 'torch', 'torch.__trace', 'utf-8', 'w+', 'win32', '|']

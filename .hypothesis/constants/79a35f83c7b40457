@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\distributions\one_hot_categorical.py
+# hypothesis_version: 6.151.2
+
+['OneHotCategorical', 'logits', 'probs']

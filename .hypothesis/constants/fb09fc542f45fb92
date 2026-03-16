@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\cli\commands\compose.py
+# hypothesis_version: 6.151.2
+
+['-', '--add-layer', '--arc-type', '--json', '--stage', 'Stage ID', 'Unknown error', 'arc_type', 'as_json', 'compose', 'error', 'inherit', 'layer_count', 'layer_data', 'layer_id', 'local', 'message', 'n/a', 'payload', 'reference', 'result', 'stage_id', 'status', 'sublayer', 'variant']

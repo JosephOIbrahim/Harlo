@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\aletheia\__init__.py
+# hypothesis_version: 6.151.2
+
+['VerificationResult', 'VerificationState', 'detect_spec_gaming', 'extract_intent', 'get_depth', 'revise', 'run_gvr', 'verify']

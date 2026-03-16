@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\composition\__init__.py
+# hypothesis_version: 6.151.2
+
+['ArcType', 'Conflict', 'Layer', 'MerkleStage', 'MerkleTree', 'Resolution', 'detect_conflicts', 'log_resolution', 'read_audit', 'read_audit_for_stage', 'resolve']

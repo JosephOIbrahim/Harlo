@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_higher_order_ops\utils.py
+# hypothesis_version: 6.151.2
+
+[', ', 'F', 'call_function', 'device', 'eager', 'example_value', 'fake', 'gen_schema', 'get_attr', 'meta', 'placeholder', 'pos', 'real', 'requires_grad', 'sym_int_args', 'val']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\utils\_config_module.py
+# hypothesis_version: 6.151.2
+
+['.', '0', '1', '=', '@compile_ignored', 'ContextDecorator', 'NYI', 'T', '_', '__', '__annotations__', '__module__', '__name__', '_config', '_hash_digest', '_is_dirty', '_prefix', '_save_config_ignore', 'builtins', 'typing', 'utf-8']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_refs\nn\functional\__init__.py
+# hypothesis_version: 6.151.2
+
+[-1.7580993408473766, 0.0, 1e-08, 1e-06, 1e-05, 0.01, 0.044715, 0.5, 0.7071067811865476, 1.0, 1.0507009873554805, 1.1283791670955126, 1.4142135623730951, 1.6732632423543772, 2.0, -100, '_P', '_T', 'a', 'alpha_dropout', 'celu', 'celu_', 'channel_shuffle', 'cuda', 'dropout', 'elu', 'elu_', 'gelu', 'glu', 'group_norm', 'hardshrink', 'hardtanh', 'hinge_embedding_loss', 'huber_loss', 'inplace', 'input', 'l1_loss', 'layer_norm', 'leaky_relu', 'log_softmax', 'margin_ranking_loss', 'mean', 'mish', 'mish_', 'mse_loss', 'nan', 'nll_loss', 'none', 'out', 'pairwise_distance', 'pdist', 'poisson_nll_loss', 'prelu', 'relu', 'relu6', 'selu', 'selu_', 'smooth_l1_loss', 'softmax', 'softmin', 'softplus', 'softshrink', 'sum', 'tanh', 'tanhshrink', 'target', 'threshold', 'threshold_', 'triplet_margin_loss', 'weight']

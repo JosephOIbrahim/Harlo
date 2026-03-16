@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\jit\_dataclass_impls.py
+# hypothesis_version: 6.151.2
+
+['  return False', '!=', '(self) -> int', '(self) -> str', ')', ")'", ', ', '<', '==', '>', '__eq__', '__ge__', '__gt__', '__hash__', '__init__', '__le__', '__lt__', '__ne__', '__post_init__', '__repr__', 'pass', 'self.__post_init__(']

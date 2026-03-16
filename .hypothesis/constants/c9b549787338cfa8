@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fx\_symbolic_trace.py
+# hypothesis_version: 6.151.2
+
+['*', '**', '.', '1', '<module>', 'Argument', 'FX_PATCH_GETITEM', 'PH', '_', '__', '__call__', '__class__', '__code__', '__fx_already_patched', '__getattr__', '__getitem__', '__globals__', '_autowrap_search', '_fields', '_tensor_constant', '_torchbind_obj', '_tree_spec_constant', 'call_function', 'call_method', 'call_module', 'co_filename', 'co_firstlineno', 'co_name', 'co_posonlyargcount', 'co_qualname', 'data-dependent', 'forward', 'get_attr', 'is_wrapped', 'output', 'placeholder', 'proxy_factory_fn', 'return', 'self', 'torch.ao.nn', 'torch.nn']

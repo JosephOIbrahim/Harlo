@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\usd_lite\__init__.py
+# hypothesis_version: 6.151.2
+
+['AletheiaPrim', 'ArcType', 'AssociationPrim', 'BrainStage', 'CognitiveProfilePrim', 'CompositionLayerPrim', 'CompositionPrim', 'CompositionResult', 'GateStatusPrim', 'InquiryContainerPrim', 'InquiryPrim', 'IntakeHistoryPrim', 'MerkleRootPrim', 'MotorContainerPrim', 'MotorGateStatus', 'MotorPrim', 'MultipliersPrim', 'Provenance', 'RetrievalPath', 'SessionPrim', 'SkillPrim', 'SkillsContainerPrim', 'SourceType', 'TracePrim', 'VerificationState', 'compose', 'hex_to_sdr', 'parse', 'sdr_to_hex', 'serialize']

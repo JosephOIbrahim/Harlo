@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\nn\modules\instancenorm.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1e-05, 0.1, ' and ', 'InstanceNorm1d', 'InstanceNorm2d', 'InstanceNorm3d', 'LazyInstanceNorm1d', 'LazyInstanceNorm2d', 'LazyInstanceNorm3d', 'device', 'dtype', 'running_mean', 'running_var', 'version']

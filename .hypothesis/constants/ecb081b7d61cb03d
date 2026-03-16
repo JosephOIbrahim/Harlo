@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_refs\_conversions.py
+# hypothesis_version: 6.151.2
+
+['bfloat16', 'bool', 'byte', 'cdouble', 'cfloat', 'chalf', 'char', 'complex', 'double', 'float', 'half', 'int', 'long', 'polar', 'short']

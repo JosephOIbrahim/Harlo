@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_prims_common\__init__.py
+# hypothesis_version: 6.151.2
+
+[0.0, 1.0, '!', '.', 'A', 'CUDA not available', 'Invalid dtype!', 'Tensor on device ', 'Tensor with dtype ', '_', '_IntLikeT', '__custom_out_param__', 'cpu', 'cuda', 'cuda:0', 'torch._refs']

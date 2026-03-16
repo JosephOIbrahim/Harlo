@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\distributions\__init__.py
+# hypothesis_version: 6.151.2
+
+['Bernoulli', 'Beta', 'Binomial', 'Categorical', 'Cauchy', 'Chi2', 'ContinuousBernoulli', 'Dirichlet', 'Distribution', 'Exponential', 'ExponentialFamily', 'FisherSnedecor', 'Gamma', 'GeneralizedPareto', 'Geometric', 'Gumbel', 'HalfCauchy', 'HalfNormal', 'Independent', 'InverseGamma', 'Kumaraswamy', 'LKJCholesky', 'Laplace', 'LogNormal', 'LogisticNormal', 'MixtureSameFamily', 'Multinomial', 'MultivariateNormal', 'NegativeBinomial', 'Normal', 'OneHotCategorical', 'Pareto', 'Poisson', 'RelaxedBernoulli', 'StudentT', 'Uniform', 'VonMises', 'Weibull', 'Wishart', 'biject_to', 'kl_divergence', 'register_kl', 'transform_to']

@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\composition\resolver.py
+# hypothesis_version: 6.151.2
+
+['action', 'arc_type', 'attribute', 'kept', 'kept_layer', 'layer_id', 'loser_layer', 'override', 'rejected_arc', 'rejected_layer', 'set', 'value', 'winner_arc', 'winner_layer']

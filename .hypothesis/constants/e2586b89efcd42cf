@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\jit\_recursive.py
+# hypothesis_version: 6.151.2
+
+[', ', 'PropertyStub', 'ScriptMethodStub', '__', '__annotations__', '__constants__', '__contains__', '__func__', '__len__', '__module__', '__overloads__', '_backward_hooks', '_backward_pre_hooks', '_buffers', '_concrete_type', '_forward_hooks', '_forward_pre_hooks', '_initializing', '_modules', '_parameters', '_state_dict_hooks', '_version', 'buffer', 'def_', 'dump_patches', 'forward', 'method', 'original_method', 'parameter', 'remote_parameters', 'resolution_callback', 'submodule']

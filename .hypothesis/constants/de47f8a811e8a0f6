@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\_subclasses\meta_utils.py
+# hypothesis_version: 6.151.2
+
+['FakeTensor', 'MetaStorageId', 'MetaTensorDesc', 'MetaTensorId', '_DescriberId', '_T', '_TensorLikeT', '_TensorT', '_TensorT_cov', '__tensor_flatten__', '_base', 'attrs', 'autograd_meta_from', 'ctx', 'current_level', 'data', 'describe_source', 'describe_storage', 'describe_tensor', 'describer_id', 'fake_mode', 'functorch_stack', 'grad', 'id', 'lazy', 'level', 'meta', 'nested_int', 'size', 'source', 'symint_visitor_fn', 'tensor_visitor_fn', 'type', 'view_func', 'xla']

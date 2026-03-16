@@ -88,7 +88,7 @@ def _handle_ask(args: dict) -> dict:
         session = mgr.get_or_create(session_id, domain=domain, encoder_type=encoder)
 
         from ..provider import get_provider
-        from ..bridge.generate import generate
+        from ..brainstem.generate import generate
 
         provider = get_provider(provider_name)
 

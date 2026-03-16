@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\ao\quantization\fake_quantize.py
+# hypothesis_version: 6.151.2
+
+[1.0, -128, -127, 127, 255, ' got qscheme: ', '.', 'FakeQuantize', 'FakeQuantizeBase', 'ch_axis', 'default_fake_quant', 'disable_fake_quant', 'disable_observer', 'dtype', 'enable_fake_quant', 'enable_observer', 'fake_quant_enabled', 'is_dynamic', 'keywords', 'observer_enabled', 'p', 'quant_max', 'quant_min', 'scale', 'torch.qscheme', 'zero_point']

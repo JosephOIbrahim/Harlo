@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\profiler\profiler.py
+# hypothesis_version: 6.151.2
+
+['"', '.', '.et.json', '.gz', '.html', '.json', '0', '0.0', '1', '12.6', ':0', 'KINETO_USE_DAEMON', 'ProfilerAction', 'ProfilerStep', 'ProfilerStep#', 'TEARDOWN_CUPTI', '\\"', '__file__', '_inductor', '_resources', 'backend', 'cpu', 'cuda', 'cuda:0', 'distributedInfo', 'gz', 'hpu', 'mtia', 'nccl', 'nccl_version', 'pg_config', 'pg_count', 'profile', 'profile_memory', 'rank', 'raw.json.gz', 'rb', 'record_shapes', 'schedule', 'self_cpu_time_total', 'supported_activities', 'version', 'w+b', 'w+t', 'wb', 'with_flops', 'with_modules', 'with_stack', 'world_size', 'wt', 'xpu']

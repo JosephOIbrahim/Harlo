@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\antlr4\Parser.py
+# hypothesis_version: 6.151.2
+
+[' rule ', ', LT(1)=', ':', 'Decision ', '_ctx', '_errHandler', '_input', '_output', '_parseListeners', '_parser', '_precedenceStack', '_syntaxErrors', '_tracer', 'buildParseTrees', 'consume ', 'enter   ', 'exit    ', 'listener', 'n/a']

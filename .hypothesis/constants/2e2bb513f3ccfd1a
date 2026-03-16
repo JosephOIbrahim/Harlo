@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\hydra\_internal\callbacks.py
+# hypothesis_version: 6.151.2
+
+['JobReturn', 'hydra.callbacks', 'on_job_end', 'on_job_start', 'on_multirun_end', 'on_multirun_start', 'on_run_end', 'on_run_start']

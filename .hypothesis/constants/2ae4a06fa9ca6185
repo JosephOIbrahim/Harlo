@@ -1,0 +1,4 @@
+# file: C:\Users\User\Cognitive_Twin\python\cognitive_twin\brainstem\__init__.py
+# hypothesis_version: 6.151.2
+
+['ROLLING_WINDOW', 'SurpriseResult', 'accept_blind_spot', 'aletheia_stage', 'compile_to_reflex', 'compose', 'compute_surprise', 'compute_trace_merkle', 'emit_perception_gap', 'escalate', 'full_stage', 'generate', 'inquiries_to_prims', 'is_amygdala_trigger', 'list_reflexes', 'lookup_reflex', 'make_event_hash', 'motor_to_prims', 'prim_to_session', 'prims_to_inquiries', 'prims_to_motor', 'recall_to_traces', 'route_recall', 'session_to_prim', 'should_escalate', 'stamp_provenance', 'traces_to_recall', 'update_rolling_stats', 'verify_merkle_root']

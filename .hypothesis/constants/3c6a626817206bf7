@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\jit\_check.py
+# hypothesis_version: 6.151.2
+
+['#', '# type:', 'Dict', 'List', 'Optional', 'annotate', 'dict', 'jit', 'list', 'self', 'torch']

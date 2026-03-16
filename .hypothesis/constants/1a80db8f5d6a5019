@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\fx\graph_module.py
+# hypothesis_version: 6.151.2
+
+[' passed for root!', ' referenced target ', '.', '<locals>', 'FxModule', 'GraphModule', 'GraphModuleImpl', 'Node ', 'Unsupported type ', '__call__', '__file__', '__init__.py', '__loader__', '__name__', '_co_fields', '_code', '_create_node_hooks', '_deepcopy_hooks', '_erase_node_hooks', '_graph', '_replace_hooks', '_state_dict_hooks', '_tracer_cls', '_tracer_extras', '_wrapped_call', 'call_module', 'code', 'eval_with_key', 'exec', 'forward', 'get_attr', 'graph', 'import torch', 'meta', 'module.py', 'reduce_graph_module', 'self', 'stack_trace', 'state_dict.pt', 'training', 'type[GraphModule]', '~', '~~~ <--- HERE']

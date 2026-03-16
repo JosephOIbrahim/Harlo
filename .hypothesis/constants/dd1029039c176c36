@@ -1,0 +1,4 @@
+# file: C:\Users\User\AppData\Roaming\Python\Python314\site-packages\torch\library.py
+# hypothesis_version: 6.151.2
+
+['(', '.', '/', '::', 'AutocastCPU', 'AutocastCUDA', 'Autograd', 'CONSERVATIVE', 'DEF', 'FRAGMENT', 'FROM_SCHEMA', 'FuncTorchBatched', 'IMPL', 'Library', 'Meta', 'Unsupported kind: ', '\\(.*\\) -> .*', '_', '_P', '_T', 'cpu', 'cuda', 'custom_op', 'default', 'define', 'fallthrough_kernel', 'get_ctx', 'get_kernel', 'impl', 'impl_abstract', 'infer_schema', 'prim', 'register_autocast', 'register_fake', 'register_vmap', 'test_faketensor', 'test_schema', 'torchvision.', 'triton_op', 'wrap_triton']
