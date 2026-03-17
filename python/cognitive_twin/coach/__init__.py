@@ -38,12 +38,14 @@ def project_coach(
     session_info = _get_session_info(db_path, session_id)
     pattern_count = _get_pattern_count(db_path)
     trust_score = _get_trust_score(db_path)
+    pending_claims = _get_pending_claims(db_path)
 
     return _format_xml(
         recent_traces=recent_traces,
         session_info=session_info,
         pattern_count=pattern_count,
         trust_score=trust_score,
+        pending_claims=pending_claims,
     )
 
 
@@ -135,11 +137,26 @@ def _get_trust_score(db_path: str) -> float:
         return 0.0
 
 
+def _get_pending_claims(db_path: str) -> list[dict]:
+    """Get pending Aletheia claims for Coach injection."""
+    try:
+        from cognitive_twin.aletheia_v8 import AletheiaQueue
+        queue = AletheiaQueue(db_path)
+        claims = queue.get_pending(limit=5)
+        return [
+            {"claim_id": c.claim_id, "claim_text": c.claim_text}
+            for c in claims
+        ]
+    except Exception:
+        return []
+
+
 def _format_xml(
     recent_traces: list[dict],
     session_info: dict,
     pattern_count: int,
     trust_score: float = 0.0,
+    pending_claims: list[dict] | None = None,
 ) -> str:
     """Format Twin state as Anthropic XML system prompt block.
 
@@ -179,6 +196,15 @@ def _format_xml(
             lines.append(f'      <message>{trace["message"]}</message>')
             lines.append(f"    </trace>")
         lines.append("  </recent-traces>")
+
+    # Pending claims
+    if pending_claims:
+        lines.append("  <pending-verifications>")
+        for claim in pending_claims:
+            lines.append(f'    <claim id="{claim["claim_id"]}">')
+            lines.append(f'      {claim["claim_text"]}')
+            lines.append(f"    </claim>")
+        lines.append("  </pending-verifications>")
 
     # Patterns
     lines.append(f"  <patterns-detected>{pattern_count}</patterns-detected>")

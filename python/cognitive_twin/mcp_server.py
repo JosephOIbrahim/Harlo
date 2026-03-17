@@ -194,6 +194,39 @@ def twin_session_status() -> str:
 
 
 @server.tool()
+def resolve_verifications(verdicts: list[dict]) -> str:
+    """Resolve pending Aletheia verification claims.
+
+    The Actor evaluates pending claims and submits boolean verdicts.
+    Each verdict dict must have 'claim_id' (str) and 'verdict' (bool).
+
+    Args:
+        verdicts: List of {"claim_id": str, "verdict": bool} dicts.
+    """
+    _ensure_data_dir()
+
+    try:
+        from cognitive_twin.aletheia_v8 import AletheiaQueue
+
+        queue = AletheiaQueue(str(DATA_DIR / "twin.db"))
+        results = []
+        for v in verdicts:
+            claim = queue.resolve(v["claim_id"], v["verdict"])
+            results.append({
+                "claim_id": v["claim_id"],
+                "resolved": claim is not None,
+                "status": claim.status if claim else "not_found",
+            })
+        return json.dumps({
+            "status": "ok",
+            "resolved": results,
+            "remaining_pending": queue.pending_count(),
+        })
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@server.tool()
 def trigger_cognitive_recalibration() -> str:
     """Trigger cognitive recalibration — reset intake and trust.
 
