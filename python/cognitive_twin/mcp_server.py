@@ -69,12 +69,25 @@ def twin_recall(query: str, depth: str = "normal") -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
+_hot_store = None
+
+
+def _get_hot_store():
+    """Lazy singleton for HotStore. No model loading."""
+    global _hot_store
+    if _hot_store is None:
+        from cognitive_twin.hot_store import HotStore
+        _hot_store = HotStore(str(DATA_DIR / "twin.db"))
+    return _hot_store
+
+
 @server.tool()
 def twin_store(message: str, tags: list[str] | None = None, domain: str | None = None) -> str:
-    """Store a new trace in the Cognitive Twin's memory.
+    """Store a memory trace. Zero-encoding hot path (<2ms).
 
-    Encodes the message using the semantic encoder (BGE + LSH → 2048-bit SDR)
-    and persists it to the trace database.
+    Writes to the Hot Tier (L1) immediately with no model loading or SDR
+    encoding. Traces are promoted to Warm Tier (L2) asynchronously by the
+    Observer process.
 
     Args:
         message: The text content to store as a memory trace.
@@ -84,27 +97,18 @@ def twin_store(message: str, tags: list[str] | None = None, domain: str | None =
     _ensure_data_dir()
 
     try:
-        from encoder import semantic_store
-    except ImportError:
-        from cognitive_twin.encoder import semantic_store
-
-    trace_id = uuid.uuid4().hex[:16]
-
-    try:
-        semantic_store(
-            db_path=DB_PATH,
-            trace_id=trace_id,
+        hot = _get_hot_store()
+        trace_id = hot.store(
             message=message,
-            tags=tags,
-            domain=domain,
-            source="mcp",
+            tags=tags or [],
+            domain=domain or "general",
         )
         return json.dumps({
-            "status": "ok",
+            "status": "stored",
             "trace_id": trace_id,
-            "message": message,
-            "stored": True,
-        })
+            "tier": "hot",
+            "encoded": False,
+        }, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 

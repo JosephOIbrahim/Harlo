@@ -101,41 +101,49 @@ class TestTwinRecall:
 
 
 class TestTwinStore:
-    """Tests for the twin_store tool."""
+    """Tests for the twin_store tool (v8 Hot Tier path)."""
 
-    def test_store_returns_trace_id(self, tmp_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_store
+    def test_store_returns_trace_id(self, tmp_path, mock_encoder):
+        import cognitive_twin.mcp_server as srv
 
-        with _patch_db(tmp_db):
-            result = json.loads(twin_store("A new memory trace"))
+        srv._hot_store = None
+        with patch.object(srv, "DATA_DIR", tmp_path):
+            result = json.loads(srv.twin_store("A new memory trace"))
 
-        assert result["status"] == "ok"
-        assert result["stored"] is True
+        assert result["status"] == "stored"
+        assert result["tier"] == "hot"
+        assert result["encoded"] is False
         assert len(result["trace_id"]) == 16
+        srv._hot_store = None
 
-    def test_store_with_tags_and_domain(self, tmp_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_store
+    def test_store_with_tags_and_domain(self, tmp_path, mock_encoder):
+        import cognitive_twin.mcp_server as srv
 
-        with _patch_db(tmp_db):
-            result = json.loads(twin_store(
+        srv._hot_store = None
+        with patch.object(srv, "DATA_DIR", tmp_path):
+            result = json.loads(srv.twin_store(
                 "Tagged memory",
                 tags=["important", "test"],
                 domain="testing",
             ))
 
+        assert result["status"] == "stored"
+        assert result["tier"] == "hot"
+        srv._hot_store = None
+
+    def test_store_hot_trace_not_in_warm_recall(self, tmp_path, mock_encoder):
+        """Hot-tier traces are NOT in warm-tier recall until promoted."""
+        import cognitive_twin.mcp_server as srv
+
+        srv._hot_store = None
+        with patch.object(srv, "DATA_DIR", tmp_path), \
+             _patch_db(str(tmp_path / "twin.db")):
+            srv.twin_store("Unique memory about quantum computing")
+            result = json.loads(srv.twin_recall("quantum"))
+
         assert result["status"] == "ok"
-        assert result["stored"] is True
-
-    def test_store_then_recall(self, tmp_db, mock_encoder):
-        """Stored trace should be retrievable via recall."""
-        from cognitive_twin.mcp_server import twin_store, twin_recall
-
-        with _patch_db(tmp_db):
-            twin_store("Unique memory about quantum computing")
-            result = json.loads(twin_recall("quantum"))
-
-        assert result["status"] == "ok"
-        assert result["trace_count"] >= 1
+        assert result["trace_count"] == 0  # Not yet promoted to warm
+        srv._hot_store = None
 
 
 # ── Tests: twin_ask ───────────────────────────────────────────────────
