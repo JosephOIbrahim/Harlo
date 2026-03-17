@@ -1,10 +1,18 @@
 # Cognitive Twin
 
-A persistent cognitive layer that sits between you and any LLM, modeling not what you know — but how you think.
+Your AI forgets you every time. This fixes that.
+
+The Cognitive Twin is a living model of how you think — not a chat log, not a search history, but a persistent layer of *you* that any AI can consult. It remembers your patterns, learns your instincts, verifies what it tells you, and evolves as you do.
 
 ## The Problem
 
-LLM conversations are stateless. Every session starts from zero. Your context, your patterns of thought, your evolving understanding — all evaporated the moment the window closes. Current "memory" solutions bolt on vector databases that store what you said, not how you reason. The Cognitive Twin inverts this: it builds a living model of your cognition that any LLM can consult, verify against, and evolve through.
+Every conversation with an AI starts from scratch. Close the window and everything you built together — your context, your shorthand, the way it was starting to *get* you — vanishes. The next session is a stranger again.
+
+Current "memory" products store what you *said*. The Cognitive Twin stores how you *think*.
+
+It sits between you and any AI, modeling your cognitive patterns: what surprises you, how you make connections, where your expertise runs deep, when you're running on fumes. The AI doesn't just remember your words — it understands your rhythm. And it gets sharper the longer you work together, not because the AI improved, but because your Twin learned more about you.
+
+The intelligence lives in the relationship — not in either party alone.
 
 ## How It Works
 
