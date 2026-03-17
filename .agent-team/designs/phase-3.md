@@ -1,60 +1,73 @@
-# Phase 3 Design: Subsystem Cutover + Structured Provenance
-
-**Author:** Architect
-**Phase:** 3
-**Gates:** 3a, 3b, 3c, 3d
+# Phase 3 Design: Trust & Cognitive Profile (v8.0)
+# Architect: Claude Opus 4.6 | Date: 2026-03-17
+# Resolves: RISK-3 (3-Tier Float Trust), GAP-1 (Intake Migration)
 
 ---
 
-## 1. Strategy
+## 1. Trust Ledger
 
-Bridge functions fall into two categories:
-- **Orchestration pipelines** (generate, escalate): Rewire to build USD stages via brainstem
-- **Decision gates** (amygdala, consolidation, intent_check, etc.): Pure functions — keep in bridge as thin shims, add provenance tracking
+### Schema
+- `trust_score: float [0.0–1.0]` stored in SQLite
+- Table: `trust_ledger (user_id TEXT PK, trust_score REAL, last_updated REAL)`
+- Single user for v8.0 (user_id = "default")
 
-The bridge module becomes a **compatibility shim** that delegates to brainstem for stage building while preserving its public API. All existing tests must pass unchanged.
+### Thresholds (Basal Ganglia)
+- 0.0–0.3: New — passive store only
+- 0.3–0.7: Familiar — context/pattern surfacing
+- 0.7–1.0: Trusted — proactive coaching/pushback
 
-## 2. Changes
+### Update Formula
+- `delta = base_delta * session_quality`
+- `session_quality = (0.4 * duration_factor + 0.3 * feedback_factor + 0.3 * correction_factor)`
+- Positive: session > 3 exchanges, explicit positive feedback, accepted corrections
+- Negative: explicit negative feedback, rejected suggestions
+- Clamp to [0.0, 1.0]
 
-### 2.1 Structured Provenance Integration
+---
 
-Add provenance stamping to `composition/layer.py`:
+## 2. TrustLedger API
 
 ```python
-# New function in brainstem/provenance.py
-def stamp_provenance(
-    layer: CompositionLayerPrim,
-    source_type: SourceType,
-    session_id: str,
-) -> CompositionLayerPrim:
-    """Attach structured provenance to a composition layer."""
+class TrustLedger:
+    def __init__(self, db_path: str) -> None: ...
+    def get_score(self, user_id: str = "default") -> float: ...
+    def update(self, delta: float, user_id: str = "default") -> float: ...
+    def get_tier(self, user_id: str = "default") -> str: ...
 ```
 
-### 2.2 Bridge Shim
+Tiers: "new" (< 0.3), "familiar" (0.3–0.7), "trusted" (>= 0.7)
 
-Modify bridge modules to delegate to brainstem:
-- `bridge/generate.py`: After generate pipeline, build `full_stage()` with results
-- `bridge/escalation.py`: Use brainstem adapters for composition ↔ USD conversion
-- `bridge/__init__.py`: Re-export all functions (API unchanged)
+---
 
-### 2.3 New Files
+## 3. Cognitive Recalibration
 
+### MCP Tool: trigger_cognitive_recalibration
+- Resets trust to 0.0
+- Clears cognitive profile flag in SQLite
+- Returns confirmation
+
+### Schema
+- Table: `cognitive_profile (user_id TEXT PK, intake_complete INTEGER, profile_json TEXT, last_calibrated REAL)`
+
+---
+
+## 4. Coach.md Integration
+- Coach projection reads trust score and adjusts behavior directive
+- New: minimal context; Familiar: full context; Trusted: proactive pushback
+
+---
+
+## 5. File Layout
 ```
-python/cognitive_twin/brainstem/provenance.py    # Provenance stamping
-tests/test_brainstem/test_provenance.py          # Provenance tests
+python/cognitive_twin/trust/
+├── __init__.py              # TrustLedger class
+└── recalibration.py         # Recalibration logic
+
+tests/test_trust/
+├── __init__.py
+└── test_trust.py
+
+tests/test_recalibration/
+├── __init__.py
+└── test_recalibration.py
 ```
-
-### 2.4 Modified Files
-
-```
-python/cognitive_twin/bridge/generate.py         # Add brainstem stage building
-python/cognitive_twin/bridge/escalation.py       # Use brainstem adapters
-python/cognitive_twin/composition/layer.py       # (unchanged — provenance lives in USD prims)
-```
-
-## 3. Gate Coverage
-
-- 3a: generate() and escalate() now produce USD stages via brainstem
-- 3b: Composition results flow through brainstem adapters, not raw dicts
-- 3c: All existing imports and tests preserved (shim is transparent)
-- 3d: Every layer gets Provenance via stamp_provenance()

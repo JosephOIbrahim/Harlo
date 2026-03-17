@@ -37,11 +37,13 @@ def project_coach(
     recent_traces = _get_recent_traces(db_path, limit=5)
     session_info = _get_session_info(db_path, session_id)
     pattern_count = _get_pattern_count(db_path)
+    trust_score = _get_trust_score(db_path)
 
     return _format_xml(
         recent_traces=recent_traces,
         session_info=session_info,
         pattern_count=pattern_count,
+        trust_score=trust_score,
     )
 
 
@@ -123,10 +125,21 @@ def _get_pattern_count(db_path: str) -> int:
         conn.close()
 
 
+def _get_trust_score(db_path: str) -> float:
+    """Get current trust score."""
+    try:
+        from cognitive_twin.trust import TrustLedger
+        ledger = TrustLedger(db_path)
+        return ledger.get_score()
+    except Exception:
+        return 0.0
+
+
 def _format_xml(
     recent_traces: list[dict],
     session_info: dict,
     pattern_count: int,
+    trust_score: float = 0.0,
 ) -> str:
     """Format Twin state as Anthropic XML system prompt block.
 
@@ -140,8 +153,8 @@ def _format_xml(
     """
     lines = ['<cognitive-twin-context version="8.0">']
 
-    # Trust level (Phase 3 placeholder)
-    lines.append("  <trust-level>0.0</trust-level>")
+    # Trust level
+    lines.append(f"  <trust-level>{trust_score:.2f}</trust-level>")
 
     # Session
     if session_info:

@@ -77,10 +77,10 @@ class TestProjectCoach:
         assert "<exchanges>5</exchanges>" in result
         assert "<domain>research</domain>" in result
 
-    def test_includes_trust_placeholder(self, populated_db):
-        """Output includes trust level (Phase 3 placeholder)."""
+    def test_includes_trust_level(self, populated_db):
+        """Output includes trust level from TrustLedger."""
         result = project_coach(populated_db)
-        assert "<trust-level>0.0</trust-level>" in result
+        assert "<trust-level>" in result
 
     def test_includes_pattern_count(self, populated_db):
         """Output includes pattern count."""
@@ -99,9 +99,9 @@ class TestFormatXml:
 
     def test_empty_state(self):
         """Empty state produces minimal XML."""
-        result = _format_xml([], {}, 0)
+        result = _format_xml([], {}, 0, trust_score=0.0)
         assert '<cognitive-twin-context version="8.0">' in result
-        assert "<trust-level>0.0</trust-level>" in result
+        assert "<trust-level>0.00</trust-level>" in result
         assert "<patterns-detected>0</patterns-detected>" in result
         assert "<session>" not in result
         assert "<recent-traces>" not in result

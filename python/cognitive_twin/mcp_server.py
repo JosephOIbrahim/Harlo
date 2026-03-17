@@ -193,6 +193,24 @@ def twin_session_status() -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
+@server.tool()
+def trigger_cognitive_recalibration() -> str:
+    """Trigger cognitive recalibration — reset intake and trust.
+
+    Clears the cognitive profile and resets trust score to 0.0.
+    Use when the user indicates a major life or role change.
+    Re-triggerable: can be called multiple times.
+    """
+    _ensure_data_dir()
+
+    try:
+        from cognitive_twin.trust.recalibration import trigger_recalibration
+        result = trigger_recalibration(str(DATA_DIR / "twin.db"))
+        return json.dumps(result)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
 def main():
     """Entry point for the cognitive-twin console script."""
     server.run(transport="stdio")
