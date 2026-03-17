@@ -1,5 +1,70 @@
 # Changelog
 
+## v8.0.0 — Actor/Observer Disaggregation + Hot/Warm Tiered Memory
+
+### Architecture
+
+Complete v7 to v8 rewrite per the Surgical Directives ADR. 7 phases executed via Sequential MoE pipeline (Architect → Forge → Crucible). The Actor (LLM) reasons. The Observer (Twin) stores and projects. No local LLM required.
+
+**7 phases completed:**
+
+1. **Encoding & Hot Path** — Zero-encoding Hot Tier (SQLite + FTS5, <0.2ms store p99), ONNX Runtime encoder (BGE-small CLS pooling, Hamming correlation >= 0.95), Hot→Warm promotion pipeline
+2. **Disaggregation** — Killed `twin_ask`, removed `ANTHROPIC_API_KEY` from MCP server, built Observer (background promotion, no LLM deps), built Coach (stage → Anthropic XML system prompt projection)
+3. **Trust & Cognitive Profile** — Continuous [0.0, 1.0] Trust Ledger with 3-tier gating (new/familiar/trusted), `trigger_cognitive_recalibration` MCP tool
+4. **Aletheia Deferral** — Pending verification queue (SQLite-backed), Actor-side `resolve_verifications` MCP tool, Coach.md injects pending claims
+5. **Temporal Compaction** — Replay-then-archive engine with decay commutation invariant, recoverable archives at `.usda.archive/`
+6. **Federated Recall** — `query_past_experience` searches Hot (FTS5) + Warm (SDR Hamming) simultaneously, normalizes scores, deduplicates, merges ranked results
+7. **Test Suite + SLAs** — Latency SLA enforcement (store <2ms, FTS5 <2ms, Coach <10ms)
+
+### MCP tool registry changes
+
+| Tool | Status |
+|------|--------|
+| `twin_store` | MODIFIED — writes to Hot Tier, zero-encoding |
+| `twin_recall` | KEPT — warm-tier SDR search (backward compat) |
+| `query_past_experience` | **NEW** — federated Hot+Warm recall |
+| `twin_coach` | **NEW** — system prompt projection |
+| `twin_patterns` | KEPT |
+| `twin_session_status` | KEPT |
+| `resolve_verifications` | **NEW** — Actor-side Aletheia |
+| `trigger_cognitive_recalibration` | **NEW** — intake/trust reset |
+| `twin_ask` | **DELETED** — Actor reasons, Twin stores |
+
+### Modules added
+
+- `python/cognitive_twin/hot_store/` — Hot Tier (L1) with FTS5 + promotion pipeline
+- `python/cognitive_twin/observer/` — Background Hot→Warm SDR promotion
+- `python/cognitive_twin/coach/` — Coach.md system prompt projection
+- `python/cognitive_twin/trust/` — Trust Ledger + cognitive recalibration
+- `python/cognitive_twin/aletheia_v8/` — Deferred verification queue
+- `python/cognitive_twin/compaction/` — Temporal compaction engine
+- `python/cognitive_twin/federated_recall.py` — Federated Hot+Warm query
+- `python/cognitive_twin/encoder/onnx_encoder.py` — ONNX Runtime BGE encoder
+
+### Dependencies added
+
+- `onnxruntime>=1.17` — ONNX model inference for SDR encoding
+- `transformers>=4.36` — AutoTokenizer for ONNX encoder input
+
+### By the numbers
+
+- 791 tests, all passing (was 761 in v7)
+- 27 test modules (was 20 in v7)
+- 8 MCP tools (was 5 in v7)
+- 0 LLM dependencies in MCP server (was 1 in v7)
+- <0.2ms store latency (p99)
+- <2ms FTS5 search latency (p99)
+- >= 0.95 Hamming distance correlation (ONNX vs reference encoder)
+
+### Breaking changes
+
+- `twin_ask` removed — Actor (Claude) provides reasoning via MCP tools
+- `twin_store` response format changed: `{status: "stored", tier: "hot", encoded: false}`
+- `ANTHROPIC_API_KEY` no longer required by MCP server
+- New dependencies: `onnxruntime`, `transformers`
+
+---
+
 ## v7.0.0 — USD Brain Housing + Brainstem + Hebbian Neuroplasticity
 
 ### Architecture

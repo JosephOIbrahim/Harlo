@@ -1,6 +1,6 @@
-"""Cognitive Twin v7.0 — biologically-architected AI memory and action system."""
+"""Cognitive Twin v8.0 — biologically-architected AI memory and action system."""
 
-__version__ = "7.0.0"
+__version__ = "8.0.0"
 
 from cognitive_twin.hippocampus import (
     py_recall,

@@ -274,7 +274,7 @@ def _handle_status(args: dict) -> dict:
     """Handle status command."""
     return {
         "status": "ok",
-        "version": "7.0.0",
+        "version": "8.0.0",
         "state": "running",
     }
 
@@ -702,7 +702,7 @@ def _handle_export(args: dict) -> dict:
         from ..session.manager import SessionManager
         import sqlite3
 
-        export_data = {"version": "7.0.0", "traces": [], "sessions": [], "patterns": []}
+        export_data = {"version": "8.0.0", "traces": [], "sessions": [], "patterns": []}
 
         conn = sqlite3.connect(str(DB_PATH))
         try:

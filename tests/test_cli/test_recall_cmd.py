@@ -19,7 +19,7 @@ class TestRecallCommand:
         runner = CliRunner()
         result = runner.invoke(cli, ["status"])
         assert result.exit_code == 0
-        assert "7.0.0" in result.output
+        assert "8.0.0" in result.output
 
     def test_status_json(self):
         runner = CliRunner()
@@ -27,10 +27,10 @@ class TestRecallCommand:
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert data["status"] == "ok"
-        assert data["version"] == "7.0.0"
+        assert data["version"] == "8.0.0"
 
     def test_version(self):
         runner = CliRunner()
         result = runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
-        assert "7.0.0" in result.output
+        assert "8.0.0" in result.output

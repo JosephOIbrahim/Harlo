@@ -44,7 +44,7 @@ class TestE2ERecall:
         """Test daemon router status command."""
         result = run_direct("status", {})
         assert result["status"] == "ok"
-        assert result["version"] == "7.0.0"
+        assert result["version"] == "8.0.0"
 
     def test_daemon_router_unknown_command(self):
         """Test daemon router handles unknown commands."""
