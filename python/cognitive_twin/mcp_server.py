@@ -69,6 +69,43 @@ def twin_recall(query: str, depth: str = "normal") -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
+@server.tool()
+def query_past_experience(query: str, limit: int = 10) -> str:
+    """Federated recall across Hot and Warm memory tiers.
+
+    Searches both the Hot Tier (FTS5 plaintext, immediate) and Warm Tier
+    (SDR Hamming, semantic) simultaneously, merging and deduplicating results.
+    Satisfies both "what did I just say?" and "what patterns exist?" queries.
+
+    Args:
+        query: Search query text.
+        limit: Maximum results to return (default 10).
+    """
+    _ensure_data_dir()
+
+    try:
+        from cognitive_twin.federated_recall import query_past_experience as qpe
+
+        results = qpe(str(DATA_DIR / "twin.db"), query, limit=limit)
+        return json.dumps({
+            "status": "ok",
+            "results": [
+                {
+                    "trace_id": r.trace_id,
+                    "message": r.message,
+                    "score": r.score,
+                    "tier": r.tier,
+                    "domain": r.domain,
+                    "tags": r.tags,
+                }
+                for r in results
+            ],
+            "count": len(results),
+        }, default=str)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
 _hot_store = None
 
 
