@@ -146,40 +146,6 @@ class TestTwinStore:
         srv._hot_store = None
 
 
-# ── Tests: twin_ask ───────────────────────────────────────────────────
-
-
-class TestTwinAsk:
-    """Tests for the twin_ask tool."""
-
-    def test_ask_without_api_key(self, tmp_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_ask
-
-        env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
-        with _patch_db(tmp_db), patch.dict(os.environ, env, clear=True):
-            result = json.loads(twin_ask("What is the meaning of life?"))
-
-        assert result["status"] == "error"
-        assert "ANTHROPIC_API_KEY" in result["error"]
-
-    def test_ask_with_mock_provider(self, populated_db, mock_encoder):
-        """Mock the provider to test the full pipeline without a real API call."""
-        from cognitive_twin.mcp_server import twin_ask
-
-        mock_provider = MagicMock()
-        mock_provider.model_name = "mock-model"
-        mock_provider.generate.return_value = "This is a mock response."
-
-        with _patch_db(populated_db), \
-             patch.dict(os.environ, {"ANTHROPIC_API_KEY": "sk-test-fake"}), \
-             patch("cognitive_twin.provider.get_provider", return_value=mock_provider):
-            result = json.loads(twin_ask("Test question"))
-
-        assert result["status"] == "ok"
-        assert "response" in result
-        assert result["model"] == "mock-model"
-
-
 # ── Tests: twin_patterns ─────────────────────────────────────────────
 
 
@@ -247,13 +213,14 @@ class TestServerInit:
         assert server.name == "cognitive-twin"
 
     def test_all_tools_registered(self):
-        """All 5 tools should be registered on the server."""
+        """All 5 v8 tools should be registered on the server."""
         from cognitive_twin.mcp_server import server
 
         # FastMCP stores tools internally; check they're callable
         from cognitive_twin import mcp_server
         assert callable(mcp_server.twin_recall)
         assert callable(mcp_server.twin_store)
-        assert callable(mcp_server.twin_ask)
+        assert callable(mcp_server.twin_coach)
         assert callable(mcp_server.twin_patterns)
         assert callable(mcp_server.twin_session_status)
+        assert not hasattr(mcp_server, "twin_ask")

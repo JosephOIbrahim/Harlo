@@ -1,13 +1,13 @@
 """MCP server exposing Cognitive Twin tools to Claude Desktop.
 
-Wraps the Twin's core functions (recall, store, ask, patterns, session)
-as MCP tools over stdio transport.
+Wraps the Twin's core functions (recall, store, coach, patterns, session)
+as MCP tools over stdio transport. v8.0: No LLM client code — the Actor
+(Claude) reasons, the Twin (Observer) stores and projects.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import time
 import uuid
 
@@ -24,10 +24,10 @@ DB_PATH = str(DATA_DIR / "twin.db")
 server = FastMCP(
     name="cognitive-twin",
     instructions=(
-        "Cognitive Twin v7.0 — biologically-architected AI memory. "
+        "Cognitive Twin v8.0 — biologically-architected AI memory. "
         "Use twin_recall to search memory, twin_store to save traces, "
-        "twin_ask for full generation pipeline, twin_patterns for "
-        "pattern detection, twin_session_status for session info."
+        "twin_coach for coaching context, twin_patterns for pattern "
+        "detection, twin_session_status for session info."
     ),
 )
 
@@ -114,50 +114,28 @@ def twin_store(message: str, tags: list[str] | None = None, domain: str | None =
 
 
 @server.tool()
-def twin_ask(question: str) -> str:
-    """Run the full Cognitive Twin generation pipeline.
+def twin_coach(session_id: str | None = None) -> str:
+    """Get coaching context for the current session.
 
-    Pipeline: semantic recall → context injection → LLM generation →
-    Aletheia GVR verification → response. Requires ANTHROPIC_API_KEY
-    to be set in the environment.
+    Returns a structured system prompt block built from the Twin's current
+    state: recent traces, session info, trust level, and pending patterns.
+    The Actor (Claude) uses this to inform its reasoning.
 
     Args:
-        question: The question or prompt to process.
+        session_id: Optional session ID for session-specific context.
     """
     _ensure_data_dir()
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return json.dumps({
-            "status": "error",
-            "error": "ANTHROPIC_API_KEY not set. Set it in your environment to use twin_ask.",
-        })
-
     try:
-        try:
-            from provider import get_provider
-            from brainstem.generate import generate
-        except ImportError:
-            from cognitive_twin.provider import get_provider
-            from cognitive_twin.brainstem.generate import generate
-
-        provider = get_provider("claude")
-        result = generate(
-            query=question,
-            provider=provider,
-            db_path=DB_PATH,
-            domain="general",
-            encoder_type="semantic",
-            recall_depth="normal",
+        from cognitive_twin.coach import project_coach
+        result = project_coach(
+            db_path=str(DATA_DIR / "twin.db"),
+            session_id=session_id,
         )
         return json.dumps({
             "status": "ok",
-            "response": result.get("response", ""),
-            "verification": result.get("verification", {}),
-            "confidence": result.get("confidence", 0.0),
-            "model": result.get("model", "unknown"),
-            "context_traces": len(result.get("context_traces", [])),
-        }, default=str)
+            "coach_block": result,
+        })
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 

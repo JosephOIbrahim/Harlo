@@ -17,7 +17,6 @@ def route_command(command: str, args: dict) -> dict:
         Result dictionary with at minimum a "status" key.
     """
     router = {
-        "ask": _handle_ask,
         "detect": _handle_detect,
         "health": _handle_health,
         "recall": _handle_recall,
@@ -68,55 +67,6 @@ def _get_session_manager():
 
     ensure_data_dirs()
     return SessionManager(db_path=str(DB_PATH), timeout_s=SESSION_TIMEOUT_S)
-
-
-def _handle_ask(args: dict) -> dict:
-    """Handle ask command: full Twin generation loop with session tracking."""
-    try:
-        from ..daemon.config import DB_PATH, ENCODER_TYPE, ensure_data_dirs
-
-        ensure_data_dirs()
-        question = args.get("question", "")
-        provider_name = args.get("provider", "claude")
-        depth = args.get("depth", "normal")
-        domain = args.get("domain", "general")
-        encoder = args.get("encoder", ENCODER_TYPE)
-        session_id = args.get("session_id")
-
-        # Session management
-        mgr = _get_session_manager()
-        session = mgr.get_or_create(session_id, domain=domain, encoder_type=encoder)
-
-        from ..provider import get_provider
-        from ..brainstem.generate import generate
-
-        provider = get_provider(provider_name)
-
-        # Pass conversation history as context
-        history = session.history if session.history else None
-
-        result = generate(
-            query=question,
-            provider=provider,
-            db_path=str(DB_PATH),
-            domain=domain,
-            encoder_type=encoder,
-            recall_depth=depth,
-        )
-
-        # Record exchange in session
-        response_text = result.get("response", "")
-        token_estimate = len(question.split()) + len(response_text.split())
-        mgr.record_exchange(session.session_id, question, response_text, tokens=token_estimate)
-
-        result["session_id"] = session.session_id
-        return {"status": "ok", "result": result}
-    except ValueError as e:
-        return {"status": "error", "message": str(e)}
-    except ImportError as e:
-        return {"status": "error", "message": f"Provider not available: {e}"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
 
 
 def _handle_detect(args: dict) -> dict:

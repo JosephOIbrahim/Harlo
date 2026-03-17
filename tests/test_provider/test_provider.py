@@ -503,27 +503,14 @@ class TestGenerateFactory:
 
 
 class TestRouterAsk:
-    """Test the router's ask command handler."""
+    """Test the router's ask command handler — v8: removed."""
 
-    def test_router_has_ask_command(self):
-        """Router should recognise 'ask' as a valid command."""
+    def test_router_ask_removed(self):
+        """Router should NOT have 'ask' command in v8 (killed in Phase 2)."""
         from cognitive_twin.daemon.router import route_command
 
         result = route_command("ask", {"question": "test"})
-        # Should NOT be "Unknown command" — it's a registered handler
-        assert "Unknown command" not in result.get("message", "")
-
-    def test_router_ask_with_mock_provider(self):
-        """Router ask command should work when provider is mocked."""
-        from cognitive_twin.daemon.router import route_command
-
-        mock_prov = MockProvider("A detailed response about the test topic with relevant information")
-
-        with patch("cognitive_twin.provider.get_provider", return_value=mock_prov):
-            result = route_command("ask", {"question": "test question"})
-            assert result["status"] == "ok"
-            assert "result" in result
-            assert result["result"]["model"] == "mock-v1"
+        assert "Unknown command" in result.get("message", "")
 
 
 class TestCLIAsk:
