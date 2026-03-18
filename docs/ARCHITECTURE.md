@@ -24,7 +24,7 @@ CALLOSUM.should_escalate(recall_result, load) → bool
     Return context              PREFRONTAL.resolve(stage) → Resolution
     via BRAINSTEM.wrap()                  │
                                          ▼
-                            ALETHEIA.run_gvr(intent, resolution)
+                            ELENCHUS.run_gvr(intent, resolution)
                                  │
                     ┌────────────┼────────────┐
                     │            │            │
@@ -52,7 +52,7 @@ CALLOSUM.should_escalate(recall_result, load) → bool
 
   ─── MOTOR PATH ───────────────────────────────────────
             MOTOR.premotor.plan(intent, context) → ActionPlan
-            ALETHEIA.run_gvr(intent, plan)
+            ELENCHUS.run_gvr(intent, plan)
             MOTOR.basal_ganglia.gate(action, state)
               DEFAULT: INHIBIT
             MOTOR.executor.execute(action) → ActionResult

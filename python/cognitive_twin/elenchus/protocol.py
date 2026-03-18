@@ -1,4 +1,4 @@
-"""Core Generate-Verify-Revise (GVR) protocol — the Aletheia loop.
+"""Core Generate-Verify-Revise (GVR) protocol — the Elenchus loop.
 
 Rule 13: Max 3 GVR cycles (ADHD guard).  After cycle 3, FIXABLE is promoted
          to UNPROVABLE.

@@ -12,7 +12,7 @@
 - Continuous updates (10 × 0.05 = 0.5) ✓
 - Clamp to [0.0, 1.0] ✓
 - Tiers: new (<0.3), familiar (0.3-0.7), trusted (≥0.7) ✓
-- Trust readable via Coach.md projection ✓
+- Trust readable via Coach Core projection ✓
 - 14 trust tests pass
 
 ### Gate 3b: Recalibration
@@ -24,18 +24,18 @@
 
 ---
 
-## Phase 4: Aletheia Deferral — PASS
+## Phase 4: Elenchus Deferral — PASS
 
 ### Gate 4a: Pending Queue
 - Claims queued with correct status='pending' ✓
 - Source traces stored and retrievable ✓
-- Queue persists across AletheiaQueue restarts ✓
+- Queue persists across ElenchusQueue restarts ✓
 - 8 queue tests pass
 
 ### Gate 4b: Actor Verification
 - resolve_verifications accepts claim_id + boolean verdict ✓
 - Verified → status='verified', Rejected → status='rejected' ✓
-- Coach.md injects pending claims when queue is non-empty ✓
+- Coach Core injects pending claims when queue is non-empty ✓
 - Already-resolved claims return None (no double-resolution) ✓
 - 9 resolve tests pass
 
@@ -87,7 +87,7 @@
 ### Gate 7b: Latency SLAs
 - Hot Store write p99 < 2ms ✓
 - Hot Store FTS5 read p99 < 2ms ✓
-- Coach.md projection p99 < 10ms ✓
+- Coach Core projection p99 < 10ms ✓
 
 ### Gate 7c: Full Suite Green
 - 787 tests pass, 0 failures

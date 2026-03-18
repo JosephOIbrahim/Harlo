@@ -48,7 +48,7 @@ class TestRecordVerification:
             verification_state="TRUSTED", cycle_count=1,
             data_dir=tmp_path,
         )
-        filepath = tmp_path / "aletheia_training.jsonl"
+        filepath = tmp_path / "elenchus_training.jsonl"
         assert filepath.exists()
         lines = filepath.read_text(encoding="utf-8").strip().splitlines()
         assert len(lines) == 1
@@ -171,7 +171,7 @@ class TestLogRotation:
     def test_rotation_at_max_rows(self, tmp_path: Path) -> None:
         """File rotates when reaching max_rows."""
         # Write max_rows entries
-        filepath = tmp_path / "aletheia_training.jsonl"
+        filepath = tmp_path / "elenchus_training.jsonl"
         with open(filepath, "w", encoding="utf-8") as f:
             for i in range(_MAX_ROWS):
                 f.write(json.dumps({"row": i}) + "\n")
@@ -187,12 +187,12 @@ class TestLogRotation:
         assert get_row_count(tmp_path) == 1
 
         # Rotated file should exist
-        rotated = list(tmp_path.glob("aletheia_training.*.jsonl"))
+        rotated = list(tmp_path.glob("elenchus_training.*.jsonl"))
         assert len(rotated) >= 1
 
     def test_max_rotated_files(self, tmp_path: Path) -> None:
         """At most MAX_ROTATED_FILES old files retained."""
-        filepath = tmp_path / "aletheia_training.jsonl"
+        filepath = tmp_path / "elenchus_training.jsonl"
 
         # Create more than max rotated files
         for j in range(_MAX_ROTATED_FILES + 2):
@@ -206,12 +206,12 @@ class TestLogRotation:
                 data_dir=tmp_path,
             )
 
-        rotated = list(tmp_path.glob("aletheia_training.*.jsonl"))
+        rotated = list(tmp_path.glob("elenchus_training.*.jsonl"))
         assert len(rotated) <= _MAX_ROTATED_FILES
 
     def test_no_full_rewrite(self, tmp_path: Path) -> None:
         """Rotation uses rename, not full rewrite. O(1) amortized."""
-        filepath = tmp_path / "aletheia_training.jsonl"
+        filepath = tmp_path / "elenchus_training.jsonl"
         with open(filepath, "w", encoding="utf-8") as f:
             for i in range(100):
                 f.write(json.dumps({"row": i}) + "\n")
@@ -223,5 +223,5 @@ class TestLogRotation:
             data_dir=tmp_path,
         )
         assert get_row_count(tmp_path) == 101
-        rotated = list(tmp_path.glob("aletheia_training.*.jsonl"))
+        rotated = list(tmp_path.glob("elenchus_training.*.jsonl"))
         assert len(rotated) == 0  # No rotation yet

@@ -30,7 +30,7 @@ class SourceType(Enum):
 
 
 class VerificationState(Enum):
-    """Aletheia verification states."""
+    """Elenchus verification states."""
     TRUSTED = "trusted"
     CONTESTED = "contested"
     REFUTED = "refuted"
@@ -173,7 +173,7 @@ class CompositionLayerPrim:
 
 @dataclass
 class GateStatusPrim:
-    """Current Aletheia verification gate status (/Aletheia/GateStatus)."""
+    """Current Elenchus verification gate status (/Elenchus/GateStatus)."""
     verification_state: VerificationState
     cycle_count: int
     last_verified: datetime
@@ -198,7 +198,7 @@ class GateStatusPrim:
 
 @dataclass
 class MerkleRootPrim:
-    """Merkle hash over /Association/Traces subtree (/Aletheia/MerkleRoot)."""
+    """Merkle hash over /Association/Traces subtree (/Elenchus/MerkleRoot)."""
     root_hash: str
     trace_count: int
 
@@ -434,8 +434,8 @@ class CompositionPrim:
 
 
 @dataclass
-class AletheiaPrim:
-    """Container for verification engine state (/Aletheia)."""
+class ElenchusPrim:
+    """Container for verification engine state (/Elenchus)."""
     gate_status: Optional[GateStatusPrim] = None
     merkle_root: Optional[MerkleRootPrim] = None
 
@@ -447,7 +447,7 @@ class AletheiaPrim:
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> AletheiaPrim:
+    def from_dict(cls, d: dict) -> ElenchusPrim:
         """Deserialize from dict."""
         gs = d.get("gate_status")
         mr = d.get("merkle_root")

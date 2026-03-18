@@ -16,7 +16,7 @@ from enum import Enum
 from typing import Optional
 
 from .prims import (
-    AletheiaPrim,
+    ElenchusPrim,
     AssociationPrim,
     CognitiveProfilePrim,
     CompositionPrim,
@@ -81,7 +81,7 @@ class BrainStage:
     """
     association: AssociationPrim = field(default_factory=AssociationPrim)
     composition: CompositionPrim = field(default_factory=CompositionPrim)
-    aletheia: AletheiaPrim = field(default_factory=AletheiaPrim)
+    elenchus: ElenchusPrim = field(default_factory=ElenchusPrim)
     session: Optional[SessionPrim] = None
     inquiry: InquiryContainerPrim = field(default_factory=InquiryContainerPrim)
     motor: MotorContainerPrim = field(default_factory=MotorContainerPrim)
@@ -99,7 +99,7 @@ class BrainStage:
         return {
             "association": self.association.to_dict(),
             "composition": self.composition.to_dict(),
-            "aletheia": self.aletheia.to_dict(),
+            "elenchus": self.elenchus.to_dict(),
             "session": self.session.to_dict() if self.session else None,
             "inquiry": self.inquiry.to_dict(),
             "motor": self.motor.to_dict(),
@@ -114,7 +114,7 @@ class BrainStage:
         return cls(
             association=AssociationPrim.from_dict(d.get("association", {})),
             composition=CompositionPrim.from_dict(d.get("composition", {})),
-            aletheia=AletheiaPrim.from_dict(d.get("aletheia", {})),
+            elenchus=ElenchusPrim.from_dict(d.get("elenchus", {})),
             session=SessionPrim.from_dict(sess) if sess else None,
             inquiry=InquiryContainerPrim.from_dict(d.get("inquiry", {})),
             motor=MotorContainerPrim.from_dict(d.get("motor", {})),

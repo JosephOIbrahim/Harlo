@@ -18,7 +18,7 @@ from typing import Optional
 from .arc_types import ArcType
 from .hex_sdr import sdr_to_hex, hex_to_sdr
 from .prims import (
-    AletheiaPrim,
+    ElenchusPrim,
     AssociationPrim,
     CognitiveProfilePrim,
     CompositionLayerPrim,
@@ -134,9 +134,9 @@ def _serialize_composition(lines: list[str], depth: int, comp: CompositionPrim) 
     _emit_block_close(lines, depth)
 
 
-def _serialize_aletheia(lines: list[str], depth: int, ale: AletheiaPrim) -> None:
-    """Serialize the Aletheia subtree."""
-    _emit_block_open(lines, depth, "AletheiaPrim", "Aletheia")
+def _serialize_elenchus(lines: list[str], depth: int, ale: ElenchusPrim) -> None:
+    """Serialize the Elenchus subtree."""
+    _emit_block_open(lines, depth, "ElenchusPrim", "Elenchus")
     d = depth + 1
     if ale.gate_status is not None:
         gs = ale.gate_status
@@ -253,7 +253,7 @@ def serialize(stage: BrainStage) -> str:
     depth = 1
     _serialize_association(lines, depth, stage.association)
     _serialize_composition(lines, depth, stage.composition)
-    _serialize_aletheia(lines, depth, stage.aletheia)
+    _serialize_elenchus(lines, depth, stage.elenchus)
     if stage.session is not None:
         _serialize_session(lines, depth, stage.session)
     _serialize_inquiry(lines, depth, stage.inquiry)
@@ -389,8 +389,8 @@ class _BlockParser:
                 stage.association = _build_association(sub_children)
             elif type_name == "CompositionPrim":
                 stage.composition = _build_composition(sub_children)
-            elif type_name == "AletheiaPrim":
-                stage.aletheia = _build_aletheia(sub_children)
+            elif type_name == "ElenchusPrim":
+                stage.elenchus = _build_elenchus(sub_children)
             elif type_name == "SessionPrim":
                 stage.session = _build_session(attrs)
             elif type_name == "InquiryContainerPrim":
@@ -515,8 +515,8 @@ def _build_composition(children: list) -> CompositionPrim:
     return CompositionPrim(layers=layers)
 
 
-def _build_aletheia(children: list) -> AletheiaPrim:
-    """Build AletheiaPrim from parsed children."""
+def _build_elenchus(children: list) -> ElenchusPrim:
+    """Build ElenchusPrim from parsed children."""
     gate_status = None
     merkle_root = None
     for type_name, prim_name, data in children:
@@ -532,7 +532,7 @@ def _build_aletheia(children: list) -> AletheiaPrim:
                 root_hash=_get_str(attrs, "root_hash"),
                 trace_count=_get_int(attrs, "trace_count"),
             )
-    return AletheiaPrim(gate_status=gate_status, merkle_root=merkle_root)
+    return ElenchusPrim(gate_status=gate_status, merkle_root=merkle_root)
 
 
 def _build_session(attrs: dict) -> SessionPrim:

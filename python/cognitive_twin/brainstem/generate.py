@@ -2,7 +2,7 @@
 
 Pipeline:
     user query → semantic recall (context) → inject context into prompt
-    → provider.generate() → aletheia verify → GVR if needed → return
+    → provider.generate() → elenchus verify → GVR if needed → return
 
 Absorbed from bridge/ in Phase 4.
 """
@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ..aletheia.protocol import run_gvr
-from ..aletheia.states import VerificationResult, VerificationState
-from .stage_builder import full_stage, aletheia_stage
+from ..elenchus.protocol import run_gvr
+from ..elenchus.states import VerificationResult, VerificationState
+from .stage_builder import full_stage, elenchus_stage
 
 
 def generate(
@@ -32,13 +32,13 @@ def generate(
         1. Semantic recall — retrieve relevant context traces
         2. Build augmented prompt with recalled context
         3. Generate initial response via LLM provider
-        4. Run Aletheia GVR verification (with provider as revision generator)
+        4. Run Elenchus GVR verification (with provider as revision generator)
         5. Optionally validate through Blood-Brain Barrier
 
     Returns:
         dict with keys:
             response (str): The final generated text.
-            verification (dict): Aletheia verification result.
+            verification (dict): Elenchus verification result.
             context_traces (list): Traces used for context.
             confidence (float): Recall confidence score.
             model (str): Provider model name.
@@ -55,7 +55,7 @@ def generate(
     # ---- Step 3: Generate initial response ----
     response = provider.generate(augmented_prompt)
 
-    # ---- Step 4: Aletheia GVR verification ----
+    # ---- Step 4: Elenchus GVR verification ----
     def _generator_fn(intent: str, output, flaw: str, context: dict) -> str:
         """Revision generator: asks the provider to fix the flaw."""
         revision_prompt = (
@@ -86,7 +86,7 @@ def generate(
 
     # ---- Build USD stages via brainstem ----
     _full = full_stage(recall_result=recall_result)
-    _ale = aletheia_stage(
+    _ale = elenchus_stage(
         verification_result=gvr_result.to_dict(),
     )
 
@@ -98,7 +98,7 @@ def generate(
         "model": provider.model_name,
         "barrier": barrier_result,
         "_brainstem_full_stage": _full,
-        "_brainstem_aletheia_stage": _ale,
+        "_brainstem_elenchus_stage": _ale,
     }
 
 

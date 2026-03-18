@@ -1,6 +1,6 @@
 """Epistemological bypass -- Safeguard S2.
 
-Inquiry outputs bypass Aletheia truth-checking (tone only).
+Inquiry outputs bypass Elenchus truth-checking (tone only).
 Self-reported data consumed by inquiry -> bypass.
 Self-reported data consumed by composition -> standard verification.
 This bypass is DIRECTIONAL.
@@ -21,12 +21,12 @@ _INQUIRY_SOURCES = frozenset({"inquiry", "dmn_inquiry", "self_inquiry"})
 _SELF_REPORTED_TAGS = frozenset({"self_reported", "subjective", "introspective"})
 
 
-def should_bypass_aletheia(
+def should_bypass_elenchus(
     source: str,
     tags: list,
     consumer: str,
 ) -> bool:
-    """Determine if Aletheia truth-checking should be bypassed.
+    """Determine if Elenchus truth-checking should be bypassed.
 
     Safeguard S2 (DIRECTIONAL):
       - Inquiry outputs -> bypass truth check (tone only).
@@ -53,16 +53,16 @@ def emit_perception_gap(
     self_reported: dict,
     finding: dict,
 ) -> dict:
-    """Emit a perception_gap trace when Aletheia falsifies self_reported data.
+    """Emit a perception_gap trace when Elenchus falsifies self_reported data.
 
-    Rule 20: When Aletheia falsifies self_reported in Composition,
+    Rule 20: When Elenchus falsifies self_reported in Composition,
     emit perception_gap trace for DMN inquiry to process.
     """
     return {
         "type": "perception_gap",
         "timestamp": int(time.time()),
         "self_reported": self_reported,
-        "aletheia_finding": finding,
+        "elenchus_finding": finding,
         "status": "pending_inquiry",
         "tags": ["perception_gap", "self_reported_falsified"],
     }

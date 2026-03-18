@@ -2,7 +2,7 @@
 
 DMN/Co-Evolution system with safeguards:
 - S1: Apophenia guard (evidence-gated)
-- S2: Bypass Aletheia truth (tone only, handled by brainstem)
+- S2: Bypass Elenchus truth (tone only, handled by brainstem)
 - S3: Rupture & repair (rejection tracking)
 - S4: Utility mode (mutes DMN)
 - S5: Inquiry apoptosis (TTL + decay)

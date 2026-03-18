@@ -8,7 +8,7 @@ import pytest
 
 from cognitive_twin.usd_lite.arc_types import ArcType
 from cognitive_twin.usd_lite.prims import (
-    AletheiaPrim,
+    ElenchusPrim,
     AssociationPrim,
     CognitiveProfilePrim,
     CompositionLayerPrim,
@@ -146,8 +146,8 @@ class TestContainerPrims:
         c = CompositionPrim()
         assert c.layers == {}
 
-    def test_aletheia_prim(self) -> None:
-        a = AletheiaPrim()
+    def test_elenchus_prim(self) -> None:
+        a = ElenchusPrim()
         assert a.gate_status is None
         assert a.merkle_root is None
 
@@ -278,8 +278,8 @@ class TestDictRoundTrip:
         assert "t1" in restored.traces
         assert restored.traces["t1"].strength == 0.87
 
-    def test_aletheia_container_roundtrip(self) -> None:
-        ale = AletheiaPrim(
+    def test_elenchus_container_roundtrip(self) -> None:
+        ale = ElenchusPrim(
             gate_status=GateStatusPrim(
                 verification_state=VerificationState.CONTESTED,
                 cycle_count=1,
@@ -287,7 +287,7 @@ class TestDictRoundTrip:
             ),
             merkle_root=MerkleRootPrim(root_hash="hash", trace_count=5),
         )
-        restored = AletheiaPrim.from_dict(ale.to_dict())
+        restored = ElenchusPrim.from_dict(ale.to_dict())
         assert restored.gate_status is not None
         assert restored.gate_status.verification_state == VerificationState.CONTESTED
         assert restored.merkle_root is not None

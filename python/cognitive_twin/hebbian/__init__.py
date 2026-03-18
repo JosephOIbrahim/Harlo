@@ -1,5 +1,5 @@
 """Hebbian neuroplasticity — co-activation, dual-mask SDR evolution,
-episodic reconstruction, and Aletheia training data pipeline.
+episodic reconstruction, and Elenchus training data pipeline.
 """
 
 from .learning import (

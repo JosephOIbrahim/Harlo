@@ -1,6 +1,6 @@
-"""Gate 2b: Aletheia stage isolation — structural trace exclusion.
+"""Gate 2b: Elenchus stage isolation — structural trace exclusion.
 
-aletheia_stage() output MUST contain zero traces.
+elenchus_stage() output MUST contain zero traces.
 This is enforced by function signature (no trace parameter), not filtering.
 """
 
@@ -8,31 +8,31 @@ from __future__ import annotations
 
 import inspect
 
-from cognitive_twin.brainstem.stage_builder import aletheia_stage, full_stage
+from cognitive_twin.brainstem.stage_builder import elenchus_stage, full_stage
 
 
-class TestAletheiaStageIsolation:
-    """aletheia_stage() structurally cannot include traces."""
+class TestElenchusStageIsolation:
+    """elenchus_stage() structurally cannot include traces."""
 
-    def test_no_traces_in_aletheia_stage(self) -> None:
+    def test_no_traces_in_elenchus_stage(self) -> None:
         """Output has empty association."""
-        stage = aletheia_stage()
+        stage = elenchus_stage()
         assert stage.association.traces == {}
 
     def test_no_traces_with_verification(self) -> None:
         """Even with verification data, no traces leak."""
-        stage = aletheia_stage(
+        stage = elenchus_stage(
             verification_result={"state": "verified", "cycle_count": 1},
             merkle_root="abc123",
             trace_count=42,
         )
         assert stage.association.traces == {}
-        assert stage.aletheia.merkle_root is not None
-        assert stage.aletheia.merkle_root.trace_count == 42
+        assert stage.elenchus.merkle_root is not None
+        assert stage.elenchus.merkle_root.trace_count == 42
 
     def test_no_traces_with_session(self) -> None:
         """Session data present but no traces."""
-        stage = aletheia_stage(
+        stage = elenchus_stage(
             session={"session_id": "s1", "exchange_count": 10},
         )
         assert stage.association.traces == {}
@@ -40,8 +40,8 @@ class TestAletheiaStageIsolation:
         assert stage.session.current_session_id == "s1"
 
     def test_signature_has_no_trace_param(self) -> None:
-        """Structural: aletheia_stage has no parameter for traces."""
-        sig = inspect.signature(aletheia_stage)
+        """Structural: elenchus_stage has no parameter for traces."""
+        sig = inspect.signature(elenchus_stage)
         param_names = set(sig.parameters.keys())
         # These should NOT exist
         assert "recall_result" not in param_names
@@ -68,8 +68,8 @@ class TestAletheiaStageIsolation:
         assert len(stage.association.traces) == 1
         assert "t1" in stage.association.traces
 
-    def test_aletheia_and_full_same_merkle(self) -> None:
+    def test_elenchus_and_full_same_merkle(self) -> None:
         """Both paths produce the same Merkle root when given same hash."""
-        a_stage = aletheia_stage(merkle_root="root_hash", trace_count=5)
+        a_stage = elenchus_stage(merkle_root="root_hash", trace_count=5)
         f_stage = full_stage(merkle_root="root_hash", trace_count=5)
-        assert a_stage.aletheia.merkle_root.root_hash == f_stage.aletheia.merkle_root.root_hash
+        assert a_stage.elenchus.merkle_root.root_hash == f_stage.elenchus.merkle_root.root_hash

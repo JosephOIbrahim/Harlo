@@ -13,7 +13,7 @@ from ..composition.layer import ArcType as CompArcType
 from ..composition.layer import Layer
 from ..usd_lite.arc_types import ArcType as UsdArcType
 from ..usd_lite.prims import (
-    AletheiaPrim,
+    ElenchusPrim,
     CompositionLayerPrim,
     GateStatusPrim,
     InquiryPrim,
@@ -135,11 +135,11 @@ def composition_to_layers(prims: dict[str, CompositionLayerPrim]) -> list[Layer]
 
 
 # ---------------------------------------------------------------
-# Aletheia adapter
+# Elenchus adapter
 # ---------------------------------------------------------------
 
-# Map between aletheia.states.VerificationState values and usd_lite VerificationState
-_ALETHEIA_STATE_MAP = {
+# Map between elenchus.states.VerificationState values and usd_lite VerificationState
+_ELENCHUS_STATE_MAP = {
     "verified": VerificationState.TRUSTED,
     "fixable": VerificationState.CONTESTED,
     "spec_gamed": VerificationState.REFUTED,
@@ -147,7 +147,7 @@ _ALETHEIA_STATE_MAP = {
     "deferred": VerificationState.PENDING,
 }
 
-_USD_TO_ALETHEIA_STATE = {
+_USD_TO_ELENCHUS_STATE = {
     VerificationState.TRUSTED: "verified",
     VerificationState.CONTESTED: "fixable",
     VerificationState.REFUTED: "spec_gamed",
@@ -155,17 +155,17 @@ _USD_TO_ALETHEIA_STATE = {
 }
 
 
-def verification_to_aletheia(result: dict) -> AletheiaPrim:
-    """Convert VerificationResult dict to AletheiaPrim.
+def verification_to_elenchus(result: dict) -> ElenchusPrim:
+    """Convert VerificationResult dict to ElenchusPrim.
 
     Maps verification state and cycle count into GateStatusPrim.
     """
     state_str = result.get("state", "deferred")
     if hasattr(state_str, "value"):
         state_str = state_str.value
-    usd_state = _ALETHEIA_STATE_MAP.get(state_str, VerificationState.PENDING)
+    usd_state = _ELENCHUS_STATE_MAP.get(state_str, VerificationState.PENDING)
 
-    return AletheiaPrim(
+    return ElenchusPrim(
         gate_status=GateStatusPrim(
             verification_state=usd_state,
             cycle_count=result.get("cycle_count", 0),
@@ -174,13 +174,13 @@ def verification_to_aletheia(result: dict) -> AletheiaPrim:
     )
 
 
-def aletheia_to_verification(prim: AletheiaPrim) -> dict:
-    """Convert AletheiaPrim back to VerificationResult-shaped dict."""
+def elenchus_to_verification(prim: ElenchusPrim) -> dict:
+    """Convert ElenchusPrim back to VerificationResult-shaped dict."""
     if prim.gate_status is None:
         return {"state": "deferred", "cycle_count": 0}
 
     gs = prim.gate_status
-    state_str = _USD_TO_ALETHEIA_STATE.get(gs.verification_state, "unprovable")
+    state_str = _USD_TO_ELENCHUS_STATE.get(gs.verification_state, "unprovable")
     return {
         "state": state_str,
         "cycle_count": gs.cycle_count,

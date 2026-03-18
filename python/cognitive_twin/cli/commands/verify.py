@@ -1,4 +1,4 @@
-"""twin verify — Verify a composition stage resolution via the Aletheia Engine."""
+"""twin verify — Verify a composition stage resolution via the Elenchus Engine."""
 
 import json
 
@@ -17,7 +17,7 @@ from ..ipc import send_command
 )
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON for LLM consumption")
 def verify(id: str, depth: str, as_json: bool):
-    """Verify a composition stage resolution via the Aletheia Verification Engine."""
+    """Verify a composition stage resolution via the Elenchus Verification Engine."""
     result = send_command("verify", {"stage_id": id, "depth": depth})
 
     if result.get("status") == "error":

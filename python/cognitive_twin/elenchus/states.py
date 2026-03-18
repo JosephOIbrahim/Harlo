@@ -1,4 +1,4 @@
-"""Aletheia verification states and result container.
+"""Elenchus verification states and result container.
 
 Defines the possible outcomes of the Generate-Verify-Revise protocol.
 Rule 12: Only VERIFIED resolutions become reflexes.

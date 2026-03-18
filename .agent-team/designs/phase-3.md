@@ -51,7 +51,7 @@ Tiers: "new" (< 0.3), "familiar" (0.3–0.7), "trusted" (>= 0.7)
 
 ---
 
-## 4. Coach.md Integration
+## 4. Coach Core Integration
 - Coach projection reads trust score and adjusts behavior directive
 - New: minimal context; Familiar: full context; Trusted: proactive pushback
 

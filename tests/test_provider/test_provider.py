@@ -261,7 +261,7 @@ class TestGeneratePipeline:
                 os.unlink(db)
 
     def test_generate_includes_verification(self):
-        """generate() should include Aletheia verification result."""
+        """generate() should include Elenchus verification result."""
         from cognitive_twin.brainstem.generate import generate
 
         db = tempfile.mktemp(suffix=".db")

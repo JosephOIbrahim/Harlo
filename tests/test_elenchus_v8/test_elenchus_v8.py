@@ -1,16 +1,16 @@
-"""Tests for Aletheia v8 deferred verification."""
+"""Tests for Elenchus v8 deferred verification."""
 
 from __future__ import annotations
 
 import pytest
 
-from cognitive_twin.aletheia_v8 import AletheiaQueue
+from cognitive_twin.elenchus_v8 import ElenchusQueue
 
 
 @pytest.fixture
 def queue(tmp_path):
-    """Create an AletheiaQueue with temp DB."""
-    return AletheiaQueue(str(tmp_path / "aletheia.db"))
+    """Create an ElenchusQueue with temp DB."""
+    return ElenchusQueue(str(tmp_path / "elenchus.db"))
 
 
 class TestQueueClaim:
@@ -144,10 +144,10 @@ class TestQueuePersistence:
     def test_persists_across_instances(self, tmp_path):
         """Claims survive queue restart."""
         db = str(tmp_path / "persist.db")
-        q1 = AletheiaQueue(db)
+        q1 = ElenchusQueue(db)
         cid = q1.queue_claim("persistent claim")
 
-        q2 = AletheiaQueue(db)
+        q2 = ElenchusQueue(db)
         pending = q2.get_pending()
         assert len(pending) == 1
         assert pending[0].claim_id == cid

@@ -1,4 +1,4 @@
-"""Aletheia v8 — deferred verification via Actor.
+"""Elenchus v8 — deferred verification via Actor.
 
 Observer queues unverified claims. Actor verifies when connected.
 No local LLM required. "Renting cloud LLM compute to verify
@@ -31,7 +31,7 @@ class PendingClaim:
     status: str  # "pending", "verified", "rejected"
 
 
-class AletheiaQueue:
+class ElenchusQueue:
     """Manages the pending verification queue.
 
     Observer evaluates structural/heuristic checks locally.
@@ -40,7 +40,7 @@ class AletheiaQueue:
     """
 
     def __init__(self, db_path: str) -> None:
-        """Initialize Aletheia queue.
+        """Initialize Elenchus queue.
 
         Args:
             db_path: Path to SQLite database file.
@@ -49,7 +49,7 @@ class AletheiaQueue:
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(db_path)
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS aletheia_pending (
+            CREATE TABLE IF NOT EXISTS elenchus_pending (
                 claim_id TEXT PRIMARY KEY,
                 claim_text TEXT NOT NULL,
                 source_traces TEXT NOT NULL DEFAULT '[]',
@@ -85,7 +85,7 @@ class AletheiaQueue:
         conn = sqlite3.connect(self._db_path)
         try:
             conn.execute(
-                "INSERT INTO aletheia_pending "
+                "INSERT INTO elenchus_pending "
                 "(claim_id, claim_text, source_traces, structural_score, timestamp, status) "
                 "VALUES (?, ?, ?, ?, ?, 'pending')",
                 (
@@ -115,7 +115,7 @@ class AletheiaQueue:
         try:
             cursor = conn.execute(
                 "SELECT claim_id, claim_text, source_traces, structural_score, timestamp, status "
-                "FROM aletheia_pending WHERE status = 'pending' "
+                "FROM elenchus_pending WHERE status = 'pending' "
                 "ORDER BY timestamp ASC LIMIT ?",
                 (limit,),
             )
@@ -138,7 +138,7 @@ class AletheiaQueue:
         conn = sqlite3.connect(self._db_path)
         try:
             cursor = conn.execute(
-                "UPDATE aletheia_pending SET status = ? WHERE claim_id = ? AND status = 'pending'",
+                "UPDATE elenchus_pending SET status = ? WHERE claim_id = ? AND status = 'pending'",
                 (new_status, claim_id),
             )
             conn.commit()
@@ -148,7 +148,7 @@ class AletheiaQueue:
 
             row = conn.execute(
                 "SELECT claim_id, claim_text, source_traces, structural_score, timestamp, status "
-                "FROM aletheia_pending WHERE claim_id = ?",
+                "FROM elenchus_pending WHERE claim_id = ?",
                 (claim_id,),
             ).fetchone()
 
@@ -169,7 +169,7 @@ class AletheiaQueue:
         conn = sqlite3.connect(self._db_path)
         try:
             row = conn.execute(
-                "SELECT COUNT(*) FROM aletheia_pending WHERE status = 'pending'"
+                "SELECT COUNT(*) FROM elenchus_pending WHERE status = 'pending'"
             ).fetchone()
             return row[0] if row else 0
         finally:
@@ -181,7 +181,7 @@ class AletheiaQueue:
         try:
             cursor = conn.execute(
                 "SELECT claim_id, claim_text, source_traces, structural_score, timestamp, status "
-                "FROM aletheia_pending WHERE status = ? ORDER BY timestamp ASC",
+                "FROM elenchus_pending WHERE status = ? ORDER BY timestamp ASC",
                 (status,),
             )
             return [self._row_to_claim(row) for row in cursor.fetchall()]

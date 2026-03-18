@@ -27,7 +27,7 @@ This is the **final, doubly-reviewed** v7.0 agent team kit. Six patches from Gem
 | Rule 2: Verify Every Mutation | **Basal Ganglia Gate** — default INHIBIT, must pass to proceed | Claude Code understands inhibition-default because it's implementing it |
 | Rule 3: Circuit Breaker | **UNPROVABLE** — park with dignity, metadata, partial progress | "Stop and surface" becomes a first-class state, not a failure |
 | Rule 5: Role Isolation | **Trace Exclusion (Rule 11)** — structural separation, not policy | Role boundaries feel structural because the same pattern is in the code |
-| Rule 7: Adversarial Verification | **Crucible IS Aletheia** — blind verification, spec-gaming detection | The verifier pattern is the same one being built |
+| Rule 7: Adversarial Verification | **Crucible IS Elenchus** — blind verification, spec-gaming detection | The verifier pattern is the same one being built |
 
 ### Projected Scores Post-Execution
 
@@ -42,7 +42,7 @@ This is the **final, doubly-reviewed** v7.0 agent team kit. Six patches from Gem
 
 **Why Biomimicry hits 9.5:** Hebb's rule (1949) + Kahneman's System 1/System 2 + hippocampal fragment reconstruction + neuropsych-informed personal baseline + apoptosis/reconstruction lifecycle. The system doesn't just mimic brain structures — it calibrates to individual cognitive profiles.
 
-**The remaining 0.5 to 10:** Real-world validation at scale, training the Aletheia classifier on accumulated data, publishing results.
+**The remaining 0.5 to 10:** Real-world validation at scale, training the Elenchus classifier on accumulated data, publishing results.
 
 ---
 
@@ -89,7 +89,7 @@ Phase 5: hebbian/ (dual masks) + reconstruction (reconsolidation) + data  → Ga
 
 - **New modules:** `usd_lite/`, `brainstem/`, `intake/`, `skills/`, `hebbian/`
 - **New MCP tools:** `twin_skills` (#6), `twin_intake` (#7)
-- **New data:** `data/aletheia_training.jsonl` (with `cognitive_profile_features`)
+- **New data:** `data/elenchus_training.jsonl` (with `cognitive_profile_features`)
 - **New capabilities:** Dual-process routing (Z-score), episodic reconstruction (with reconsolidation boost), cognitive profile calibration, structured provenance, Hebbian neuroplasticity (dual-mask, Merkle-safe, O(1) training data)
 - **Modified:** `session/`, `mcp_server.py`, `composition/`, subsystem adapters
 - **Deleted:** `bridge/` (Phase 4)

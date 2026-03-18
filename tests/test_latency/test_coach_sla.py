@@ -1,6 +1,6 @@
-"""Coach.md projection SLA enforcement tests.
+"""Coach Core projection SLA enforcement tests.
 
-SLA: Coach.md projection < 10ms.
+SLA: Coach Core projection < 10ms.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ def populated_db(tmp_path):
 
 
 class TestCoachSLA:
-    """SLA: Coach.md projection < 10ms."""
+    """SLA: Coach Core projection < 10ms."""
 
     def test_projection_under_10ms(self, populated_db):
         """100 projection calls, p99 < 10ms."""

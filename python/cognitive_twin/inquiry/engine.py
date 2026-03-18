@@ -11,7 +11,7 @@ Orchestrates all inquiry subsystems:
 - Consent
 - DMN window (S6)
 
-S2: Inquiry outputs bypass Aletheia truth (tone only). Handled by brainstem.
+S2: Inquiry outputs bypass Elenchus truth (tone only). Handled by brainstem.
 S4: Utility mode mutes DMN. Behavioral traces invisible.
 Rule 1: No blocking waits, no infinite loops.
 """
@@ -289,7 +289,7 @@ class InquiryEngine:
     @staticmethod
     def synthesize(
         patterns: list,
-        aletheia_state: dict | None = None,
+        elenchus_state: dict | None = None,
         max_candidates: int = 2,
     ) -> list:
         """Legacy synthesis interface for backward compatibility.

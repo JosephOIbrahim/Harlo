@@ -12,7 +12,7 @@ import pytest
 
 from cognitive_twin.usd_lite.arc_types import ArcType
 from cognitive_twin.usd_lite.prims import (
-    AletheiaPrim,
+    ElenchusPrim,
     AssociationPrim,
     CognitiveProfilePrim,
     CompositionLayerPrim,
@@ -221,7 +221,7 @@ def BrainStage "Brain"
     def CompositionPrim "Composition"
     {
     }
-    def AletheiaPrim "Aletheia"
+    def ElenchusPrim "Elenchus"
     {
     }
     def InquiryContainerPrim "Inquiry"

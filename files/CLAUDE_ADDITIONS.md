@@ -61,7 +61,7 @@ tests/test_brainstem/                # Phase 2 tests (fidelity, routing)
 tests/test_intake/                   # Phase 4 tests (adaptive, multipliers, ceiling)
 tests/test_skills/                   # Phase 4 tests
 tests/test_hebbian/                  # Phase 5 tests (stability, merkle isolation, reconstruction, training data)
-data/                                # Phase 5: aletheia_training.jsonl output
+data/                                # Phase 5: elenchus_training.jsonl output
 ```
 
 ### Frozen Boundaries (v7.0)
@@ -74,7 +74,7 @@ python/cognitive_twin/encoder/       # NEVER TOUCH — SDR encoding pipeline
 - Dataclasses for all schema types (no raw dicts for USD prims)
 - Type hints on all public functions
 - Docstring on every function (one sentence minimum)
-- Import style: match existing modules (see aletheia/, composition/)
+- Import style: match existing modules (see elenchus/, composition/)
 - Error handling: raise typed exceptions, never bare except
 - No `sleep()`, no `while True`, no background threads (Rule 33)
 

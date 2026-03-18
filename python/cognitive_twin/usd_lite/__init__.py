@@ -8,7 +8,7 @@ from .arc_types import ArcType
 from .composer import CompositionResult, compose
 from .hex_sdr import hex_to_sdr, sdr_to_hex
 from .prims import (
-    AletheiaPrim,
+    ElenchusPrim,
     AssociationPrim,
     CognitiveProfilePrim,
     CompositionLayerPrim,
@@ -36,7 +36,7 @@ from .stage import BrainStage
 
 __all__ = [
     "ArcType",
-    "AletheiaPrim",
+    "ElenchusPrim",
     "AssociationPrim",
     "BrainStage",
     "CognitiveProfilePrim",

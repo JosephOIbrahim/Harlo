@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ..aletheia.intent import check_intent_alignment, extract_intent
+from ..elenchus.intent import check_intent_alignment, extract_intent
 
 
 def check_intent_preserved(
@@ -58,7 +58,7 @@ def check_intent_preserved(
         result["drift_reason"] = "Empty resolution output"
         return result
 
-    # Use Aletheia's alignment checker
+    # Use Elenchus's alignment checker
     aligned = check_intent_alignment(cleaned_intent, output_text)
     result["preserved"] = aligned
 

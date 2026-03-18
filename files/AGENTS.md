@@ -36,9 +36,9 @@ that detects it.
 Authority boundaries are structural. Forge reads the Architect's design artifact, not
 its reasoning. Disagreements are notes, not unilateral action.
 
-### Rule 7 → ALETHEIA PATTERN: Adversarial Verification
+### Rule 7 → ELENCHUS PATTERN: Adversarial Verification
 
-The Crucible IS Aletheia. Blind verification. Spec-gaming detection.
+The Crucible IS Elenchus. Blind verification. Spec-gaming detection.
 Fix the code, never weaken the test.
 
 ### Rules 1, 4, 6, 8, 9, 10 (Generic)
@@ -73,10 +73,10 @@ Phase 5: Hebbian + Reconstruction + Data     → Gate 5a + 5b + 5c + 5d
 **Per-phase responsibilities:**
 
 - **Phase 1:** Design `usd_lite/` — dataclasses (including Provenance, surprise/confidence session fields, CognitiveProfile types, Hebbian dual-mask config as forward-declared types), `.usda` stringifier with compact hex encoding for 2048-bit arrays (Patch 9), `BrainStage.__eq__` with `math.isclose()` for float fields, LIVRPS composition with permanent-prim handling.
-- **Phase 2:** Design `brainstem/` — `to_stage()`, `from_stage()`, `full_stage()`, `aletheia_stage()`, Merkle hashing. **NEW:** Design the surprise metric computation (Z-score over rolling mean/std_dev of last 100 best-hamming values, with `max(std_dev, 1.0)` cold-start floor), the dual-process routing logic (threshold-based escalation from Association to Composition), and the `/Session` prim updates (`surprise_rolling_mean`, `surprise_rolling_std`, `last_query_surprise`, `last_retrieval_path`). Design `conftest.py` Hypothesis strategies.
+- **Phase 2:** Design `brainstem/` — `to_stage()`, `from_stage()`, `full_stage()`, `elenchus_stage()`, Merkle hashing. **NEW:** Design the surprise metric computation (Z-score over rolling mean/std_dev of last 100 best-hamming values, with `max(std_dev, 1.0)` cold-start floor), the dual-process routing logic (threshold-based escalation from Association to Composition), and the `/Session` prim updates (`surprise_rolling_mean`, `surprise_rolling_std`, `last_query_surprise`, `last_retrieval_path`). Design `conftest.py` Hypothesis strategies.
 - **Phase 3:** Design subsystem adapter interfaces. Design `bridge/` deprecation shim. **NEW:** Design the structured Provenance dataclass migration — how existing layers get `SYSTEM_INFERRED` provenance, how new layers populate automatically.
 - **Phase 4:** Design `skills/` (with incremental `last_processed_timestamp` cursor for ghost window compliance — Patch 10), `twin_skills` MCP tool contract, `intake/`, `twin_intake` MCP tool contract, `migrate_v7.py`, `bridge/` deletion checklist. **NEW:** Design the intake's continuous [0.0, 1.0] scoring with deterministic linear interpolation, semantic `user_disengaged` ceiling detection, and multiplier derivation rubric.
-- **Phase 5:** Design `hebbian/` — co-activation tracking, bit-level strengthening/weakening math, stability constraints, homeostatic plasticity, lazy decay interaction. **NEW:** Hebbian deltas stored as dual directional masks (`strengthen_mask`, `weaken_mask`) in `[V] Variant` USD layer (not destructive SQLite mutation). `effective_sdr = (base_sdr | strengthen_mask) & ~weaken_mask` — NOT XOR (Patch 7). Design episodic context reconstruction with apoptosis twilight zone clamp `max(apoptosis_threshold + 0.05, threshold)` and reconsolidation boost on user-facing retrieval (Patch 11). Design Aletheia training data pipeline with `cognitive_profile_hash` AND `cognitive_profile_features` (full float vector), using O(1) log rotation (Patch 8).
+- **Phase 5:** Design `hebbian/` — co-activation tracking, bit-level strengthening/weakening math, stability constraints, homeostatic plasticity, lazy decay interaction. **NEW:** Hebbian deltas stored as dual directional masks (`strengthen_mask`, `weaken_mask`) in `[V] Variant` USD layer (not destructive SQLite mutation). `effective_sdr = (base_sdr | strengthen_mask) & ~weaken_mask` — NOT XOR (Patch 7). Design episodic context reconstruction with apoptosis twilight zone clamp `max(apoptosis_threshold + 0.05, threshold)` and reconsolidation boost on user-facing retrieval (Patch 11). Design Elenchus training data pipeline with `cognitive_profile_hash` AND `cognitive_profile_features` (full float vector), using O(1) log rotation (Patch 8).
 
 **Rules:** Read spec first (Rule 1). Match existing patterns (Rule 1). Complete designs only (Rule 4). Design only, no code (Rule 5).
 
@@ -117,7 +117,7 @@ Phase 5: Hebbian + Reconstruction + Data     → Gate 5a + 5b + 5c + 5d
 
 ### Phase 2 — Gate 2a + 2b + 2c
 - [ ] `from_stage(to_stage(x)) == x` for every subsystem, Hypothesis 1000+ examples
-- [ ] `aletheia_stage()` output contains zero traces (structural inspection)
+- [ ] `elenchus_stage()` output contains zero traces (structural inspection)
 - [ ] Merkle hash correctly computed over `/Association/Traces`
 - [ ] **[Patch 1] Surprise Z-score:** `surprise = (best_hamming - rolling_mean) / max(rolling_std_dev, 1.0)` computes correctly
 - [ ] **[Patch 1] Z-score default:** Escalation triggers at Z-score > 2.0 when no profile exists

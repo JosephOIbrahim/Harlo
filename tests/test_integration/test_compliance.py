@@ -207,20 +207,20 @@ class TestRule11_TraceExclusion:
     """Rule 11: verify() NEVER receives reasoning trace."""
 
     def test_verify_rejects_trace(self):
-        from cognitive_twin.aletheia.verifier import verify
+        from cognitive_twin.elenchus.verifier import verify
 
         with pytest.raises(ValueError, match="RULE 11"):
             verify("test intent", "test output", reasoning_trace="some trace")
 
     def test_verify_accepts_none_trace(self):
-        from cognitive_twin.aletheia.verifier import verify
+        from cognitive_twin.elenchus.verifier import verify
 
         # Should not raise
         result = verify("What is 2+2?", "4 is the answer.", reasoning_trace=None)
         assert result is not None
 
     def test_verify_accepts_absent_trace(self):
-        from cognitive_twin.aletheia.verifier import verify
+        from cognitive_twin.elenchus.verifier import verify
 
         # Default parameter — should not raise
         result = verify("What is 2+2?", "4 is the answer.")
@@ -268,8 +268,8 @@ class TestRule13_Max3GVR:
     """Rule 13: ADHD guard. After cycle 3, promote FIXABLE to UNPROVABLE."""
 
     def test_gvr_terminates_after_3(self):
-        from cognitive_twin.aletheia.protocol import run_gvr
-        from cognitive_twin.aletheia.states import VerificationState
+        from cognitive_twin.elenchus.protocol import run_gvr
+        from cognitive_twin.elenchus.states import VerificationState
 
         # Provide an output that is always FIXABLE (too short for intent)
         result = run_gvr(
@@ -287,8 +287,8 @@ class TestRule13_Max3GVR:
         )
 
     def test_gvr_hard_cap(self):
-        from cognitive_twin.aletheia.protocol import run_gvr
-        from cognitive_twin.aletheia.states import VerificationState
+        from cognitive_twin.elenchus.protocol import run_gvr
+        from cognitive_twin.elenchus.states import VerificationState
 
         call_count = 0
 
@@ -551,30 +551,30 @@ class TestSafeguardS2_EpistemologicalBypass:
     """S2: Inquiry outputs bypass truth, composition does not."""
 
     def test_inquiry_source_bypasses(self):
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
 
-        assert should_bypass_aletheia(
+        assert should_bypass_elenchus(
             source="inquiry", tags=[], consumer="inquiry"
         ) is True
 
     def test_self_reported_inquiry_bypasses(self):
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
 
-        assert should_bypass_aletheia(
+        assert should_bypass_elenchus(
             source="user", tags=["self_reported"], consumer="inquiry"
         ) is True
 
     def test_self_reported_composition_no_bypass(self):
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
 
-        assert should_bypass_aletheia(
+        assert should_bypass_elenchus(
             source="user", tags=["self_reported"], consumer="composition"
         ) is False
 
     def test_composition_gets_standard_verification(self):
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
 
-        assert should_bypass_aletheia(
+        assert should_bypass_elenchus(
             source="composition", tags=[], consumer="composition"
         ) is False
 

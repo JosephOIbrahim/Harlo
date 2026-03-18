@@ -9,7 +9,7 @@ from __future__ import annotations
 from hypothesis import HealthCheck, given, settings
 
 from cognitive_twin.brainstem.adapters import (
-    aletheia_to_verification,
+    elenchus_to_verification,
     composition_to_layers,
     inquiries_to_prims,
     layers_to_composition,
@@ -20,7 +20,7 @@ from cognitive_twin.brainstem.adapters import (
     recall_to_traces,
     session_to_prim,
     traces_to_recall,
-    verification_to_aletheia,
+    verification_to_elenchus,
 )
 
 from .conftest import (
@@ -50,13 +50,13 @@ class TestCompositionFidelity:
 
 
 class TestVerificationFidelity:
-    """VerificationResult round-trip through AletheiaPrim."""
+    """VerificationResult round-trip through ElenchusPrim."""
 
     @given(result=verification_result_dicts())
     @settings(max_examples=200, suppress_health_check=[HealthCheck.too_slow])
     def test_roundtrip(self, result) -> None:
-        prim = verification_to_aletheia(result)
-        restored = aletheia_to_verification(prim)
+        prim = verification_to_elenchus(result)
+        restored = elenchus_to_verification(prim)
         # State mapping is lossy (deferred→unprovable, etc) so check cycle_count
         assert restored["cycle_count"] == result["cycle_count"]
         # Verify state is one of the valid output states

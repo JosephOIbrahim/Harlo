@@ -11,7 +11,7 @@ Complete v7 to v8 rewrite per the Surgical Directives ADR. 7 phases executed via
 1. **Encoding & Hot Path** — Zero-encoding Hot Tier (SQLite + FTS5, <0.2ms store p99), ONNX Runtime encoder (BGE-small CLS pooling, Hamming correlation >= 0.95), Hot→Warm promotion pipeline
 2. **Disaggregation** — Killed `twin_ask`, removed `ANTHROPIC_API_KEY` from MCP server, built Observer (background promotion, no LLM deps), built Coach (stage → Anthropic XML system prompt projection)
 3. **Trust & Cognitive Profile** — Continuous [0.0, 1.0] Trust Ledger with 3-tier gating (new/familiar/trusted), `trigger_cognitive_recalibration` MCP tool
-4. **Aletheia Deferral** — Pending verification queue (SQLite-backed), Actor-side `resolve_verifications` MCP tool, Coach.md injects pending claims
+4. **Elenchus Deferral** — Pending verification queue (SQLite-backed), Actor-side `resolve_verifications` MCP tool, Coach Core injects pending claims
 5. **Temporal Compaction** — Replay-then-archive engine with decay commutation invariant, recoverable archives at `.usda.archive/`
 6. **Federated Recall** — `query_past_experience` searches Hot (FTS5) + Warm (SDR Hamming) simultaneously, normalizes scores, deduplicates, merges ranked results
 7. **Test Suite + SLAs** — Latency SLA enforcement (store <2ms, FTS5 <2ms, Coach <10ms)
@@ -26,7 +26,7 @@ Complete v7 to v8 rewrite per the Surgical Directives ADR. 7 phases executed via
 | `twin_coach` | **NEW** — system prompt projection |
 | `twin_patterns` | KEPT |
 | `twin_session_status` | KEPT |
-| `resolve_verifications` | **NEW** — Actor-side Aletheia |
+| `resolve_verifications` | **NEW** — Actor-side Elenchus |
 | `trigger_cognitive_recalibration` | **NEW** — intake/trust reset |
 | `twin_ask` | **DELETED** — Actor reasons, Twin stores |
 
@@ -34,9 +34,9 @@ Complete v7 to v8 rewrite per the Surgical Directives ADR. 7 phases executed via
 
 - `python/cognitive_twin/hot_store/` — Hot Tier (L1) with FTS5 + promotion pipeline
 - `python/cognitive_twin/observer/` — Background Hot→Warm SDR promotion
-- `python/cognitive_twin/coach/` — Coach.md system prompt projection
+- `python/cognitive_twin/coach/` — Coach Core system prompt projection
 - `python/cognitive_twin/trust/` — Trust Ledger + cognitive recalibration
-- `python/cognitive_twin/aletheia_v8/` — Deferred verification queue
+- `python/cognitive_twin/elenchus_v8/` — Deferred verification queue
 - `python/cognitive_twin/compaction/` — Temporal compaction engine
 - `python/cognitive_twin/federated_recall.py` — Federated Hot+Warm query
 - `python/cognitive_twin/encoder/onnx_encoder.py` — ONNX Runtime BGE encoder
@@ -75,9 +75,9 @@ Complete v6 to v7 rewrite informed by 2026 frontier research (Titans, Mnemis, SS
 
 1. **USD-Lite Container** — 17 typed prim dataclasses, `.usda` serialization, LIVRPS composition, hex SDR encoding (512-char strings), float tolerance via `math.isclose()`
 2. **Brainstem Translation** — Lossless adapter pairs with Hypothesis property-based fidelity proofs, Z-score surprise metric, dual-process routing (System 1/System 2), structured provenance (5 source types)
-3. **Aletheia + Composition** — Already existed in v6, integrated with brainstem stage builder
+3. **Elenchus + Composition** — Already existed in v6, integrated with brainstem stage builder
 4. **Cognitive Profile Intake** — Adaptive questionnaire, continuous [0.0, 1.0] scoring, personal multipliers, semantic ceiling detection (disengagement-based, not answer length). Incremental skills observer with cursor-based O(new_traces) processing
-5. **Hebbian Neuroplasticity** — Dual-mask SDR evolution (`(base | strengthen) & ~weaken`), homeostatic plasticity [3%-5%], episodic context reconstruction, reconsolidation boost (user-retrieval gated), Aletheia training data pipeline (JSONL with full cognitive profile feature vector)
+5. **Hebbian Neuroplasticity** — Dual-mask SDR evolution (`(base | strengthen) & ~weaken`), homeostatic plasticity [3%-5%], episodic context reconstruction, reconsolidation boost (user-retrieval gated), Elenchus training data pipeline (JSONL with full cognitive profile feature vector)
 
 ### 11 Gemini-reviewed patches applied
 
@@ -125,4 +125,4 @@ Complete v6 to v7 rewrite informed by 2026 frontier research (Titans, Mnemis, SS
 
 ## v6.0.0 — Motor Cortex
 
-Initial public architecture with Association Engine (Rust), Composition Engine, Aletheia verification, Inquiry/DMN, Motor Cortex with Basal Ganglia gating, and 33 inviolable rules.
+Initial public architecture with Association Engine (Rust), Composition Engine, Elenchus verification, Inquiry/DMN, Motor Cortex with Basal Ganglia gating, and 33 inviolable rules.

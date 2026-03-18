@@ -232,7 +232,7 @@ def twin_session_status() -> str:
 
 @server.tool()
 def resolve_verifications(verdicts: list[dict]) -> str:
-    """Resolve pending Aletheia verification claims.
+    """Resolve pending Elenchus verification claims.
 
     The Actor evaluates pending claims and submits boolean verdicts.
     Each verdict dict must have 'claim_id' (str) and 'verdict' (bool).
@@ -243,9 +243,9 @@ def resolve_verifications(verdicts: list[dict]) -> str:
     _ensure_data_dir()
 
     try:
-        from cognitive_twin.aletheia_v8 import AletheiaQueue
+        from cognitive_twin.elenchus_v8 import ElenchusQueue
 
-        queue = AletheiaQueue(str(DATA_DIR / "twin.db"))
+        queue = ElenchusQueue(str(DATA_DIR / "twin.db"))
         results = []
         for v in verdicts:
             claim = queue.resolve(v["claim_id"], v["verdict"])

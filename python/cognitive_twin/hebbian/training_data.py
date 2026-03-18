@@ -1,4 +1,4 @@
-"""Aletheia training data pipeline — JSONL with profile features.
+"""Elenchus training data pipeline — JSONL with profile features.
 
 Patch 5: cognitive_profile_features (full float vector) alongside hash.
 Patch 8: O(1) log rotation at max_rows (10,000).
@@ -19,7 +19,7 @@ from typing import Optional
 from ..usd_lite.prims import CognitiveProfilePrim
 
 _DEFAULT_DATA_DIR = Path("data")
-_DEFAULT_FILENAME = "aletheia_training.jsonl"
+_DEFAULT_FILENAME = "elenchus_training.jsonl"
 _MAX_ROWS = 10_000
 _MAX_ROTATED_FILES = 3
 
@@ -129,12 +129,12 @@ def _maybe_rotate(filepath: Path, data_dir: Path) -> None:
 
     # Rotate: rename to timestamped file (microseconds for uniqueness)
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%f")
-    rotated_name = f"aletheia_training.{ts}.jsonl"
+    rotated_name = f"elenchus_training.{ts}.jsonl"
     rotated_path = data_dir / rotated_name
     filepath.replace(rotated_path)  # replace() works cross-platform
 
     # Cleanup: retain at most MAX_ROTATED_FILES
-    rotated_files = sorted(data_dir.glob("aletheia_training.*.jsonl"))
+    rotated_files = sorted(data_dir.glob("elenchus_training.*.jsonl"))
     excess = len(rotated_files) - _MAX_ROTATED_FILES
     if excess > 0:
         for old_file in rotated_files[:excess]:

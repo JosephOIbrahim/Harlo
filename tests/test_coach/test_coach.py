@@ -1,4 +1,4 @@
-"""Tests for Coach.md projection engine."""
+"""Tests for Coach Core projection engine."""
 
 from __future__ import annotations
 

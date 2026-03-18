@@ -1,4 +1,4 @@
-"""Coach.md — system prompt projection from Twin state.
+"""Coach Core — system prompt projection from Twin state.
 
 Reads current state from HotStore and session manager, produces
 an Anthropic XML system prompt block for Claude (the Actor).
@@ -138,10 +138,10 @@ def _get_trust_score(db_path: str) -> float:
 
 
 def _get_pending_claims(db_path: str) -> list[dict]:
-    """Get pending Aletheia claims for Coach injection."""
+    """Get pending Elenchus claims for Coach injection."""
     try:
-        from cognitive_twin.aletheia_v8 import AletheiaQueue
-        queue = AletheiaQueue(db_path)
+        from cognitive_twin.elenchus_v8 import ElenchusQueue
+        queue = ElenchusQueue(db_path)
         claims = queue.get_pending(limit=5)
         return [
             {"claim_id": c.claim_id, "claim_text": c.claim_text}

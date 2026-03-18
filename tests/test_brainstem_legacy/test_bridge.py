@@ -135,9 +135,9 @@ class TestEpistemologicalBypass:
     """Safeguard S2: Directional epistemological bypass."""
 
     def test_inquiry_bypasses_truth_check(self):
-        """Inquiry outputs bypass Aletheia truth (tone only)."""
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
-        result = should_bypass_aletheia(
+        """Inquiry outputs bypass Elenchus truth (tone only)."""
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
+        result = should_bypass_elenchus(
             source="inquiry",
             tags=["self_reported"],
             consumer="inquiry",
@@ -146,8 +146,8 @@ class TestEpistemologicalBypass:
 
     def test_composition_gets_standard_verification(self):
         """Self-reported consumed by composition → standard verification."""
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_aletheia
-        result = should_bypass_aletheia(
+        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
+        result = should_bypass_elenchus(
             source="user",
             tags=["self_reported"],
             consumer="composition",

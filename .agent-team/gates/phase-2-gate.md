@@ -9,7 +9,7 @@
 - `import os` removed from MCP server (was only used for ANTHROPIC_API_KEY)
 - Daemon router "ask" handler removed
 
-## Gate 2b: Coach.md Projection — PASS
+## Gate 2b: Coach Core Projection — PASS
 - `twin_coach` returns valid Anthropic XML with cognitive-twin-context tags
 - Includes: trust-level, session info, recent-traces, patterns-detected
 - Deterministic: same input → same output (verified)

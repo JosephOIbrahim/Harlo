@@ -19,7 +19,7 @@ class Resolution:
     merkle_root: str
     outcome: dict               # Resolved attribute -> value
     trace: list                 # Per-attribute resolution trace
-    gvr_state: Optional[dict] = None  # Filled by Aletheia later
+    gvr_state: Optional[dict] = None  # Filled by Elenchus later
 
 
 def resolve(stage: MerkleStage) -> Resolution:

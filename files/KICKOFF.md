@@ -21,7 +21,7 @@ Read CLAUDE.md for frozen boundaries, verification commands, and coding conventi
 - **Rule 2 = Basal Ganglia Gate:** Every mutation is gated. Default state is INHIBIT.
 - **Rule 3 = UNPROVABLE:** 3 failures → park with dignity. Reason, what_would_help, partial_progress.
 - **Rule 5 = Trace Exclusion:** Role boundaries are structural. Forge reads the design, not the reasoning.
-- **Rule 7 = Crucible IS Aletheia:** Blind verification. Spec-gaming detection. Fix forward, never weaken tests.
+- **Rule 7 = Crucible IS Elenchus:** Blind verification. Spec-gaming detection. Fix forward, never weaken tests.
 
 ## PHASE EXECUTION ORDER
 
@@ -45,9 +45,9 @@ These constraints strictly bound the v7.0 refactor. No phase may violate any of 
 
 1. **The Rust Hot Path:** `crates/hippocampus/` remains untouched. Sub-2ms XOR + popcount recall is the performance core. USD is strictly for serialization/composition, not compute.
 2. **Zero-Watt Lifecycle (Rule 33):** Socket-activated daemon. No background polling, no `while True` loops. Operations run on demand or during the 30-second teardown ghost window.
-3. **Trace Exclusion (Rule 11):** Aletheia is physically forbidden from seeing reasoning traces. Enforced structurally, not by filtering. Two Brainstem construction paths:
+3. **Trace Exclusion (Rule 11):** Elenchus is physically forbidden from seeing reasoning traces. Enforced structurally, not by filtering. Two Brainstem construction paths:
    - Path A (`full_stage()`): Complete USD stage with all prims including `/Association` traces. Used for session capsules, export, skill building.
-   - Path B (`aletheia_stage()`): Restricted input set that structurally cannot include `/Association` or any reasoning trace data. Aletheia receives only its own state, gate status, and the Merkle root. Never trace content.
+   - Path B (`elenchus_stage()`): Restricted input set that structurally cannot include `/Association` or any reasoning trace data. Elenchus receives only its own state, gate status, and the Merkle root. Never trace content.
 4. **Lazy Decay Model (Rule 4):** `strength = initial · e^(-λt) + Σ(retrieval_boosts)`. Decay is evaluated on read, not maintained by a background process.
 5. **Existing 5 MCP Tools:** `twin_store`, `twin_recall`, `twin_ask`, `twin_patterns`, `twin_session_status` remain. Phase 4 adds `twin_skills` (#6) and `twin_intake` (#7).
 6. **SQLite as Source of Truth:** `.usda` files are computed views, never replacements.
@@ -90,7 +90,7 @@ Every subsystem writes to a shared USD stage. Each subsystem owns a layer. LIVRP
         timestamp: datetime
         provenance: Provenance     # Phase 3: structured dataclass
         permanent: bool            # Amygdala reflexes = immutable
-  /Aletheia                         # Verification engine state
+  /Elenchus                         # Verification engine state
     /GateStatus
       verification_state: enum     # TRUSTED, CONTESTED, REFUTED, PENDING
       cycle_count: int
@@ -160,7 +160,7 @@ The Brainstem converts any subsystem's native format to/from the USD stage with 
 For every adapter: `assert from_stage(to_stage(native_data)) == native_data`. This is tested with Hypothesis (property-based testing) to cover edge cases automatically.
 
 #### 2.2.4 Merkle Integrity
-The Brainstem computes a Merkle hash over the `/Association/Traces` subtree. This hash is stored at `/Aletheia/MerkleRoot/root_hash`. Any bit-flip in any trace is detectable by comparing the recomputed hash against the stored one.
+The Brainstem computes a Merkle hash over the `/Association/Traces` subtree. This hash is stored at `/Elenchus/MerkleRoot/root_hash`. Any bit-flip in any trace is detectable by comparing the recomputed hash against the stored one.
 
 **CRITICAL (Patch 4 — Merkle Isolation, refined by Patch 7 — Dual Masks):** Hebbian modifications are NOT applied destructively to the base SDR stored in SQLite. Instead, Hebbian deltas are stored as two directional masks in a `[V] Variant` USD layer: `hebbian_strengthen_mask` (bits to force ON) and `hebbian_weaken_mask` (bits to force OFF). The effective SDR for recall is computed as: `effective_sdr = (base_sdr | strengthen_mask) & ~weaken_mask`. This avoids the XOR toggle flaw where reinforcing a bit that's already 1 would inadvertently flip it to 0. Set/clear is idempotent: reinforcing a 1 keeps it 1, weakening a 0 keeps it 0. The base trace in SQLite stays pristine. The Merkle hash is computed over the base traces only. This prevents Hebbian learning from triggering false-positive corruption detection.
 
@@ -274,7 +274,7 @@ Create `python/cognitive_twin/brainstem/`:
 - `to_stage(native_data, subsystem) → Stage`: Convert any subsystem's output to USD prims.
 - `from_stage(stage, subsystem) → native_data`: Convert back.
 - `full_stage() → Stage`: Complete brain state (for session capsules, export, skill building).
-- `aletheia_stage() → Stage`: Restricted stage (for Aletheia — NO `/Association`, NO traces).
+- `elenchus_stage() → Stage`: Restricted stage (for Elenchus — NO `/Association`, NO traces).
 - Merkle hash computation over `/Association/Traces`.
 - Hypothesis-based fuzz testing for round-trip fidelity.
 - **NEW:** Surprise metric computation (Z-score over rolling window of last 100 hamming distances).
@@ -283,12 +283,12 @@ Create `python/cognitive_twin/brainstem/`:
 
 **Phase 2 Gates:**
 - Gate 2a (Fidelity): `from_stage(to_stage(x)) == x` for every subsystem adapter, proven by Hypothesis with 1,000+ examples.
-- Gate 2b (Isolation): `aletheia_stage()` output contains zero traces. Verified by structural inspection, not content filtering.
+- Gate 2b (Isolation): `elenchus_stage()` output contains zero traces. Verified by structural inspection, not content filtering.
 - Gate 2c (Metacognitive Routing): Surprise Z-score computes correctly. Escalation triggers at threshold. Rolling mean and std_dev update after each recall. Profile multiplier scales the threshold. **Fallback test: when `/CognitiveProfile` is empty/default, routing uses hardcoded 2.0 Z-score threshold and does not crash.** **Cold-start test: with fewer than 10 recalls, rolling_std_dev near zero, the max(std_dev, 1.0) floor prevents blowup.**
 
 ### Phase 3: Subsystem Cutover
 
-Adapt all existing subsystems (Association, Composition, Aletheia, Motor, DMN) to read/write through Brainstem instead of Bridge. Deprecate Bridge with a compatibility shim.
+Adapt all existing subsystems (Association, Composition, Elenchus, Motor, DMN) to read/write through Brainstem instead of Bridge. Deprecate Bridge with a compatibility shim.
 
 - **Structured Provenance (from SSGM/REMem research):** The plain `provenance: str` field in `/Composition/Layers` becomes a structured dataclass:
   ```python
@@ -347,9 +347,9 @@ Create `python/cognitive_twin/hebbian/`:
 - The clamp `max(apoptosis_threshold + 0.05, threshold)` ensures the reconstruction threshold is always above the apoptosis threshold by at least 0.05, preventing traces from being deleted before they ever qualify for reconstruction.
 - **Reconsolidation boost (Patch 11 — Death Rattle Prevention):** Reconstruction alone is read-only, but if the reconstructed episode is **actually retrieved by the user** (surfaced in a recall response, not just computed internally), apply a standard retrieval boost to all contributing base traces. This mimics biological reconsolidation: recalling a reconstructed memory strengthens its fragments, saving them from apoptosis on the next decay cycle. Without this, reconstructed traces continue decaying and hit apoptosis immediately — a death spiral. **CRITICAL CAVEAT:** The boost fires ONLY on user-facing retrieval, not on internal computation. Otherwise traces bootstrap their own survival without user engagement, violating the lazy decay philosophy.
 
-**5C. Aletheia Training Data Pipeline**
+**5C. Elenchus Training Data Pipeline**
 
-- Every verification → JSONL row to `data/aletheia_training.jsonl`.
+- Every verification → JSONL row to `data/elenchus_training.jsonl`.
 - Row schema (Patch 5 — full profile features):
   ```json
   {
@@ -374,7 +374,7 @@ Create `python/cognitive_twin/hebbian/`:
 - `cognitive_profile_hash` captures a deterministic hash of the profile state at verification time.
 - `cognitive_profile_features` captures the **actual float multiplier vector** — essential for training a model that can learn per-profile verification patterns, not just per-hash buckets. The hash alone would require the model to memorize arbitrary strings; the features let it learn continuous relationships between cognitive style and verification behavior.
 - Rule 11: NO reasoning traces in dataset.
-- **O(1) log rotation (Patch 8):** Do NOT implement naive FIFO (rewriting 9,999 lines on every event is O(N) blocking I/O). Instead: append sequentially to `data/aletheia_training.jsonl`. When row count hits `max_rows` (10,000), rotate: rename current file to `aletheia_training.{timestamp}.jsonl`, start a new empty file. Retain at most `max_rotated_files` (default 3) old files. This is O(1) amortized write cost and Rule 33 compliant.
+- **O(1) log rotation (Patch 8):** Do NOT implement naive FIFO (rewriting 9,999 lines on every event is O(N) blocking I/O). Instead: append sequentially to `data/elenchus_training.jsonl`. When row count hits `max_rows` (10,000), rotate: rename current file to `elenchus_training.{timestamp}.jsonl`, start a new empty file. Retain at most `max_rotated_files` (default 3) old files. This is O(1) amortized write cost and Rule 33 compliant.
 
 **Phase 5 Gates:**
 - Gate 5a (Hebbian Correctness): Co-activation counts increment on co-recall. Bits strengthen proportionally. Competing traces weaken shared bits. Stability holds after 1,000 updates. Sparsity stays in [3%, 5%]. Hebbian boosts integrate with lazy decay (additive, 2× half-life). Idempotent: same event twice doesn't double the shift. Profile-scaled `hebbian_alpha` produces different learning rates for different profiles. **Merkle isolation: Hebbian deltas live in `[V] Variant` layer as dual masks (`strengthen_mask`, `weaken_mask`). `effective_sdr = (base_sdr | strengthen_mask) & ~weaken_mask`. Base SDR in SQLite is untouched. Merkle hash computed over base traces only. Mask conflict resolution: if same bit in both masks, `weaken_mask` wins.**
@@ -390,7 +390,7 @@ Create `python/cognitive_twin/hebbian/`:
 |------|-------|-------------|
 | 1 | Phase 1 | USD schema + LIVRPS + round-trip (float tolerance + hex SDR) + 100% coverage |
 | 2a | Phase 2 | Round-trip fidelity (Hypothesis, 1000+ examples) |
-| 2b | Phase 2 | Aletheia stage isolation (structural, not filtered) |
+| 2b | Phase 2 | Elenchus stage isolation (structural, not filtered) |
 | 2c | Phase 2 | Metacognitive routing (Z-score surprise, dual-process, profile-aware, cold-start safe) |
 | 3a | Phase 3 | All subsystems through Brainstem |
 | 3b | Phase 3 | No bypass of Brainstem |
@@ -438,9 +438,9 @@ Create `python/cognitive_twin/hebbian/`:
 - **Episodic Context Reconstruction:** IMPLEMENTED. Fragment assembly via Hebbian links + LIVRPS. Profile-scaled aggressiveness. Apoptosis clamp prevents reconstruction/deletion race condition. Reconsolidation boost on user-facing retrieval prevents death spiral.
 - **Dual-Process Retrieval:** IMPLEMENTED. System 1 → System 2 on surprise. Z-score formulation. Profile-scaled threshold.
 - **Structured Provenance:** IMPLEMENTED. Authenticated source tracking with INTAKE_CALIBRATED type.
-- **Aletheia Training Data:** IMPLEMENTED. Structured dataset with `cognitive_profile_hash` AND `cognitive_profile_features`. Ready for LoRA.
+- **Elenchus Training Data:** IMPLEMENTED. Structured dataset with `cognitive_profile_hash` AND `cognitive_profile_features`. Ready for LoRA.
 - **Cognitive Profile Intake:** IMPLEMENTED. Adaptive neuropsych-informed calibration. Continuous scoring. Semantic ceiling detection. Personal baseline replaces universal defaults. Re-callable.
-- **Learned Aletheia:** READY. Training data + profile features = personalized verification model.
+- **Learned Elenchus:** READY. Training data + profile features = personalized verification model.
 - **Active DMN Probing:** READY. Surprise metric provides trigger signal.
 - **Proactive Nudges:** READY. `twin_skills` + Hebbian data + surprise metric + profile = full input set.
 
@@ -451,7 +451,7 @@ Create `python/cognitive_twin/hebbian/`:
 | Research Concept | Twin v6.0 | Twin v7.0 | Status |
 |---|---|---|---|
 | SSGM temporal decay | Lazy decay | Same | Already ahead |
-| SSGM pre-consolidation validation | Aletheia trace exclusion | Same (blinded) | Already ahead |
+| SSGM pre-consolidation validation | Elenchus trace exclusion | Same (blinded) | Already ahead |
 | Analog I sovereign refusal | Basal Ganglia gate | Same | Already ahead |
 | Titans forgetting gate | Apoptosis | Same (more aggressive) | Already ahead |
 | HiMem reconsolidation | LIVRPS composition | Brain-wide LIVRPS | Extended |
@@ -466,6 +466,6 @@ Create `python/cognitive_twin/hebbian/`:
 
 ## BEGIN
 
-Start as the **Architect** for **Phase 1**. Read the spec above. Read AGENTS.md. Read the existing modules in `python/cognitive_twin/composition/` and `python/cognitive_twin/aletheia/` to understand current patterns. Then produce your design for `usd_lite/` at `.agent-team/designs/phase-1.md`.
+Start as the **Architect** for **Phase 1**. Read the spec above. Read AGENTS.md. Read the existing modules in `python/cognitive_twin/composition/` and `python/cognitive_twin/elenchus/` to understand current patterns. Then produce your design for `usd_lite/` at `.agent-team/designs/phase-1.md`.
 
 After you complete the Phase 1 design, STOP and present it for review.

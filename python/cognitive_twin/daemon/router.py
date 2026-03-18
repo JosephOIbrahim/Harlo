@@ -431,7 +431,7 @@ def _handle_audit(args: dict) -> dict:
 
 
 def _handle_verify(args: dict) -> dict:
-    """Handle verify command: verify a composition stage resolution via Aletheia."""
+    """Handle verify command: verify a composition stage resolution via Elenchus."""
     try:
         from ..daemon.config import STAGES_DIR, ensure_data_dirs
 
@@ -450,8 +450,8 @@ def _handle_verify(args: dict) -> dict:
 
         from ..composition.stage import MerkleStage
         from ..composition.resolver import resolve
-        from ..aletheia.protocol import run_gvr
-        from ..aletheia.depth import get_depth
+        from ..elenchus.protocol import run_gvr
+        from ..elenchus.depth import get_depth
 
         stage = MerkleStage.from_dict(stage_data)
         resolution = resolve(stage)
@@ -460,7 +460,7 @@ def _handle_verify(args: dict) -> dict:
 
         return {"status": "ok", "result": verification.to_dict()}
     except ImportError as e:
-        return {"status": "error", "message": f"Aletheia module not available: {e}"}
+        return {"status": "error", "message": f"Elenchus module not available: {e}"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -521,8 +521,8 @@ def _handle_deferred(args: dict) -> dict:
 
         from ..composition.stage import MerkleStage
         from ..composition.resolver import resolve
-        from ..aletheia.protocol import run_gvr
-        from ..aletheia.depth import get_depth
+        from ..elenchus.protocol import run_gvr
+        from ..elenchus.depth import get_depth
 
         results = []
         for entry in entries:
@@ -556,7 +556,7 @@ def _handle_deferred(args: dict) -> dict:
 
         return {"status": "ok", "result": {"flushed": len(results), "results": results}}
     except ImportError as e:
-        return {"status": "error", "message": f"Aletheia module not available: {e}"}
+        return {"status": "error", "message": f"Elenchus module not available: {e}"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

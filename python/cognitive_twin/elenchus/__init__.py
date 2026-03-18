@@ -1,4 +1,4 @@
-"""Aletheia Verification Engine — the cognitive immune system.
+"""Elenchus Verification Engine — the cognitive immune system.
 
 Public API:
     VerificationState, VerificationResult  — states.py

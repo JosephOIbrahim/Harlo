@@ -94,20 +94,20 @@ def _check_consent(
     return True, None
 
 
-def _check_aletheia(action: PlannedAction, session_state: dict) -> tuple[bool, Optional[str]]:
-    """Check 3: Aletheia verification state.
+def _check_elenchus(action: PlannedAction, session_state: dict) -> tuple[bool, Optional[str]]:
+    """Check 3: Elenchus verification state.
 
     The action's underlying intent must have been verified.
     """
-    aletheia_state = session_state.get("aletheia_state", "")
+    elenchus_state = session_state.get("elenchus_state", "")
 
-    if aletheia_state == "spec_gamed":
-        return False, "Aletheia detected spec-gaming — action blocked"
+    if elenchus_state == "spec_gamed":
+        return False, "Elenchus detected spec-gaming — action blocked"
 
-    if aletheia_state == "unprovable":
-        return False, "Aletheia state is UNPROVABLE — action blocked"
+    if elenchus_state == "unprovable":
+        return False, "Elenchus state is UNPROVABLE — action blocked"
 
-    # Verified or no aletheia context (autonomous actions)
+    # Verified or no elenchus context (autonomous actions)
     return True, None
 
 
@@ -178,13 +178,13 @@ def gate(
     The five checks:
     1. Anchor alignment
     2. Consent level
-    3. Aletheia verification
+    3. Elenchus verification
     4. Reversibility
     5. Scope validation
 
     Args:
         action: The planned action to gate.
-        session_state: Dict with cognitive_state, is_depleted, aletheia_state,
+        session_state: Dict with cognitive_state, is_depleted, elenchus_state,
                        scope, etc.
         consent_state: ConsentState tracker. If None, a fresh (no-grant) state
                        is used — which means only AUTONOMOUS actions can pass.
@@ -210,11 +210,11 @@ def gate(
     if not consent_ok and first_failure is None:
         first_failure = consent_reason
 
-    # --- Check 3: Aletheia ---
-    aletheia_ok, aletheia_reason = _check_aletheia(action, session_state)
-    checks["aletheia"] = aletheia_ok
-    if not aletheia_ok and first_failure is None:
-        first_failure = aletheia_reason
+    # --- Check 3: Elenchus ---
+    elenchus_ok, elenchus_reason = _check_elenchus(action, session_state)
+    checks["elenchus"] = elenchus_ok
+    if not elenchus_ok and first_failure is None:
+        first_failure = elenchus_reason
 
     # --- Check 4: Reversibility ---
     rev_ok, rev_reason = _check_reversibility(action, session_state)

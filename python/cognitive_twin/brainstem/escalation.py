@@ -8,8 +8,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from ..aletheia.protocol import run_gvr
-from ..aletheia.states import VerificationResult, VerificationState
+from ..elenchus.protocol import run_gvr
+from ..elenchus.states import VerificationResult, VerificationState
 from ..composition.resolver import resolve as composition_resolve, Resolution
 from ..composition.stage import MerkleStage
 from ..usd_lite.prims import SourceType
@@ -19,7 +19,7 @@ from .amygdala import is_amygdala_trigger, create_amygdala_reflex
 from .consolidation import consolidate_resolution
 from .intent_check import check_intent_preserved
 from .provenance import stamp_provenance
-from .stage_builder import full_stage, aletheia_stage
+from .stage_builder import full_stage, elenchus_stage
 
 
 _BASE_CONFIDENCE_THRESHOLD = 0.70
@@ -52,7 +52,7 @@ def escalate(query: str, context: dict, stage_id: str) -> dict:
     Steps:
       1. Composition resolve
       2. Amygdala check (Rule 7)
-      3. Aletheia GVR
+      3. Elenchus GVR
       4. Intent preservation check (Rule 14)
       5-7. Act on verification state
     """
@@ -67,7 +67,7 @@ def escalate(query: str, context: dict, stage_id: str) -> dict:
         comp_prims[lid] = stamp_provenance(prim, source, session_id)
 
     _bs_full = full_stage(composition_layers=stage.get_layers())
-    _bs_ale = aletheia_stage(merkle_root=resolution.merkle_root)
+    _bs_ale = elenchus_stage(merkle_root=resolution.merkle_root)
 
     result: dict = {
         "stage_id": stage_id,

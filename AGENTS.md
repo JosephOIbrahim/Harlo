@@ -1,253 +1,574 @@
-# Cognitive Twin v7.0 — Agent Team Specification
-# Pattern: Sequential MoE (Architect → Forge → Crucible) × 5 Phases
-# Scope: Full v6→v7 rewrite + Frontier Neuroplasticity + Cognitive Profile Intake
-# Research: Titans, Mnemis, SSGM, REMem, HiMem, LoCoMo-Plus + Neuropsych Calibration
-# Gemini Pass: ALL 6 patches propagated to gate checklists.
-# Gemini Phase 1 Review: 5 additional patches (7-11) propagated.
+# Cognitive Twin v8.0 — Agent Team Execution Spec
+# Pattern: Sequential MoE (Architect → Forge → Crucible) × 7 Phases
+# Source: v8.0 Surgical Directives ADR (Gemini Deep Think → Claude Opus)
+# Mode: Autonomous sequential execution in Claude Code
 
 ---
 
-## Mission Overview
+## COMMANDMENTS (Violation = Abort)
 
-Rewrite Cognitive Twin from v6.0 to v7.0. Three architectural moves, five phases,
-plus a neuropsych-informed cognitive profile system that calibrates the Twin to each
-individual user's brain — turning universal defaults into personal baselines.
-
-**The spec is the recon.** Trust the specification.
-
----
-
-## Architecture-Native Agent Rules
-
-### Rule 2 → BASAL GANGLIA GATE: Verify Every Mutation
-
-The Motor Cortex defaults to INHIBIT ALL. Every action must pass 5 checks or it's blocked.
-After every file create or modify, run `pytest tests/ -v`. Default state is INHIBIT.
-Existing passing tests are invariants. You leave more tests than you found.
-
-### Rule 3 → UNPROVABLE WITH DIGNITY: Bounded Failure
-
-3 failed attempts → UNPROVABLE. Surface reason, what_would_help, partial_progress.
-Never silently degrade quality — that's spec-gaming, and you're building the system
-that detects it.
-
-### Rule 5 → TRACE EXCLUSION: Role Isolation Is Structural
-
-Authority boundaries are structural. Forge reads the Architect's design artifact, not
-its reasoning. Disagreements are notes, not unilateral action.
-
-### Rule 7 → ALETHEIA PATTERN: Adversarial Verification
-
-The Crucible IS Aletheia. Blind verification. Spec-gaming detection.
-Fix the code, never weaken the test.
-
-### Rules 1, 4, 6, 8, 9, 10 (Generic)
-
-1. **RECON = READ THE SPEC.** Identify frozen boundaries.
-4. **COMPLETE OR BLOCKED.** No stubs, no TODOs.
-6. **EXPLICIT HANDOFFS.** Designs at `.agent-team/designs/`. Blockers at `.agent-team/blockers/`.
-8. **HUMAN GATE AFTER PHASE 1 DESIGN.**
-9. **SEQUENTIAL PHASES.** One at a time.
-10. **CLAUDE.md IS LAW.**
+1. **RECON = THIS FILE.** The ADR is the spec. Do not re-explore the codebase to "understand the architecture." The specification documents every decision, every constraint, every gate. Trust it.
+2. **VERIFY EVERY MUTATION.** After every file creation or modification: `python -m pytest tests/ -v --ignore=tests/test_encoder --ignore=tests/test_daemon`. If ANY existing test breaks, STOP and fix. Non-negotiable.
+3. **CIRCUIT BREAKER.** 3 failed attempts at the same fix → STOP. Surface a structured blocker at `.agent-team/blockers/phase-{N}-{description}.md` with: reason, what_would_help, partial_progress. Never silently degrade.
+4. **COMPLETE OR BLOCKED.** No stubs. No TODOs. No `pass` bodies. No truncated files. Every function has a docstring. Every file is finished. If you can't finish, produce a blocker — don't leave debris.
+5. **TRACE EXCLUSION: ROLE ISOLATION IS STRUCTURAL.** Architect designs. Forge builds. Crucible breaks. Forge reads the design artifact, not the reasoning. Disagreements are notes at `.agent-team/blockers/`, not unilateral changes.
+6. **EXPLICIT HANDOFFS.** Designs at `.agent-team/designs/phase-{N}.md`. Blockers at `.agent-team/blockers/`. Gate results at `.agent-team/gates/phase-{N}-gate.md`. Every artifact is named and pathed.
+7. **CRUCIBLE IS ELENCHUS.** The verifier receives intent (spec) and output (implementation). It evaluates without seeing the builder's reasoning. It detects spec-gaming: code that technically passes but doesn't answer the actual requirement. Fix code, never weaken tests.
+8. **HUMAN GATE AFTER PHASE 1.** Pause for Joe's review before proceeding to Phase 2. This is the AND-chain blocker — encoding fidelity is the hardest subtask.
+9. **SEQUENTIAL PHASES.** One phase at a time. No parallelization across phases. Each gate MUST pass before the next phase begins.
+10. **MATURIN DEVELOP FOR RUST.** Use `maturin develop` (not `pip install -e .`) for the Rust extension. Run from the same shell where `ANTHROPIC_API_KEY` is set.
+11. **PYTHON VERSION.** Run `python -m pytest` (not bare `pytest`) — Python 3.12/3.14 coexist.
+12. **THIS FILE IS LAW.** Verification commands, module boundaries, frozen boundaries, coding conventions — all constraints, not suggestions.
 
 ---
 
-## Phase Sequence
+## MISSION
+
+Disaggregate Cognitive Twin from v7.0 monolith to v8.0 Actor/Observer architecture per the resolved ADR. Seven phases, each running the full Architect → Forge → Crucible cycle with hard verification gates.
+
+### Key Architectural Moves
+
+| Move | What Changes |
+|------|-------------|
+| Actor/Observer Split | LLM (Actor) reasons. Twin (Observer/Stage) stores and projects. No more twin_ask. |
+| USD-as-House | `.usda` stage is the live truth. usd_lite is the fast runtime layer (our Fabric). |
+| Hot/Warm Tiered Memory | FTS5 plaintext (Hot, zero-encoding) + SDR Hamming (Warm, encoded). Federated query merges both. |
+| Coach Core Projection | MCP server generates a system prompt injection from current stage state. Claude-only for v8.0. |
+| Trust as Float | Continuous [0.0–1.0] trust score replaces any bitmask. Basal Ganglia evaluates the float. |
+| Elenchus → Actor | Observer queues unverified claims. Actor verifies when connected. No local LLM required. |
+| Replay-Then-Archive | Epoch compaction replays variants chronologically with decay, writes resolved baseline, archives originals. |
+
+---
+
+## PHASE SEQUENCE (AND-node: each must pass before the next begins)
 
 ```
-Phase 1: Foundation (USD Layer)              → Gate 1
-Phase 2: Core Transport + Metacognition      → Gate 2a + 2b + 2c
-Phase 3: Subsystem Cutover + Provenance      → Gate 3a + 3b + 3c + 3d
-Phase 4: Observation + Intake + Migration    → Gate 4a + 4b + 4c + 4d + 4e
-Phase 5: Hebbian + Reconstruction + Data     → Gate 5a + 5b + 5c + 5d
+Phase 1: Encoding & Hot Path      → Gate 1a + 1b        [RISK-1, TENSION-1]
+Phase 2: Disaggregation           → Gate 2a + 2b + 2c   [RISK-2, GAP-4]
+Phase 3: Trust & Cognitive Profile → Gate 3a + 3b        [RISK-3, GAP-1]
+Phase 4: Elenchus Deferral        → Gate 4a + 4b        [GAP-2]
+Phase 5: Temporal Compaction       → Gate 5a + 5b        [GAP-3]
+Phase 6: Federated Recall & MCP   → Gate 6a + 6b + 6c   [TENSION-1]
+Phase 7: Test Suite Rewrite        → Gate 7a + 7b + 7c   [GAP-5]
 ```
+
+**AlphaProof value = Phase 1.** This is the AND-chain blocker. If encoding fidelity fails, nothing downstream works. Surface it early, kill it fast.
 
 ---
 
-## Agent Roles
+## AGENT ROLES
 
 ### ARCHITECT (Phase Designer)
 
-**Authority:** Design ONLY. Produce plans, schemas, file layouts. No code.
+**Authority:** Design ONLY. Produce plans, schemas, APIs, file layouts.
+**Output:** `.agent-team/designs/phase-{N}.md`
+**Rules:** No implementation code. No file creation outside `.agent-team/designs/`. Read 2-3 existing files of the same kind before designing. Match codebase conventions.
 
-**Per-phase responsibilities:**
+### FORGE (Implementer)
 
-- **Phase 1:** Design `usd_lite/` — dataclasses (including Provenance, surprise/confidence session fields, CognitiveProfile types, Hebbian dual-mask config as forward-declared types), `.usda` stringifier with compact hex encoding for 2048-bit arrays (Patch 9), `BrainStage.__eq__` with `math.isclose()` for float fields, LIVRPS composition with permanent-prim handling.
-- **Phase 2:** Design `brainstem/` — `to_stage()`, `from_stage()`, `full_stage()`, `aletheia_stage()`, Merkle hashing. **NEW:** Design the surprise metric computation (Z-score over rolling mean/std_dev of last 100 best-hamming values, with `max(std_dev, 1.0)` cold-start floor), the dual-process routing logic (threshold-based escalation from Association to Composition), and the `/Session` prim updates (`surprise_rolling_mean`, `surprise_rolling_std`, `last_query_surprise`, `last_retrieval_path`). Design `conftest.py` Hypothesis strategies.
-- **Phase 3:** Design subsystem adapter interfaces. Design `bridge/` deprecation shim. **NEW:** Design the structured Provenance dataclass migration — how existing layers get `SYSTEM_INFERRED` provenance, how new layers populate automatically.
-- **Phase 4:** Design `skills/` (with incremental `last_processed_timestamp` cursor for ghost window compliance — Patch 10), `twin_skills` MCP tool contract, `intake/`, `twin_intake` MCP tool contract, `migrate_v7.py`, `bridge/` deletion checklist. **NEW:** Design the intake's continuous [0.0, 1.0] scoring with deterministic linear interpolation, semantic `user_disengaged` ceiling detection, and multiplier derivation rubric.
-- **Phase 5:** Design `hebbian/` — co-activation tracking, bit-level strengthening/weakening math, stability constraints, homeostatic plasticity, lazy decay interaction. **NEW:** Hebbian deltas stored as dual directional masks (`strengthen_mask`, `weaken_mask`) in `[V] Variant` USD layer (not destructive SQLite mutation). `effective_sdr = (base_sdr | strengthen_mask) & ~weaken_mask` — NOT XOR (Patch 7). Design episodic context reconstruction with apoptosis twilight zone clamp `max(apoptosis_threshold + 0.05, threshold)` and reconsolidation boost on user-facing retrieval (Patch 11). Design Aletheia training data pipeline with `cognitive_profile_hash` AND `cognitive_profile_features` (full float vector), using O(1) log rotation (Patch 8).
-
-**Rules:** Read spec first (Rule 1). Match existing patterns (Rule 1). Complete designs only (Rule 4). Design only, no code (Rule 5).
-
-### FORGE (Builder)
-
-**Authority:** Implement the Architect's design. Write code and tests. No design changes.
-
-**Per-phase responsibilities:**
-
-- **Phase 1:** Implement `usd_lite/` to exact schema. 100% test coverage.
-- **Phase 2:** Implement `brainstem/` with Hypothesis fuzz tests. **NEW:** Implement Z-score surprise metric, dual-process routing, `/Session` prim updates, profile-aware threshold fallback.
-- **Phase 3:** Write subsystem adapters. Create bridge shim. **NEW:** Implement structured Provenance dataclass. Migrate existing layers to `SYSTEM_INFERRED`.
-- **Phase 4:** Implement `skills/`, `intake/`, register both MCP tools, write `migrate_v7.py`, delete `bridge/`. **NEW:** Implement continuous scoring, semantic ceiling detection, multiplier derivation, `INTAKE_CALIBRATED` provenance.
-- **Phase 5:** Implement `hebbian/`. **NEW:** Implement dual-mask Variant layer storage (`strengthen_mask` + `weaken_mask`, NOT XOR — Patch 7), apoptosis clamp on reconstruction threshold, reconsolidation boost on user-facing retrieval (Patch 11), training data with `cognitive_profile_features` (full float vector alongside hash), O(1) log rotation at max_rows (Patch 8).
-
-**Rules:** Follow the design (Rule 5). Complete implementations (Rule 4). Run tests after every file change (Rule 2). No shortcuts — stubs are spec-gaming (Rule 3).
+**Authority:** Build ONLY what the Architect designed.
+**Rules:**
+- Read the design artifact (`.agent-team/designs/phase-{N}.md`), not the reasoning
+- Run verification after every mutation (Commandment 2)
+- No stubs (Commandment 4)
+- Circuit breaker at 3 failures (Commandment 3)
+- Convention matching: read existing files, match import style / naming / error handling / docstrings
+- No freelancing: implement the design. Disagreements → `.agent-team/blockers/`
+- Git commit after each sub-task: `v8-phase{N}: {description}`
+- File ownership: implementation files only. Do NOT modify designs or gate results.
 
 ### CRUCIBLE (Adversarial Verifier)
 
-**Authority:** Break things. Find spec-gaming. Write adversarial tests. Never weaken a test.
-
-**Responsibilities:** Run the full gate checklist for each phase. Write adversarial test cases. Report blockers with full metadata. Detect spec-gaming.
-
----
-
-## Gate Checklists (Crucible Reference)
-
-### Phase 1 — Gate 1
-- [ ] All prim types instantiate without error
-- [ ] LIVRPS composition produces correct precedence order
-- [ ] Permanent prims override normal LIVRPS recency rules
-- [ ] Round-trip fidelity: `parse(serialize(stage)) == stage` for every prim type
-- [ ] **[Patch 9+] Float tolerance:** `BrainStage.__eq__` uses `math.isclose(rel_tol=1e-9)` for float fields, exact equality for all others. Round-trip test passes with this tolerance.
-- [ ] **[Patch 9] Hex SDR serialization:** 2048-bit arrays (`sdr`, `strengthen_mask`, `weaken_mask`) serialize as 512-char hex strings, NOT text arrays. Round-trip through hex encoding is lossless.
-- [ ] 100% test coverage on `usd_lite/`
-- [ ] Forward-declared types for Provenance, CognitiveProfile, Hebbian dual-mask fields exist as stubs
-- [ ] **Spec-gaming:** Are dataclasses truly typed, or are they just dicts with a class wrapper?
-
-### Phase 2 — Gate 2a + 2b + 2c
-- [ ] `from_stage(to_stage(x)) == x` for every subsystem, Hypothesis 1000+ examples
-- [ ] `aletheia_stage()` output contains zero traces (structural inspection)
-- [ ] Merkle hash correctly computed over `/Association/Traces`
-- [ ] **[Patch 1] Surprise Z-score:** `surprise = (best_hamming - rolling_mean) / max(rolling_std_dev, 1.0)` computes correctly
-- [ ] **[Patch 1] Z-score default:** Escalation triggers at Z-score > 2.0 when no profile exists
-- [ ] **[Patch 1] Cold-start:** With < 10 recalls, `max(rolling_std_dev, 1.0)` floor prevents division issues
-- [ ] Rolling mean and std_dev update after each recall
-- [ ] `last_retrieval_path` correctly reflects SYSTEM_1 vs SYSTEM_2
-- [ ] `/Session` prims (`surprise_rolling_mean`, `surprise_rolling_std`, `last_query_surprise`) update correctly
-- [ ] Profile multiplier scales the threshold when `/CognitiveProfile` exists
-- [ ] **Fallback:** When `/CognitiveProfile` is empty/default, routing uses hardcoded 2.0 and does not crash
-- [ ] **Spec-gaming:** Does the routing actually change behavior, or is it just recorded without affecting recall?
-
-### Phase 3 — Gate 3a + 3b + 3c + 3d
-- [ ] All subsystems read/write through Brainstem
-- [ ] No direct subsystem-to-subsystem communication bypasses Brainstem
-- [ ] All existing tests pass (bridge shim transparent)
-- [ ] Every `/Composition/Layer` has fully populated structured Provenance
-- [ ] Layers from different sessions carry different event_hashes
-- [ ] `SYSTEM_INFERRED` correctly applied to migrated legacy layers
-- [ ] New layers auto-populate provenance with correct `source_type`
-- [ ] **Spec-gaming:** Is provenance a real dataclass with validation, or just a string field renamed?
-
-### Phase 4 — Gate 4a + 4b + 4c + 4d + 4e
-- [ ] `twin_skills` returns valid JSON for all 4 query patterns
-- [ ] **[Patch 10] Incremental observer:** Skills observer tracks `last_processed_timestamp` cursor, processes only new traces. Completes within ghost window budget (< 5 seconds for 100 new traces). Cursor persisted in SQLite.
-- [ ] End-to-end MCP integration passes for both new tools
-- [ ] `migrate_v7` bootstraps `/Skills` from legacy DB with 10+ traces, Growth Arcs non-zero
-- [ ] `bridge/` completely eradicated, zero broken imports, all tests pass, total tests ≥ 500
-- [ ] **[Patch 3] Continuous scoring:** Intake multiplier derivation uses continuous float [0.0, 1.0], NOT bucketed categories
-- [ ] **[Patch 3] Deterministic:** Same intake answers always produce identical multipliers
-- [ ] **[Patch 3] Linear interpolation:** `multiplier = base + (score * range)` verified for each dimension
-- [ ] **[Patch 6] Semantic ceiling:** Disengagement detected via `user_disengaged: bool` (dismissal language, identical answers, explicit opt-out), NOT raw answer length
-- [ ] **[Patch 6] TERSE resilience:** Short but substantive answers do NOT trigger ceiling detection
-- [ ] Profile stored in `/CognitiveProfile/Multipliers` with correct types
-- [ ] Re-run updates existing profile (not append)
-- [ ] History has `INTAKE_CALIBRATED` provenance
-- [ ] After intake, Phase 2 routing uses calibrated thresholds (test: same query routes differently with vs without profile)
-- [ ] **Spec-gaming:** Does the intake actually derive multipliers from answers, or just store raw responses? Storing without deriving is a stub.
-
-### Phase 5 — Gate 5a + 5b + 5c + 5d
-- [ ] Co-activation counts increment on co-recall
-- [ ] Bits strengthen proportionally to co-activation
-- [ ] Competing traces weaken shared bits
-- [ ] Stability: max drift holds after 1,000 updates
-- [ ] Homeostasis: traces stay in [3%, 5%] activation band
-- [ ] Hebbian boosts integrate with lazy decay (additive, 2× half-life)
-- [ ] Idempotent: same event twice doesn't double shift
-- [ ] Profile-scaled `hebbian_alpha` produces different learning rates for different profiles
-- [ ] **[Patch 7] Dual masks:** Hebbian uses `strengthen_mask` (bits to SET) and `weaken_mask` (bits to CLEAR), NOT a single XOR delta mask
-- [ ] **[Patch 7] Set/Clear formula:** `effective_sdr = (base_sdr | strengthen_mask) & ~weaken_mask` — idempotent and directionally correct
-- [ ] **[Patch 7] Conflict resolution:** If same bit appears in both masks, `weaken_mask` wins (bias toward forgetting)
-- [ ] **[Patch 7] Reinforcement test:** Strengthening a bit already set to 1 in base_sdr keeps it 1 (XOR would flip to 0 — this is the bug Patch 7 fixes)
-- [ ] **[Patch 4] Merkle isolation:** Dual masks live in `[V] Variant` USD layer, NOT destructive SQLite mutation
-- [ ] **[Patch 4] Base pristine:** `base_sdr` in SQLite is untouched by Hebbian updates
-- [ ] **[Patch 4] Merkle hash:** Computed over base traces only, not effective traces
-- [ ] **[Patch 2] Apoptosis clamp:** Reconstruction threshold = `max(apoptosis_threshold + 0.05, configured_threshold)` — always above apoptosis by ≥ 0.05
-- [ ] Degraded trace (strength < reconstruction_threshold) with Hebbian links → reconstructed episode
-- [ ] Reconstruction marked `reconstructed: true` with contributing trace IDs
-- [ ] Reconstruction uses LIVRPS composition
-- [ ] Reconstruction provenance = `HEBBIAN_DERIVED`
-- [ ] Reconstruction computation is READ-ONLY — original traces not modified during composition
-- [ ] **[Patch 11] Reconsolidation boost:** When reconstructed episode is surfaced to user (user-facing retrieval), contributing base traces receive a standard retrieval boost
-- [ ] **[Patch 11] Boost gating:** Reconsolidation boost does NOT fire on internal-only computation — only on user-facing retrieval. Traces must not bootstrap their own survival without user engagement.
-- [ ] Profile-scaled `reconstruction_threshold` produces different aggressiveness for different profiles
-- [ ] **Adversarial:** Degraded trace with zero Hebbian links → return trace as-is, not crash
-- [ ] **Adversarial:** Contributing traces already below apoptosis → reconstruction still works with available fragments, does not crash
-- [ ] Training data: every verification → valid JSONL row
-- [ ] Training data: no reasoning traces (Rule 11)
-- [ ] Training data: `retrieval_path` field correctly reflects SYSTEM_1 vs SYSTEM_2
-- [ ] Training data: `cognitive_profile_hash` present and deterministic
-- [ ] **[Patch 5] Training data:** `cognitive_profile_features` present and non-empty when profile exists; empty dict `{}` when no profile (never null, never missing key)
-- [ ] **[Patch 8] Log rotation:** Training data file rotates at max_rows (10,000) with O(1) amortized cost. No full-file rewrite. Rotated files named with timestamp. Max 3 rotated files retained.
-- [ ] All prior tests pass. Total ≥ 550. Rule 33 preserved.
-- [ ] All configurable thresholds read from `/CognitiveProfile/Multipliers/` when available, fall back to hardcoded defaults when not
-- [ ] **Spec-gaming:** Hebbian actually modifies bits (via dual masks)? Reconstruction actually composes via LIVRPS? Reconsolidation boost only fires on user retrieval? Profile multipliers actually flow through? Training data includes actual feature vector, not just hash? Log rotation is O(1), not O(N) rewrite?
+**Authority:** Break ONLY. Run tests, write adversarial tests, verify gate conditions.
+**Rules:**
+- Receive intent (spec) and output (implementation). Evaluate blind.
+- Write adversarial tests that attempt to break assumptions
+- Detect spec-gaming (technically passes but doesn't satisfy the intent)
+- If something fails: describe the failure. Do NOT fix it. Forge fixes.
+- Gate results go to `.agent-team/gates/phase-{N}-gate.md`
+- Tests are sacred: fix code, NEVER weaken tests
+- On gate failure: loop Forge → Crucible until pass
 
 ---
 
-## Coordination
+## PHASE 1: ENCODING & HOT PATH
+**Resolves:** RISK-1 (Encoding Fidelity), TENSION-1 (Store vs Recall Latency)
+**AND-chain blocker. Hardest subtask. Do this first.**
 
-### File Ownership
+### Architect Scope
+Design the dual-tier memory architecture:
+
+**Hot Tier (L1 — zero encoding, zero latency):**
+- SQLite table with FTS5 full-text index
+- Schema: `trace_id TEXT PK, message TEXT, tags JSON, domain TEXT, timestamp REAL, encoded BOOLEAN DEFAULT FALSE`
+- `twin_store` writes here immediately with `encoded=FALSE`
+- Zero-encoding constraint: no model loading in the MCP hot path
+- Target: <2ms store latency
+
+**Warm Tier (L2 — SDR encoded, Hamming search):**
+- Existing Rust hippocampus crate (unchanged per Commandment — crates/hippocampus is frozen unless encoding gate requires it)
+- Background Observer process promotes Hot → Warm after SDR encoding
+- SDR encoding via ONNX Runtime (not sentence-transformers — eliminates the BGE load hang)
+
+**Encoder Pipeline:**
+- Convert BAAI/bge-small-en-v1.5 to ONNX format
+- Attempt INT8 quantization
+- Validation: 1,000-trace reference corpus, 0.95 Hamming distance correlation threshold
+- **If INT8 fails the 0.95 gate: fall back to FP16 ONNX immediately. Do not attempt QAT.**
+- FP16 payload (~60-100MB) is acceptable for desktop consumer hardware
+- ONNX model loads ONCE at Observer startup, not per-call
+
+**Design output:** File layout, schemas, API signatures for Hot Tier CRUD, promotion pipeline, ONNX encoder wrapper.
+
+### Forge Scope
+1. Create `python/cognitive_twin/hot_store/` — SQLite + FTS5 Hot Tier
+2. Create `python/cognitive_twin/encoder/onnx_encoder.py` — ONNX Runtime wrapper
+3. Export BGE-small-en-v1.5 to ONNX, attempt INT8 quantization
+4. Build reference corpus (1,000 traces from existing test data or synthetic)
+5. Run Hamming correlation validation
+6. If INT8 < 0.95: switch to FP16, re-validate (must be ≥ 0.95)
+7. Create `python/cognitive_twin/hot_store/promotion.py` — Hot → Warm async promotion
+8. Modify `twin_store` MCP tool: write to Hot Tier only (zero-encoding path)
+9. Tests in `tests/test_hot_store/`
+
+### Crucible Gates
+
+**Gate 1a: Encoding Fidelity**
+- Run 1,000-trace corpus through both the original sentence-transformers encoder AND the ONNX encoder
+- Compute SDRs from both
+- Hamming distance correlation between the two sets ≥ 0.95
+- **If this fails, Phase 1 loops. Nothing proceeds.**
+
+**Gate 1b: Hot Path Latency**
+- `twin_store` completes in <2ms (measured over 100 calls, p99)
+- No model loading occurs during `twin_store`
+- FTS5 search returns results for a plaintext query
+- Hot Tier correctly marks traces as `encoded=FALSE`
+
+**⚠️ HUMAN GATE: Pause here. Present Gate 1a/1b results to Joe before proceeding.**
+
+---
+
+## PHASE 2: DISAGGREGATION
+**Resolves:** RISK-2 (Kill twin_ask), GAP-4 (Claude-only v8.0)
+
+### Architect Scope
+Design the Actor/Observer disaggregation:
+
+**Actor (LLM — Claude via MCP):**
+- Receives structured context via Coach Core system prompt injection
+- All reasoning happens in the Actor. No LLM calls from the Twin.
+- MCP tools are read/write data operations, not reasoning operations
+
+**Observer (Background daemon):**
+- Runs locally as a persistent process
+- Handles: SDR encoding (Hot → Warm promotion), structural USD updates, Hebbian decay
+- Does NOT call any external LLM
+- Communicates with the stage via usd_lite
+
+**Coach Core Projection:**
+- New MCP tool: `twin_coach` — returns a formatted system prompt block
+- Reads current stage state, projects it into Anthropic XML format
+- Includes: active cognitive profile, trust level, recent patterns, pending Elenchus items
+- Claude-only formatting for v8.0 (hardcoded Anthropic XML)
+
+**Kill twin_ask:**
+- Remove `twin_ask` MCP tool entirely
+- Remove any LLM client code from the MCP server
+- Remove `ANTHROPIC_API_KEY` requirement from the MCP server (Observer needs no API key)
+
+**Design output:** Observer process architecture, Coach Core template, twin_coach tool signature, deletion manifest for twin_ask.
+
+### Forge Scope
+1. Create `python/cognitive_twin/observer/` — background daemon process
+2. Create `python/cognitive_twin/coach/` — Coach Core projection engine
+3. Implement `twin_coach` MCP tool
+4. Delete `twin_ask` and all associated LLM client code
+5. Remove `ANTHROPIC_API_KEY` from MCP server requirements
+6. Update MCP server tool registry
+7. Tests in `tests/test_observer/`, `tests/test_coach/`
+
+### Crucible Gates
+
+**Gate 2a: twin_ask is Dead**
+- `grep -r "twin_ask" python/` returns zero results
+- No LLM client imports remain in MCP server code
+- MCP server starts without `ANTHROPIC_API_KEY` in env
+
+**Gate 2b: Coach Core Projection**
+- `twin_coach` returns valid Anthropic XML system prompt block
+- Projection includes cognitive profile, trust level, recent patterns
+- Output is deterministic for the same stage state
+
+**Gate 2c: Observer Lifecycle**
+- Observer process starts, runs encoding promotion loop, shuts down cleanly
+- Hot → Warm promotion moves traces correctly
+- Observer does not import any LLM client libraries
+
+---
+
+## PHASE 3: TRUST & COGNITIVE PROFILE
+**Resolves:** RISK-3 (3-Tier Float Trust), GAP-1 (Intake Migration)
+
+### Architect Scope
+
+**Trust Ledger:**
+- USD path: `/RelationalModel/Trust`
+- Schema: `trust_score: float [0.0–1.0]`
+- Thresholds: 0.0–0.3 (New: passive store), 0.3–0.7 (Familiar: context/pattern surfacing), 0.7–1.0 (Trusted: proactive coaching/pushback)
+- Basal Ganglia evaluates the float directly — smooth continuous updates
+- Update formula: define based on interaction quality signals (session length, explicit feedback, correction acceptance)
+
+**Cognitive Recalibration:**
+- New MCP tool: `trigger_cognitive_recalibration`
+- Resets `/Meta/intake_complete` to `false`
+- Clears `/CognitiveProfile` sublayer
+- Actor can invoke autonomously when user indicates major life/role change
+- Re-triggerable: can be called multiple times across the lifetime
+
+**Design output:** Trust schema, Basal Ganglia integration points, update formula, recalibration tool signature, intake re-entry flow.
+
+### Forge Scope
+1. Implement trust float in `/RelationalModel/Trust` USD schema
+2. Wire Basal Ganglia to read trust float with threshold-based behavior gating
+3. Implement trust update logic (interaction quality → score delta)
+4. Create `trigger_cognitive_recalibration` MCP tool
+5. Implement intake flag reset + CognitiveProfile sublayer clearing
+6. Update Coach Core to inject trust-appropriate behavior directives
+7. Tests in `tests/test_trust/`, `tests/test_recalibration/`
+
+### Crucible Gates
+
+**Gate 3a: Trust Float**
+- Trust score initializes at 0.0 for new user
+- Score updates continuously (not discrete jumps)
+- Basal Ganglia gates behavior correctly at each threshold
+- Score is readable via existing `twin_session_status`
+
+**Gate 3b: Recalibration**
+- `trigger_cognitive_recalibration` resets intake flag
+- CognitiveProfile sublayer is cleared
+- Next Actor turn receives intake-mode Coach Core projection
+- Calling recalibration twice is idempotent
+
+---
+
+## PHASE 4: ELENCHUS DEFERRAL
+**Resolves:** GAP-2 (Observer LLM Requirement)
+
+### Architect Scope
+
+**Pending Verification Queue:**
+- USD path: `/Elenchus/Pending`
+- Schema: list of `{claim_id, claim_text, source_traces[], structural_score, timestamp}`
+- Observer evaluates structural/heuristic checks locally
+- Semantic claims that need LLM evaluation are queued here
+
+**Actor-Side Verification:**
+- New MCP tool: `resolve_verifications`
+- Coach Core injects a system block when pending items exist: "Evaluate these claims silently"
+- Actor submits boolean verdicts per claim via `resolve_verifications`
+- Tool moves verified claims to `/Elenchus/Verified` or `/Elenchus/Rejected`
+- "Renting cloud LLM compute to verify sovereign local state"
+
+**Design output:** Pending queue schema, resolve_verifications tool signature, Coach Core injection template for pending claims, Observer-side structural evaluation pipeline.
+
+### Forge Scope
+1. Implement `/Elenchus/Pending` USD layer
+2. Implement Observer-side structural claim evaluation (non-LLM heuristics)
+3. Implement `resolve_verifications` MCP tool
+4. Update Coach Core to inject pending claims when queue is non-empty
+5. Implement claim lifecycle: Pending → Verified/Rejected
+6. Tests in `tests/test_elenchus_v8/`
+
+### Crucible Gates
+
+**Gate 4a: Pending Queue**
+- Observer queues semantic claims correctly
+- Structural claims are resolved locally without queuing
+- Queue persists across Observer restarts
+
+**Gate 4b: Actor Verification**
+- `resolve_verifications` accepts claim_id + boolean verdict
+- Verified claims move to `/Elenchus/Verified`
+- Rejected claims move to `/Elenchus/Rejected`
+- Coach Core stops injecting claims once queue is empty
+
+---
+
+## PHASE 5: TEMPORAL COMPACTION
+**Resolves:** GAP-3 (Epoch-Based Flattening Semantics)
+
+### Architect Scope
+
+**Replay-Then-Archive Compaction:**
+- Deep-idle daemon process (runs when system is idle, not real-time)
+- Input: variant stack (temporal layers of USD opinions)
+- Algorithm:
+  1. Chronologically sort variant stack by timestamp
+  2. Replay each layer, applying elapsed-time Hebbian decay at `t_now`
+  3. Write resolved state to `/Baseline`
+  4. Zip variant stack into `.usda.archive/` directory
+- **Critical invariant:** Flattening MUST commute with Hebbian neuroplasticity. `flatten(decay(variants)) == decay(flatten(variants))` — if this doesn't hold, the compaction is lossy.
+- Preserves temporal archaeology: archived variants are queryable but don't bloat the active stage
+
+**Design output:** Compaction algorithm pseudocode, archive format, decay-commutation proof sketch, daemon trigger conditions (idle detection).
+
+### Forge Scope
+1. Create `python/cognitive_twin/compaction/` — replay-then-archive engine
+2. Implement chronological variant replay with decay curves
+3. Implement baseline write after compaction
+4. Implement archive creation (`.usda.archive/`)
+5. Implement idle-trigger daemon hook
+6. Tests in `tests/test_compaction/`
+
+### Crucible Gates
+
+**Gate 5a: Compaction Correctness**
+- Create 10 variants with known decay parameters
+- Compact them
+- Verify: compacted baseline matches manual chronological replay result
+- Verify: decay commutation holds (within floating-point epsilon)
+
+**Gate 5b: Archive Integrity**
+- Archived variants are readable
+- Stage size decreases after compaction
+- Original variant data is recoverable from archive
+- Compaction is idempotent (running twice on already-compacted data = no-op)
+
+---
+
+## PHASE 6: FEDERATED RECALL & MCP
+**Resolves:** TENSION-1 (Store vs Recall Latency)
+
+### Architect Scope
+
+**Federated query_past_experience:**
+- New MCP tool replacing/augmenting `twin_recall`
+- Executes TWO simultaneous queries:
+  1. FTS5 plaintext search on Hot Tier (SQLite, un-encoded, immediate)
+  2. SDR Hamming search on Warm Tier (Rust hippocampus, encoded)
+- Merges results by relevance score (FTS5 rank + Hamming distance normalized)
+- Returns unified result set to Actor
+- Satisfies "what did I just say?" (Hot, zero-latency) and "what patterns exist?" (Warm, semantic)
+
+**MCP Tool Registry v8.0:**
+| Tool | Status | Path |
+|------|--------|------|
+| twin_store | MODIFIED | Hot Tier only, zero-encoding |
+| twin_session_status | KEPT | Includes trust float |
+| twin_patterns | KEPT | Reads from Warm Tier |
+| twin_recall → query_past_experience | REPLACED | Federated L1/L2 |
+| twin_ask | DELETED | Killed in Phase 2 |
+| twin_coach | NEW | Coach Core projection |
+| trigger_cognitive_recalibration | NEW | Intake reset |
+| resolve_verifications | NEW | Elenchus actor-side |
+
+**Design output:** query_past_experience signature, merge algorithm, result schema, MCP tool registry diff.
+
+### Forge Scope
+1. Implement `query_past_experience` with federated search
+2. Wire FTS5 Hot Tier query path
+3. Wire SDR Warm Tier query path (existing hippocampus)
+4. Implement result merging (normalized scoring)
+5. Update MCP server tool registry
+6. Deprecate `twin_recall` (redirect to query_past_experience)
+7. Tests in `tests/test_federated_recall/`
+
+### Crucible Gates
+
+**Gate 6a: Hot Recall**
+- Store a trace via `twin_store`
+- Immediately query via `query_past_experience`
+- Trace appears in results (from FTS5 Hot Tier)
+- Latency <5ms for the Hot path
+
+**Gate 6b: Warm Recall**
+- After Observer promotion, query returns SDR-matched results from Warm Tier
+- Semantic similarity search works (not just keyword match)
+
+**Gate 6c: Federated Merge**
+- Query that matches both Hot and Warm tiers returns merged, deduplicated results
+- Results are ranked by unified relevance score
+- No duplicate traces in output
+
+---
+
+## PHASE 7: TEST SUITE REWRITE
+**Resolves:** GAP-5 (Testing Strategy)
+
+### Architect Scope
+
+**Test Architecture:**
+- **REJECT** full backward compatibility with the 720 v7 integration tests
+- **RETAIN** v7 tests as unit tests for pure math (Hamming distance, LIVRPS logic, SDR ops)
+- **NEW** disaggregated test suite organized by v8 component boundaries:
+
 ```
-Architect:  .agent-team/designs/
-Forge:      python/cognitive_twin/usd_lite/      (Phase 1)
-            python/cognitive_twin/brainstem/     (Phase 2)
-            python/cognitive_twin/intake/        (Phase 4)
-            python/cognitive_twin/skills/        (Phase 4)
-            python/cognitive_twin/hebbian/       (Phase 5)
-            tests/ (new test files)
-Crucible:   .agent-team/blockers/
-            tests/ (adversarial tests)
-FROZEN:     crates/hippocampus/
-            python/cognitive_twin/encoder/
+tests/
+├── test_unit/              # Pure math, no I/O
+│   ├── test_hamming.py     # Retained from v7
+│   ├── test_livrps.py      # Retained from v7
+│   └── test_sdr_ops.py     # Retained from v7
+├── test_hot_store/         # Phase 1
+├── test_encoder/           # Phase 1 (ONNX pipeline)
+├── test_observer/          # Phase 2
+├── test_coach/             # Phase 2
+├── test_trust/             # Phase 3
+├── test_recalibration/     # Phase 3
+├── test_elenchus_v8/       # Phase 4
+├── test_compaction/         # Phase 5
+├── test_federated_recall/  # Phase 6
+├── test_integration/       # Cross-component flows
+│   ├── test_store_recall_cycle.py
+│   ├── test_observer_promotion.py
+│   └── test_coach_projection.py
+└── test_latency/           # SLA enforcement
+    ├── test_hot_store_sla.py    # <2ms store
+    ├── test_mcp_latency.py      # <2ms Hot Store reads
+    └── test_recall_sla.py       # <50ms federated recall
 ```
 
-### Phase Transitions
-1. Forge declares complete → Crucible runs full gate (including spec-gaming checks)
-2. Gate passes → git tag `v7-phase-{N}-complete` → next phase
-3. Gate fails → Crucible writes blocker → Forge fixes → loop
+**Latency SLAs (enforced in CI):**
+- Hot Store write: <2ms (p99, 100 calls)
+- Hot Store read (FTS5): <2ms (p99, 100 calls)
+- Federated recall: <50ms (p99, 100 calls)
+- Coach Core projection: <10ms
+- MCP tool round-trip (stdio): <100ms
+
+**Design output:** Test directory structure, SLA thresholds, which v7 tests to retain, integration test scenarios.
+
+### Forge Scope
+1. Reorganize test directory per Architect design
+2. Move retained v7 pure-math tests to `test_unit/`
+3. Write latency SLA tests
+4. Write cross-component integration tests
+5. Ensure all phases' tests are collected properly
+6. Final full suite run: `python -m pytest tests/ -v --ignore=tests/test_encoder --ignore=tests/test_daemon`
+
+### Crucible Gates
+
+**Gate 7a: Unit Test Survival**
+- All retained v7 pure-math tests pass
+- No test regressions from the move
+
+**Gate 7b: Latency SLAs**
+- All latency tests pass their thresholds
+- Hot Store <2ms, federated recall <50ms, Coach Core <10ms
+
+**Gate 7c: Full Suite Green**
+- Complete test suite runs green
+- Total test count documented
+- No skipped tests (except explicitly excluded: test_encoder, test_daemon)
 
 ---
 
-## Verification Commands
+## FROZEN BOUNDARIES (Do Not Touch)
+
+| Path | Reason |
+|------|--------|
+| `crates/hippocampus/` | Rust core. Warm Tier engine. Untouched unless encoding gate requires it. |
+| `pyproject.toml` | Only modify if adding new dependencies required by v8 components |
+| `.mcp.json` | MCP config — modify only to add new tools |
+
+---
+
+## VERIFICATION COMMANDS
+
 ```bash
-pytest tests/ -v                           # Primary gate (every mutation)
-cargo test -p hippocampus                  # Rust (phase boundaries)
-pytest tests/test_usd_lite/ --cov=python/cognitive_twin/usd_lite --cov-report=term-missing
-pytest tests/test_usd_lite/test_hex_roundtrip.py -v    # Phase 1 Patch 9 hex SDR
-pytest tests/test_usd_lite/test_float_eq.py -v         # Phase 1 float tolerance
-pytest tests/test_brainstem/test_fidelity.py -v --hypothesis-seed=0
-pytest tests/test_brainstem/test_routing.py -v          # Phase 2 metacognitive routing
-pytest tests/test_intake/test_adaptive.py -v            # Phase 4 intake
-pytest tests/test_intake/test_multipliers.py -v         # Phase 4 derivation
-pytest tests/test_intake/test_ceiling.py -v             # Phase 4 semantic ceiling
-pytest tests/test_skills/test_incremental.py -v         # Phase 4 Patch 10 cursor
-pytest tests/test_hebbian/test_stability.py -v          # Phase 5 stability
-pytest tests/test_hebbian/test_dual_masks.py -v         # Phase 5 Patch 7 set/clear
-pytest tests/test_hebbian/test_merkle_isolation.py -v   # Phase 5 Patch 4
-pytest tests/test_hebbian/test_reconstruction.py -v     # Phase 5 episodic + Patch 11
-pytest tests/test_hebbian/test_training_data.py -v      # Phase 5 JSONL + features + rotation
-pytest tests/ -v && cargo test -p hippocampus           # Full regression
+# Primary test command (use after every mutation)
+python -m pytest tests/ -v --ignore=tests/test_encoder --ignore=tests/test_daemon
+
+# Rust extension rebuild (only if touching crates/)
+maturin develop
+
+# Type checking (if mypy is configured)
+python -m mypy python/cognitive_twin/ --ignore-missing-imports
+
+# Latency SLA tests (Phase 7)
+python -m pytest tests/test_latency/ -v --tb=short
 ```
 
 ---
 
-## Frozen Boundaries (NEVER MODIFY)
-- `crates/hippocampus/` — Rust hot path
-- All 33 inviolable rules
-- SQLite as source of truth
-- Existing 5 MCP tools
-- Encoder (BGE + LSH → 2048-bit SDR)
-- Socket-activated daemon (Rule 33)
-- Lazy decay (Rule 4)
-- Trace exclusion (Rule 11)
+## CODING CONVENTIONS (Match Existing Codebase)
+
+- **Imports:** `from cognitive_twin.module import Class` (absolute, never relative)
+- **Docstrings:** Google style, one-line summary + Args/Returns/Raises
+- **Type hints:** All function signatures typed. Use `typing` for complex types.
+- **Error handling:** Custom exceptions in `cognitive_twin/exceptions.py`. Never bare `except`.
+- **USD paths:** String constants in `cognitive_twin/usd_lite/paths.py`
+- **Logging:** `logging.getLogger(__name__)` — no print statements
+- **Tests:** pytest + fixtures. One assert per test where practical. Descriptive test names: `test_{what}_{condition}_{expected}`.
+- **Commits:** `v8-phase{N}: {description}` — one commit per sub-task minimum
+
+---
+
+## EXECUTION SEQUENCE
+
+```
+mkdir -p .agent-team/designs .agent-team/blockers .agent-team/gates
+
+For phase in 1..7:
+    ARCHITECT:
+        Read this file + existing codebase patterns
+        Produce .agent-team/designs/phase-{N}.md
+    
+    FORGE:
+        Read .agent-team/designs/phase-{N}.md
+        Implement per design
+        Run verification after every mutation
+        Git commit per sub-task
+    
+    CRUCIBLE:
+        Run gate tests
+        Write adversarial tests
+        Produce .agent-team/gates/phase-{N}-gate.md
+        If FAIL → Forge fixes → Crucible re-verifies (loop)
+        If PASS → proceed to next phase
+    
+    If phase == 1:
+        ⚠️ HUMAN GATE — present results, wait for Joe
+```
+
+---
+
+## ADR DECISION SUMMARY (Quick Reference)
+
+| ID | Decision | Binding Directive |
+|----|----------|------------------|
+| RISK-1 | FP16 fallback authorized | 0.95 Hamming correlation gate. No QAT. INT8 first, FP16 if needed. |
+| RISK-2 | Kill twin_ask | Actor reasons. Twin stores. No LLM in MCP server. |
+| RISK-3 | 3-tier float trust | [0.0–1.0] continuous. Basal Ganglia evaluates float. |
+| GAP-1 | Intake re-triggerable | trigger_cognitive_recalibration MCP tool. Resets flag + clears profile. |
+| GAP-2 | Defer Elenchus to Actor | Observer queues. Actor verifies via resolve_verifications. |
+| GAP-3 | Replay-then-archive | Chronological replay with decay. Commutes with Hebbian math. |
+| GAP-4 | Claude-only v8.0 | Coach Core hardcoded Anthropic XML. Multi-model deferred to v8.1. |
+| GAP-5 | Clean test rewrite | Reject v7 integration backward compat. Retain pure-math unit tests. |
+| TENSION-1 | FTS5 + SDR federated | L1 Hot (FTS5, zero-encoding) + L2 Warm (SDR). Merged query. |
+
+---
+
+## KICKOFF PROMPT (Paste into Claude Code)
+
+```
+You are executing a 7-phase architectural rewrite of the Cognitive Twin codebase from v7.0 to v8.0.
+
+Read AGENTS.md in the project root. It is your operating specification.
+
+You are a Sequential MoE pipeline: Architect → Forge → Crucible, repeated for each of 7 phases. There is no Scout phase — the AGENTS.md IS the reconnaissance.
+
+Your agent rules are derived from the Twin's own architecture:
+- Rule 2 = Basal Ganglia Gate: Every mutation is gated. Default state is INHIBIT.
+- Rule 3 = UNPROVABLE: 3 failures → park with dignity.
+- Rule 5 = Trace Exclusion: Role boundaries are structural.
+- Rule 7 = Crucible IS Elenchus: Blind verification. Spec-gaming detection.
+
+Begin Phase 1: Encoding & Hot Path. Start as Architect.
+```
+
+---
+
+*v8.0 Agentic Build Teams Execution Spec — derived from Gemini Deep Think ADR*
+*AlphaProof AND/OR decomposition — hardest subtask (Phase 1) surfaced first*
+*MoE pattern: Architect → Forge → Crucible × 7 sequential phases*

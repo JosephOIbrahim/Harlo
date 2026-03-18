@@ -1,4 +1,4 @@
-"""Trace-excluded verifier — the core of Aletheia's cognitive immune system.
+"""Trace-excluded verifier — the core of Elenchus's cognitive immune system.
 
 Rule 11: verify() NEVER receives a reasoning trace.  If the reasoning_trace
 parameter is anything other than None the call MUST raise ValueError

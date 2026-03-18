@@ -9,7 +9,7 @@ import pytest
 
 from cognitive_twin.usd_lite.arc_types import ArcType
 from cognitive_twin.usd_lite.prims import (
-    AletheiaPrim,
+    ElenchusPrim,
     AssociationPrim,
     CognitiveProfilePrim,
     CompositionLayerPrim,
@@ -170,11 +170,11 @@ class TestCompositionRoundTrip:
         assert parse(serialize(stage)) == stage
 
 
-class TestAletheiaRoundTrip:
-    """AletheiaPrim serialization."""
+class TestElenchusRoundTrip:
+    """ElenchusPrim serialization."""
 
-    def test_full_aletheia(self) -> None:
-        ale = AletheiaPrim(
+    def test_full_elenchus(self) -> None:
+        ale = ElenchusPrim(
             gate_status=GateStatusPrim(
                 verification_state=VerificationState.TRUSTED,
                 cycle_count=2,
@@ -182,25 +182,25 @@ class TestAletheiaRoundTrip:
             ),
             merkle_root=MerkleRootPrim(root_hash="deadbeef" * 8, trace_count=42),
         )
-        stage = BrainStage(aletheia=ale)
+        stage = BrainStage(elenchus=ale)
         assert parse(serialize(stage)) == stage
 
-    def test_empty_aletheia(self) -> None:
-        stage = BrainStage(aletheia=AletheiaPrim())
+    def test_empty_elenchus(self) -> None:
+        stage = BrainStage(elenchus=ElenchusPrim())
         assert parse(serialize(stage)) == stage
 
     def test_all_verification_states(self) -> None:
         for vs in VerificationState:
-            ale = AletheiaPrim(
+            ale = ElenchusPrim(
                 gate_status=GateStatusPrim(
                     verification_state=vs,
                     cycle_count=1,
                     last_verified=NOW,
                 )
             )
-            stage = BrainStage(aletheia=ale)
+            stage = BrainStage(elenchus=ale)
             restored = parse(serialize(stage))
-            assert restored.aletheia.gate_status.verification_state == vs
+            assert restored.elenchus.gate_status.verification_state == vs
 
 
 class TestSessionRoundTrip:
@@ -352,7 +352,7 @@ class TestFullStageRoundTrip:
                     permanent=True,
                 ),
             }),
-            aletheia=AletheiaPrim(
+            elenchus=ElenchusPrim(
                 gate_status=GateStatusPrim(
                     verification_state=VerificationState.CONTESTED,
                     cycle_count=1,

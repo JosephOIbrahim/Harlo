@@ -26,7 +26,7 @@ The intelligence lives in the relationship — not in either party alone.
   ┌─────────────────────────────────────────────────────────────────┐
   │  ACTOR / OBSERVER ARCHITECTURE                                  │
   │                                                                │
-  │  Actor (LLM) reasons ←── Coach.md projection ←── Observer      │
+  │  Actor (LLM) reasons ←── Coach Core projection ←── Observer      │
   │       │                                              │          │
   │       ▼                                              │          │
   │  ┌──────────────┐  ┌────────────────────────────────────┐       │
@@ -40,7 +40,7 @@ The intelligence lives in the relationship — not in either party alone.
   │         └────────────────────────────────────────────────┘       │
   │                                                                │
   │  ┌──────────────────────┐     ┌──────────────────────────┐     │
-  │  │  FEDERATED RECALL    │     │  ALETHEIA VERIFICATION   │     │
+  │  │  FEDERATED RECALL    │     │  ELENCHUS VERIFICATION   │     │
   │  │                      │     │  (GVR Loop, max 3)       │     │
   │  │  FTS5 + SDR Hamming  │     │                          │     │
   │  │  Score normalize     │     │  Trace-excluded verify   │     │
@@ -140,7 +140,7 @@ graph TB
         MERKLE --> LIVRPS --> AUDIT
     end
 
-    subgraph ALETHEIA["Aletheia Verification"]
+    subgraph ELENCHUS["Elenchus Verification"]
         direction TB
         GVR["GVR Loop\nmax 3 cycles"]:::verify
         SPEC["Spec-Gaming Detection"]:::verify
@@ -204,7 +204,7 @@ graph TB
     %% Connections
     BRAINSTEM <-->|"USD prims"| USD
     BRAINSTEM --> LEFT
-    BRAINSTEM --> ALETHEIA
+    BRAINSTEM --> ELENCHUS
     BRAINSTEM --> MOTOR
     BRAINSTEM --> HEBBIAN
     BRAINSTEM --> INQUIRY
@@ -278,7 +278,7 @@ graph LR
     classDef recall fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
 ```
 
-### Aletheia Verification States
+### Elenchus Verification States
 
 The Generate-Verify-Revise loop, its four terminal states, and the v8 Actor-side deferral model:
 
@@ -309,7 +309,7 @@ stateDiagram-v2
     state v8_Deferral {
         direction LR
         [*] --> ObserverQueue: Observer queues\nsemantic claims
-        ObserverQueue --> CoachInject: Coach.md surfaces\npending claims
+        ObserverQueue --> CoachInject: Coach Core surfaces\npending claims
         CoachInject --> ActorResolve: Actor calls\nresolve_verifications
     }
 
@@ -440,7 +440,7 @@ graph TB
         direction TB
         C1{"1. Anchor Check\nAligned with\ncore principles?"}:::check
         C2{"2. Consent Check\nUser authorized\nthis action?"}:::check
-        C3{"3. Verification Check\nAletheia verified\nthe reasoning?"}:::check
+        C3{"3. Verification Check\nElenchus verified\nthe reasoning?"}:::check
         C4{"4. Reversibility Check\nCan this be\nundone?"}:::check
         C5{"5. Scope Check\nWithin declared\nboundaries?"}:::check
 
@@ -495,7 +495,7 @@ graph TB
         T1["Twin observes\nHot Tier store, SDR encoding"]:::twin
         T2["Twin learns\nHebbian evolution,\nskills tracking,\npattern detection"]:::twin
         T3["Twin reflects\nDMN inquiry,\ncrystallization,\nallostatic monitoring"]:::twin
-        T4["Twin surfaces\nCoach.md projection,\ntrust-gated coaching"]:::twin
+        T4["Twin surfaces\nCoach Core projection,\ntrust-gated coaching"]:::twin
         H2["Human integrates\nnew awareness,\nadjusted behavior"]:::human
         H3["Human transforms\nnew patterns emerge,\nold ones decay"]:::human
 
@@ -604,13 +604,13 @@ graph TB
 
 **Temporal compaction (v8.0).** Deep-idle process replays variant stacks chronologically with exponential decay, writes resolved baselines, and archives originals. Critical invariant: `flatten(decay(variants)) == decay(flatten(variants))` — verified by tests.
 
-**Aletheia verification pipeline.** Every LLM response runs through Generate-Verify-Revise. Max 3 cycles (ADHD guard). The verifier never sees reasoning traces (structural constraint). Spec-gaming detection catches correct answers to wrong questions. Unresolvable outputs are parked as UNPROVABLE with full metadata. In v8.0, the Observer queues semantic claims and the Actor resolves them via `resolve_verifications` — no local LLM required.
+**Elenchus verification pipeline.** Every LLM response runs through Generate-Verify-Revise. Max 3 cycles (ADHD guard). The verifier never sees reasoning traces (structural constraint). Spec-gaming detection catches correct answers to wrong questions. Unresolvable outputs are parked as UNPROVABLE with full metadata. In v8.0, the Observer queues semantic claims and the Actor resolves them via `resolve_verifications` — no local LLM required.
 
 **Inhibition-default motor cortex.** The Basal Ganglia gate defaults to INHIBIT ALL. Every action requires all five checks (anchor, consent, verification, reversibility, scope). Financial transactions and irreversible deletions are structurally locked. RED state halts everything.
 
 **Structured provenance.** Every composition layer carries a typed Provenance dataclass (source_type, origin_timestamp, event_hash, session_id). Five source types: USER_DIRECT, EXTERNAL_REFERENCE, SYSTEM_INFERRED, HEBBIAN_DERIVED, INTAKE_CALIBRATED. Legacy layers receive SYSTEM_INFERRED during migration.
 
-**Aletheia training data pipeline.** Every verification event appends a JSONL row with the full cognitive profile feature vector (not just a hash). O(1) amortized log rotation at 10,000 rows. No reasoning traces (Rule 11). Ready for LoRA fine-tuning of a personalized verification model.
+**Elenchus training data pipeline.** Every verification event appends a JSONL row with the full cognitive profile feature vector (not just a hash). O(1) amortized log rotation at 10,000 rows. No reasoning traces (Rule 11). Ready for LoRA fine-tuning of a personalized verification model.
 
 ## Quick Start
 
@@ -634,13 +634,13 @@ maturin develop -r
 
 ```
 python/cognitive_twin/
-├── aletheia/          Verification engine — GVR loop, spec-gaming, trace exclusion
-├── aletheia_v8/       v8 deferred verification — pending queue, Actor-side resolution
+├── elenchus/          Verification engine — GVR loop, spec-gaming, trace exclusion
+├── elenchus_v8/       v8 deferred verification — pending queue, Actor-side resolution
 ├── brainstem/         Lossless translation — adapters, routing, generation pipeline,
 │                        amygdala, consolidation, provenance, escalation
 ├── cli/               Click CLI — human + JSON output
 │   └── commands/      Individual command implementations
-├── coach/             v8 Coach.md — stage → system prompt projection (Anthropic XML)
+├── coach/             v8 Coach Core — stage → system prompt projection (Anthropic XML)
 ├── compaction/        v8 temporal compaction — replay-then-archive, decay commutation
 ├── composition/       Left hemisphere — Merkle stages, LIVRPS resolution, audit trail
 ├── daemon/            Socket-activated daemon — router, config, lifecycle
@@ -682,21 +682,21 @@ python -m pytest tests/test_hot_store/ -v                # Hot Tier CRUD + FTS5
 python -m pytest tests/test_onnx/ -v                     # ONNX encoding fidelity
 python -m pytest tests/test_federated_recall/ -v         # Federated recall
 python -m pytest tests/test_observer/ -v                 # Observer lifecycle
-python -m pytest tests/test_coach/ -v                    # Coach.md projection
+python -m pytest tests/test_coach/ -v                    # Coach Core projection
 python -m pytest tests/test_trust/ -v                    # Trust Ledger
-python -m pytest tests/test_aletheia_v8/ -v              # Aletheia v8 deferral
+python -m pytest tests/test_elenchus_v8/ -v              # Elenchus v8 deferral
 python -m pytest tests/test_compaction/ -v               # Temporal compaction
 python -m pytest tests/test_latency/ -v                  # SLA enforcement
 ```
 
-Coverage spans: Hot Tier CRUD + FTS5 search, ONNX encoding fidelity (Hamming correlation >= 0.95), federated recall merge + deduplication, Observer promotion lifecycle, Coach.md XML projection, Trust Ledger continuous updates + tier gating, Aletheia v8 pending queue + claim resolution, temporal compaction with decay commutation, latency SLAs (store <2ms, FTS5 <2ms, Coach <10ms), plus all v7 coverage: USD serialization round-trip, hex SDR encoding, LIVRPS composition, adapter fidelity (Hypothesis), Z-score surprise routing, Merkle isolation, dual-mask Hebbian correctness, homeostatic stability, episodic reconstruction, apoptosis clamp, reconsolidation boost gating, training data JSONL, cognitive profile scoring, GVR protocol, spec-gaming detection, Basal Ganglia gating, structured provenance, and compliance with all 33 architectural rules.
+Coverage spans: Hot Tier CRUD + FTS5 search, ONNX encoding fidelity (Hamming correlation >= 0.95), federated recall merge + deduplication, Observer promotion lifecycle, Coach Core XML projection, Trust Ledger continuous updates + tier gating, Elenchus v8 pending queue + claim resolution, temporal compaction with decay commutation, latency SLAs (store <2ms, FTS5 <2ms, Coach <10ms), plus all v7 coverage: USD serialization round-trip, hex SDR encoding, LIVRPS composition, adapter fidelity (Hypothesis), Z-score surprise routing, Merkle isolation, dual-mask Hebbian correctness, homeostatic stability, episodic reconstruction, apoptosis clamp, reconsolidation boost gating, training data JSONL, cognitive profile scoring, GVR protocol, spec-gaming detection, Basal Ganglia gating, structured provenance, and compliance with all 33 architectural rules.
 
 ## Research Alignment
 
 | Research Concept | Implementation | Status |
 |---|---|---|
 | SSGM temporal decay | Lazy decay with Hebbian boost integration | Extended |
-| SSGM pre-consolidation validation | Aletheia trace exclusion (blinded) | Already ahead |
+| SSGM pre-consolidation validation | Elenchus trace exclusion (blinded) | Already ahead |
 | SSGM provenance | Structured 5-type Provenance dataclass | **New in v7** |
 | SSGM fragment reconstruction | Episodic reconstruction via Hebbian + LIVRPS | **New in v7** |
 | Titans test-time memorization | Hebbian dual-mask SDR evolution | **New in v7** |
@@ -708,7 +708,7 @@ Coverage spans: Hot Tier CRUD + FTS5 search, ONNX encoding fidelity (Hamming cor
 | (No equivalent in literature) | Cognitive Profile intake system | **Original** |
 | (No equivalent in literature) | Hot/Warm tiered memory with federated recall | **New in v8** |
 | (No equivalent in literature) | Actor/Observer disaggregation (zero-LLM Observer) | **New in v8** |
-| (No equivalent in literature) | Coach.md system prompt projection from cognitive state | **New in v8** |
+| (No equivalent in literature) | Coach Core system prompt projection from cognitive state | **New in v8** |
 | (No equivalent in literature) | Replay-then-archive temporal compaction | **New in v8** |
 
 ## MCP Quick Reference
@@ -765,7 +765,7 @@ twin_coach(session_id?)
 |-------|------|----------|---------|
 | `session_id` | string | no | `"abc123"` |
 
-Returns an Anthropic XML system prompt block built from current Twin state: trust level, recent traces, session info, pending Aletheia claims, and pattern count. Deterministic for the same state.
+Returns an Anthropic XML system prompt block built from current Twin state: trust level, recent traces, session info, pending Elenchus claims, and pattern count. Deterministic for the same state.
 
 ### `twin_patterns` — Detect clusters and escalation
 
@@ -786,7 +786,7 @@ twin_session_status()
 
 No arguments. Returns active sessions with exchange count, allostatic load, domain, and timing.
 
-### `resolve_verifications` — Actor-side Aletheia verification
+### `resolve_verifications` — Actor-side Elenchus verification
 
 ```
 resolve_verifications(verdicts)
@@ -796,7 +796,7 @@ resolve_verifications(verdicts)
 |-------|------|----------|---------|
 | `verdicts` | array | yes | `[{"claim_id": "abc", "verdict": true}]` |
 
-The Actor evaluates pending Aletheia claims and submits boolean verdicts. Claims move to verified or rejected. Returns remaining pending count.
+The Actor evaluates pending Elenchus claims and submits boolean verdicts. Claims move to verified or rejected. Returns remaining pending count.
 
 ### `trigger_cognitive_recalibration` — Reset intake + trust
 
@@ -830,7 +830,7 @@ Add to `claude_desktop_config.json`:
 - **Routing**: Z-score surprise metric -> System 1 / System 2 dual-process
 - **Learning**: Dual-mask Hebbian SDR evolution with homeostatic plasticity
 - **Decay**: Lazy (computed on read, not background jobs)
-- **Verification**: Aletheia GVR loop (trace-excluded, max 3 cycles) + v8 Actor-side deferral
+- **Verification**: Elenchus GVR loop (trace-excluded, max 3 cycles) + v8 Actor-side deferral
 - **Trust**: Continuous [0.0, 1.0] ledger gating Observer behavior into 3 tiers
 - **Compaction**: Replay-then-archive with decay commutation invariant
 - **Hot path**: Rust via PyO3 (`hippocampus` crate)

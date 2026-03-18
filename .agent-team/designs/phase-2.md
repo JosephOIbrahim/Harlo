@@ -9,7 +9,7 @@
 Three moves:
 1. **Kill twin_ask** — Remove LLM client code from MCP server
 2. **Observer** — Background process for Hot→Warm SDR promotion
-3. **Coach.md** — System prompt projection from stage state
+3. **Coach Core** — System prompt projection from stage state
 
 ---
 
@@ -80,7 +80,7 @@ class Observer:
 
 ---
 
-## 5. Coach.md Projection
+## 5. Coach Core Projection
 
 ### Design
 - Reads current state from HotStore + session manager
@@ -120,7 +120,7 @@ def twin_coach(session_id: str | None = None) -> str:
 - No LLM client imports in MCP server
 - MCP server starts without ANTHROPIC_API_KEY
 
-### Gate 2b: Coach.md Projection
+### Gate 2b: Coach Core Projection
 - twin_coach returns valid XML block
 - Output includes session info and recent traces
 - Deterministic for same state
