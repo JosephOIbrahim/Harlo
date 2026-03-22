@@ -11,3 +11,4 @@ dist/
 *.pdb
 models/ 
 encoder_output/ 
+.hypothesis/
