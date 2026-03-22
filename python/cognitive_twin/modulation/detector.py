@@ -118,6 +118,9 @@ class PatternDetector:
             # Escalation operates on sessions, not traces — always run it
             patterns.extend(self._detect_escalation(conn))
 
+            # Injection frequency patterns
+            patterns.extend(self._detect_injection_frequency(conn))
+
             # Persist detected patterns
             for p in patterns:
                 self._store_pattern(conn, p)
@@ -339,6 +342,47 @@ class PatternDetector:
             detected_at=now,
             topic_key="escalation:allostatic_load",
         )]
+
+    def _detect_injection_frequency(self, conn: sqlite3.Connection) -> list[DetectedPattern]:
+        """Detect repeated activation of the same injection profile.
+
+        Flags a pattern when the same profile is activated 3+ times
+        in the stored injection history.
+        """
+        try:
+            rows = conn.execute(
+                """SELECT profile, COUNT(*) as cnt,
+                          GROUP_CONCAT(trace_id) as trace_ids
+                   FROM injection_traces
+                   WHERE transition = 'activated'
+                   GROUP BY profile
+                   HAVING cnt >= 3
+                   ORDER BY cnt DESC"""
+            ).fetchall()
+        except sqlite3.OperationalError:
+            return []
+
+        now = int(time.time())
+        patterns: list[DetectedPattern] = []
+
+        for row in rows:
+            profile, count, trace_id_str = row[0], row[1], row[2]
+            trace_ids = trace_id_str.split(",") if trace_id_str else []
+            confidence = min(count / 5.0, 1.0)
+
+            patterns.append(DetectedPattern(
+                pattern_id=_make_pattern_id("injection_frequency", trace_ids),
+                pattern_type="injection_frequency",
+                description=(
+                    f"Injection frequency: {profile} activated {count} times"
+                ),
+                trace_ids=trace_ids,
+                confidence=confidence,
+                detected_at=now,
+                topic_key=f"injection:{profile}",
+            ))
+
+        return patterns
 
     def _store_pattern(self, conn: sqlite3.Connection, pattern: DetectedPattern) -> None:
         """Persist a detected pattern to SQLite."""

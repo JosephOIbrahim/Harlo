@@ -19,6 +19,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 DB_PATH = str(DATA_DIR / "twin.db")
+TRUST_DELTA_VERIFIED = 0.02
+TRUST_DELTA_REJECTED = -0.05
 
 # Create server
 server = FastMCP(
@@ -107,6 +109,7 @@ def query_past_experience(query: str, limit: int = 10) -> str:
 
 
 _hot_store = None
+_injection_store = None
 
 
 def _get_hot_store():
@@ -118,18 +121,37 @@ def _get_hot_store():
     return _hot_store
 
 
+def _get_injection_store():
+    """Lazy singleton for InjectionStore."""
+    global _injection_store
+    if _injection_store is None:
+        from cognitive_twin.injection import InjectionStore
+        _injection_store = InjectionStore(str(DATA_DIR / "twin.db"))
+    return _injection_store
+
+
 @server.tool()
-def twin_store(message: str, tags: list[str] | None = None, domain: str | None = None) -> str:
+def twin_store(
+    message: str,
+    tags: list[str] | None = None,
+    domain: str | None = None,
+    injection_state: dict | None = None,
+) -> str:
     """Store a memory trace. Zero-encoding hot path (<2ms).
 
     Writes to the Hot Tier (L1) immediately with no model loading or SDR
     encoding. Traces are promoted to Warm Tier (L2) asynchronously by the
     Observer process.
 
+    Optionally stores an injection state transition alongside the trace.
+
     Args:
         message: The text content to store as a memory trace.
         tags: Optional list of tags for categorization.
         domain: Optional domain label (e.g. "technical", "personal").
+        injection_state: Optional injection state dict with keys:
+            profile (str), s_nm (float), alpha (float),
+            exchange_count (int), transition (str), session_id (str).
     """
     _ensure_data_dir()
 
@@ -140,12 +162,28 @@ def twin_store(message: str, tags: list[str] | None = None, domain: str | None =
             tags=tags or [],
             domain=domain or "general",
         )
-        return json.dumps({
+
+        result = {
             "status": "stored",
             "trace_id": trace_id,
             "tier": "hot",
             "encoded": False,
-        }, default=str)
+        }
+
+        # Store injection state if provided
+        if injection_state is not None:
+            inj = _get_injection_store()
+            inj_trace_id = inj.store(
+                profile=injection_state["profile"],
+                s_nm=injection_state["s_nm"],
+                alpha=injection_state["alpha"],
+                exchange_count=injection_state["exchange_count"],
+                transition=injection_state["transition"],
+                session_id=injection_state.get("session_id", ""),
+            )
+            result["injection_trace_id"] = inj_trace_id
+
+        return json.dumps(result, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 
@@ -244,20 +282,28 @@ def resolve_verifications(verdicts: list[dict]) -> str:
 
     try:
         from cognitive_twin.elenchus_v8 import ElenchusQueue
+        from cognitive_twin.trust import TrustLedger
 
         queue = ElenchusQueue(str(DATA_DIR / "twin.db"))
+        ledger = TrustLedger(str(DATA_DIR / "twin.db"))
         results = []
         for v in verdicts:
             claim = queue.resolve(v["claim_id"], v["verdict"])
+            delta = 0.0
+            if claim is not None:
+                delta = TRUST_DELTA_VERIFIED if v["verdict"] else TRUST_DELTA_REJECTED
+                ledger.update(delta)
             results.append({
                 "claim_id": v["claim_id"],
                 "resolved": claim is not None,
                 "status": claim.status if claim else "not_found",
+                "trust_delta": delta,
             })
         return json.dumps({
             "status": "ok",
             "resolved": results,
             "remaining_pending": queue.pending_count(),
+            "trust_score": ledger.get_score(),
         })
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})

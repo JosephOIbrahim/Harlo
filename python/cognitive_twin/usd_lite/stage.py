@@ -20,6 +20,7 @@ from .prims import (
     AssociationPrim,
     CognitiveProfilePrim,
     CompositionPrim,
+    InjectionContainerPrim,
     InquiryContainerPrim,
     MotorContainerPrim,
     SessionPrim,
@@ -87,6 +88,7 @@ class BrainStage:
     motor: MotorContainerPrim = field(default_factory=MotorContainerPrim)
     skills: SkillsContainerPrim = field(default_factory=SkillsContainerPrim)
     cognitive_profile: CognitiveProfilePrim = field(default_factory=CognitiveProfilePrim)
+    injection: InjectionContainerPrim = field(default_factory=InjectionContainerPrim)
 
     def __eq__(self, other: object) -> bool:
         """Compare with float tolerance for round-trip fidelity."""
@@ -105,6 +107,7 @@ class BrainStage:
             "motor": self.motor.to_dict(),
             "skills": self.skills.to_dict(),
             "cognitive_profile": self.cognitive_profile.to_dict(),
+            "injection": self.injection.to_dict(),
         }
 
     @classmethod
@@ -121,5 +124,8 @@ class BrainStage:
             skills=SkillsContainerPrim.from_dict(d.get("skills", {})),
             cognitive_profile=CognitiveProfilePrim.from_dict(
                 d.get("cognitive_profile", {})
+            ),
+            injection=InjectionContainerPrim.from_dict(
+                d.get("injection", {})
             ),
         )

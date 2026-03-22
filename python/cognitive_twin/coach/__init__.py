@@ -26,6 +26,7 @@ def project_coach(
     - Hot Tier: last 5 traces for immediate context
     - Session manager: active session info
     - Patterns: count of detected patterns
+    - Injection store: recent injection state history
 
     Args:
         db_path: Path to SQLite database.
@@ -39,6 +40,7 @@ def project_coach(
     pattern_count = _get_pattern_count(db_path)
     trust_score = _get_trust_score(db_path)
     pending_claims = _get_pending_claims(db_path)
+    injection_history = _get_injection_history(db_path)
 
     return _format_xml(
         recent_traces=recent_traces,
@@ -46,6 +48,7 @@ def project_coach(
         pattern_count=pattern_count,
         trust_score=trust_score,
         pending_claims=pending_claims,
+        injection_history=injection_history,
     )
 
 
@@ -151,12 +154,42 @@ def _get_pending_claims(db_path: str) -> list[dict]:
         return []
 
 
+def _get_injection_history(db_path: str) -> list[dict]:
+    """Get recent injection state transitions."""
+    if not Path(db_path).exists():
+        return []
+
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.execute(
+            "SELECT profile, alpha, exchange_count, transition, session_id, timestamp "
+            "FROM injection_traces ORDER BY timestamp DESC LIMIT 10",
+        )
+        rows = cursor.fetchall()
+        return [
+            {
+                "profile": r[0],
+                "alpha": r[1],
+                "exchange_count": r[2],
+                "transition": r[3],
+                "session_id": r[4],
+                "timestamp": r[5],
+            }
+            for r in rows
+        ]
+    except sqlite3.OperationalError:
+        return []
+    finally:
+        conn.close()
+
+
 def _format_xml(
     recent_traces: list[dict],
     session_info: dict,
     pattern_count: int,
     trust_score: float = 0.0,
     pending_claims: list[dict] | None = None,
+    injection_history: list[dict] | None = None,
 ) -> str:
     """Format Twin state as Anthropic XML system prompt block.
 
@@ -205,6 +238,42 @@ def _format_xml(
             lines.append(f'      {claim["claim_text"]}')
             lines.append(f"    </claim>")
         lines.append("  </pending-verifications>")
+
+    # Injection history (only when there IS history)
+    if injection_history:
+        lines.append("  <injection-history>")
+
+        # Last 3 sessions summary
+        activations = [h for h in injection_history if h["transition"] == "activated"]
+        if activations:
+            recent_profiles = [a["profile"] for a in activations[:3]]
+            recent_exchanges = [str(a["exchange_count"]) for a in activations[:3]]
+            summaries = [
+                f'{p} ({e} exc)' for p, e in zip(recent_profiles, recent_exchanges)
+            ]
+            lines.append(f"    <recent-sessions>{', '.join(summaries)}</recent-sessions>")
+
+            # Most frequent profile
+            freq: dict[str, int] = {}
+            for a in activations:
+                freq[a["profile"]] = freq.get(a["profile"], 0) + 1
+            most_freq = max(freq, key=freq.get)  # type: ignore[arg-type]
+            lines.append(
+                f"    <most-frequent-profile>"
+                f"{most_freq} (used {freq[most_freq]} of last {len(activations)} activations)"
+                f"</most-frequent-profile>"
+            )
+
+        # Current/last injection state
+        last = injection_history[0]
+        lines.append(
+            f'    <last-injection profile="{last["profile"]}" '
+            f'transition="{last["transition"]}" '
+            f'alpha="{last["alpha"]:.2f}" '
+            f'exchange="{last["exchange_count"]}"/>'
+        )
+
+        lines.append("  </injection-history>")
 
     # Patterns
     lines.append(f"  <patterns-detected>{pattern_count}</patterns-detected>")

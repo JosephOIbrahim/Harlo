@@ -362,6 +362,40 @@ class MultipliersPrim:
 
 
 @dataclass
+class InjectionPrim:
+    """Behavioral modulation state from the Digital Injection Framework (/Injection)."""
+    profile: str                # "none" | "microdose" | "perceptual" | "classical" | "mdma"
+    s_nm: float                 # Neuromodulatory signal strength (0.000 - 0.025)
+    alpha: float                # Current pharmacokinetic alpha (0.0 - 1.0)
+    transition: str             # "activated" | "deactivated" | "red_override"
+    exchange_count: int         # Exchange number when transition occurred
+    session_id: str = ""        # Link to active session
+
+    def to_dict(self) -> dict:
+        """Serialize to dict."""
+        return {
+            "profile": self.profile,
+            "s_nm": self.s_nm,
+            "alpha": self.alpha,
+            "transition": self.transition,
+            "exchange_count": self.exchange_count,
+            "session_id": self.session_id,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> InjectionPrim:
+        """Deserialize from dict."""
+        return cls(
+            profile=d["profile"],
+            s_nm=d["s_nm"],
+            alpha=d["alpha"],
+            transition=d["transition"],
+            exchange_count=d["exchange_count"],
+            session_id=d.get("session_id", ""),
+        )
+
+
+@dataclass
 class IntakeHistoryPrim:
     """Intake administration history (/CognitiveProfile/IntakeHistory)."""
     last_intake: Optional[datetime] = None
@@ -511,6 +545,25 @@ class SkillsContainerPrim:
         """Deserialize from dict."""
         return cls(
             domains={k: SkillPrim.from_dict(v) for k, v in d.get("domains", {}).items()},
+        )
+
+
+@dataclass
+class InjectionContainerPrim:
+    """Container for injection state history (/Injection)."""
+    history: list[InjectionPrim] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        """Serialize to dict."""
+        return {
+            "history": [p.to_dict() for p in self.history],
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> InjectionContainerPrim:
+        """Deserialize from dict."""
+        return cls(
+            history=[InjectionPrim.from_dict(p) for p in d.get("history", [])],
         )
 
 

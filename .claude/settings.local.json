@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "mcp__cognitive-twin__twin_recall"
+      "mcp__cognitive-twin__twin_recall",
+      "mcp__cognitive-twin__twin_session_status",
+      "mcp__cognitive-twin__twin_store",
+      "mcp__cognitive-twin__twin_patterns"
     ]
   }
 }
