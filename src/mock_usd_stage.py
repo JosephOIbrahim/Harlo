@@ -83,6 +83,61 @@ class MockUsdStage:
         """
         return BASELINE_OBSERVATION.model_copy(deep=True)
 
+    # -------------------------------------------------------------------
+    # Delegate sublayer support (Sprint 3 Phase 4)
+    # -------------------------------------------------------------------
+
+    def create_delegate_sublayer(self, delegate_id: str) -> None:
+        """Create an isolated write layer for a delegate."""
+        if not hasattr(self, "_sublayers"):
+            self._sublayers: dict[str, dict[tuple[str, int], Any]] = {}
+            self._sublayer_priority: list[str] = []
+        if delegate_id not in self._sublayers:
+            self._sublayers[delegate_id] = {}
+            if delegate_id not in self._sublayer_priority:
+                self._sublayer_priority.append(delegate_id)
+
+    def set_sublayer_priority(self, priority: list[str]) -> None:
+        """Set sublayer composition priority. Last in list = strongest."""
+        if not hasattr(self, "_sublayer_priority"):
+            self._sublayer_priority = []
+        self._sublayer_priority = list(priority)
+
+    def author_to_sublayer(self, delegate_id: str, prim_path: str,
+                           exchange_index: int, value: Any) -> None:
+        """Write to a delegate's sublayer, not the base stage."""
+        if not hasattr(self, "_sublayers"):
+            self._sublayers = {}
+        if delegate_id not in self._sublayers:
+            self.create_delegate_sublayer(delegate_id)
+        self._sublayers[delegate_id][(prim_path, exchange_index)] = deepcopy(value)
+
+    def read_from_sublayer(self, delegate_id: str, prim_path: str,
+                           exchange_index: int) -> Any:
+        """Read from a specific delegate sublayer."""
+        if not hasattr(self, "_sublayers"):
+            return None
+        layer = self._sublayers.get(delegate_id, {})
+        val = layer.get((prim_path, exchange_index))
+        return deepcopy(val) if val is not None else None
+
+    def compose(self) -> dict[tuple[str, int], Any]:
+        """LIVRPS-style composition: merge base + all sublayers.
+
+        Weakest first, strongest last (strongest wins on conflict).
+        Priority order set by set_sublayer_priority or registration order.
+        """
+        composed = dict(self._store)
+        if hasattr(self, "_sublayers") and hasattr(self, "_sublayer_priority"):
+            for delegate_id in self._sublayer_priority:
+                layer = self._sublayers.get(delegate_id, {})
+                composed.update(layer)
+        return composed
+
+    # -------------------------------------------------------------------
+    # Original methods
+    # -------------------------------------------------------------------
+
     def keys(self) -> list[tuple[str, int]]:
         """Return all stored keys."""
         return list(self._store.keys())
@@ -96,3 +151,5 @@ class MockUsdStage:
     def clear(self) -> None:
         """Clear all stored data."""
         self._store.clear()
+        if hasattr(self, "_sublayers"):
+            self._sublayers.clear()
