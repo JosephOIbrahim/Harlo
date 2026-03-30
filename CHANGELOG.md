@@ -1,5 +1,71 @@
 # Changelog
 
+## v3.3.1 — Production Live (March 30, 2026)
+
+Production release. 5 sprints, 250 tests, real USD stage, organic data flowing.
+
+### Sprint 1: Cognitive State Machine Simulation
+- Pydantic schemas with IntEnum ordinal types (Momentum, Burnout, Energy, Burst, Injection)
+- CognitiveObservation canonical schema with telemetry block
+- MockUsdStage (dict-based, read_previous at index 0 returns baseline, NEVER None)
+- MockCogExec: networkx DAG with topological evaluation (7 computation nodes)
+- Pure computation functions: momentum, burnout, energy, burst, allostasis, injection_gain, context_budget
+- Adrenaline masking (energy suspends during burst, debt on exit)
+- Anchor immunity (gain = 1.0 ALWAYS, separate function)
+- RED exogenous override (ANY → RED, Commandment 7)
+- Context budget hysteresis (promote >4.2x, demote <3.8x)
+- 26-invariant validator (INV-01 to INV-26, RED exception for INV-14)
+- Trajectory generator: 10,000 sessions, 278,577 exchanges, 0 violations
+- Profile-Driven Markov Biasing (7 profiles, distribution targets ±5%)
+- XGBoost MultiOutputRegressor (111 features, 4 targets, 100% per-field accuracy)
+- Bridge integration: 50-exchange end-to-end with delegate + buffer + predictor
+- Observation buffer: SQLite priority queue with anchor (20%) / organic (80%) partitions
+
+### Sprint 2: USD 26 OpenExec (Circuit-Breaker)
+- USD 26.03 built from source with PXR_BUILD_EXEC=ON on Windows
+- C++ Exec libraries compiled (usd_exec.dll, usd_execGeom.dll, usd_execIr.dll, usd_execUsd.dll)
+- usdGenSchema available
+- **Circuit-breaker triggered:** Zero Python bindings in v26.03 source. MockCogExec continues.
+
+### Sprint 3: Hydra Cognitive Delegates + Live MCP
+- HdCognitiveDelegate ABC (Sync/Execute/CommitResources)
+- DelegateRegistry with capability-matching selection
+- HdClaude (interactive reasoning) + HdClaudeCode (batch implementation)
+- compute_routing: outputs capability requirements, NOT delegate names
+- OOB consent tokens (HMAC-signed, TTL, revocable, app-layer only)
+- Sublayer-per-delegate concurrency (LIVRPS composition, interactive wins)
+- CognitiveEngine singleton: DAG → route → delegate → observe → predict
+- 20-exchange end-to-end live test
+
+### Sprint 4: Real USD Stage
+- CognitiveStage wrapping pxr.Usd.Stage (drop-in for MockUsdStage)
+- .usda files on disk: data/stages/cognitive_twin.usda
+- Delegate sublayers: data/stages/delegates/{id}.usda
+- Time samples via Usd.TimeCode(exchange_index)
+- stage_factory toggle (USE_REAL_USD env var)
+- Backend parity verified (mock produces identical results to real USD)
+
+### Sprint 5: Production Hardening
+- Graceful degradation (every component fails independently)
+- Health check endpoint (engine.get_health())
+- Kill switches: ENGINE_ENABLED, USE_REAL_USD, OBSERVATION_LOGGING, PREDICTION_ENABLED
+- Memory queue for observations when DB locked (max 100)
+- First session verified: 10 exchanges, real .usda on disk, predictions flowing
+- 458 organic observations collected
+
+### Test Summary
+| Suite | Tests |
+|-------|-------|
+| Sprint 1 | 84 |
+| Sprint 3 | 85 |
+| Sprint 4 | 59 |
+| Sprint 5 | 22 |
+| **Total Sprint** | **250** |
+| Core Twin | 890 |
+| Rust (hippocampus) | 41 |
+
+---
+
 ## v8.0.0 — Actor/Observer Disaggregation + Hot/Warm Tiered Memory
 
 ### Architecture
