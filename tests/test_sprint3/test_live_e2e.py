@@ -23,6 +23,7 @@ class TestLiveE2E:
         """Full 20-exchange session with all systems."""
         engine = CognitiveEngine(
             model_path="models/cognitive_predictor_v1.joblib",
+            use_real_usd=False, in_memory=True,
         )
 
         results = []
@@ -58,7 +59,7 @@ class TestLiveE2E:
 
     def test_consent_blocks_and_permits(self):
         """Consent token blocks override when absent, permits when present."""
-        engine = CognitiveEngine()
+        engine = CognitiveEngine(use_real_usd=False, in_memory=True)
 
         # Without consent: engine operates normally
         result1 = engine.process_exchange("twin_coach", {})
@@ -84,7 +85,7 @@ class TestLiveE2E:
 
     def test_interleaved_delegate_calls(self):
         """Simulate interleaved Claude + ClaudeCode calls via sublayers."""
-        engine = CognitiveEngine()
+        engine = CognitiveEngine(use_real_usd=False, in_memory=True)
 
         # Mix of reasoning and coding tasks
         tasks = [
@@ -111,7 +112,7 @@ class TestLiveE2E:
 
     def test_context_hysteresis_stable(self):
         """No Payload/Reference thrashing over 20 exchanges."""
-        engine = CognitiveEngine()
+        engine = CognitiveEngine(use_real_usd=False, in_memory=True)
         contexts = []
         for i in range(20):
             result = engine.process_exchange("twin_coach", {"message": "x" * 100})
@@ -128,7 +129,7 @@ class TestLiveE2E:
 
     def test_buffer_maintains_anchor_ratio(self):
         """Buffer anchor partition maintains ~20% ratio when seeded."""
-        engine = CognitiveEngine()
+        engine = CognitiveEngine(use_real_usd=False, in_memory=True)
 
         # Seed anchors
         from src.schemas import CognitiveObservation
@@ -150,6 +151,7 @@ class TestLiveE2E:
         """Predictions are authored to stage."""
         engine = CognitiveEngine(
             model_path="models/cognitive_predictor_v1.joblib",
+            use_real_usd=False, in_memory=True,
         )
         for i in range(5):
             engine.process_exchange("twin_coach", {"message": f"msg {i}"})
@@ -164,7 +166,7 @@ class TestLiveE2E:
 
     def test_observation_pipeline_produces_valid_data(self):
         """Observations in buffer are valid CognitiveObservation records."""
-        engine = CognitiveEngine()
+        engine = CognitiveEngine(use_real_usd=False, in_memory=True)
         for i in range(5):
             engine.process_exchange("twin_coach", {"message": f"msg {i}"})
 
