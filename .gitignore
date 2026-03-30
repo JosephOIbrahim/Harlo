@@ -3,6 +3,7 @@ target/
 __pycache__/
 *.pyc
 .venv/
+.venv312/
 *.egg-info/
 dist/
 *.so

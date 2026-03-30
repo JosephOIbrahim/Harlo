@@ -1,512 +1,454 @@
-# AGENTS.md — Cognitive Twin Sprint 2
-# Native OpenExec: Replace MockCogExec with C++ Computation Plugins
+# AGENTS.md — Cognitive Twin Sprint 5
+# Production Hardening: Wire Live + Error Handling + First Real Session
 # Author: Joseph O. Ibrahim
 # Date: March 30, 2026
-# Prerequisite: Sprint 1 complete (84 tests passing, MockCogExec functional)
+# Prerequisites: Sprints 1-4 complete (228 tests, real USD stage, Hydra delegates, CognitiveEngine)
 
 ---
 
-## CONSTITUTION (Unchanged from Sprint 1 — Still Law)
-
-### LAW 1: SCOUT BEFORE YOU ACT
-### LAW 2: VERIFY AFTER EVERY MUTATION
-### LAW 3: BOUNDED FAILURE → ESCALATE (3 retries then stop)
-### LAW 4: COMPLETE OUTPUT OR EXPLICIT BLOCKER
-### LAW 5: ROLE ISOLATION
-### LAW 6: EXPLICIT HANDOFFS
-### LAW 7: ADVERSARIAL VERIFICATION
-### LAW 8: HUMAN GATES AT IRREVERSIBLE TRANSITIONS
-
-Full text in Sprint 1 AGENTS.md (AGENTS_sprint1.md). All eight laws apply unchanged.
-
----
+## CONSTITUTION (All 8 Laws Apply)
 
 ## MISSION
 
-Replace the Sprint 1 Python mock (MockCogExec + networkx DAG) with native USD 26 OpenExec computation plugins. The cognitive state machines become C++ callbacks compiled into a plugin library, evaluated by OpenExec's multithreaded engine against a real USD stage.
+Three moves. Make it production-real.
 
-**The contract:** Sprint 1's 84 tests are the verification suite. Every test that passed against MockCogExec must produce identical results against native OpenExec. Same inputs → same outputs. When that's true, MockCogExec is deleted.
-
-**The risk:** The USD 26 build environment. If it won't compile, nothing else in this sprint matters. Phase 0 exists to kill this risk immediately.
-
----
-
-## COMMANDMENTS (Sprint 2 Specific)
-
-1. **Sprint 1 tests are sacred.** The 84 Sprint 1 tests AND the 890 existing tests are invariants. Breaking any is higher priority than any Sprint 2 work.
-2. **USDA schemas first, C++ second.** Define schemas in USDA. Generate boilerplate via `usdGenSchema`. Write computation callbacks in the generated structure. Do not hand-write USD schema boilerplate.
-3. **Parameterized, not hardcoded.** C++ callbacks read thresholds from USD stage attributes. `building_task_threshold`, `rolling_coherence_threshold`, etc. are USD attributes, not C++ constants. Personality tuning via USDA, not recompilation.
-4. **Anchor immunity is structural.** AnchorPhaseAPI and ModulatedPhaseAPI are separate schemas with separate registered callbacks. There is no code path from injection parameters to anchor gain output.
-5. **Time-sampled state.** Computations read `exchange_index` t-1 from authored time samples. No self-referential queries. No cycles. OpenExec cycle detector will abort if violated.
-6. **Headless build.** `build_usd.py --no-imaging --no-usdview --no-ptex --no-embree --openexec`. Strip all VFX rendering. USD is a data substrate here, not a graphics engine.
-7. **MockCogExec is the oracle.** When in doubt about what a computation should return, run the Sprint 1 Python mock. The C++ callback must produce the same result.
-8. **If the build fails after 3 attempts, STOP.** Surface the exact error, the platform, the CMake output. Do not attempt heroic workarounds. This is a known high-risk phase.
+1. **Wire CognitiveEngine (real USD backend) into the live MCP server.** When Claude Desktop calls `twin_coach`, the DAG evaluates against real `.usda`, delegates route by capability, observations emit.
+2. **Harden every failure path.** Locked files, missing models, corrupt DB, import failures — every one falls back gracefully. The MCP server never crashes.
+3. **Run the first real session.** Open Claude Desktop, have a conversation, verify organic data is flowing.
 
 ---
 
-## PLATFORM DETECTION
+## COMMANDMENTS
 
-Sprint 2 must determine which machine to build on:
-
-| Machine | OS | CPU | GPU | USD Build Feasibility |
-|---------|-----|-----|-----|----------------------|
-| Threadripper Workstation | Windows 11 Pro | AMD 7965WX | RTX 4090 | Possible but harder. MSVC + CMake. |
-| Mac Studio | macOS | Apple M1 | Integrated | Recommended by Gemini. Clang + CMake. ~15min headless. |
-
-Phase 0 determines which platform succeeds first.
+1. **228 Sprint tests + 890 existing tests are invariants.**
+2. **The MCP server MUST NOT crash.** Any failure in the cognitive engine → logged warning + pre-Sprint 3 behavior. The MCP server is the product. The engine is an enhancement. Enhancement failure ≠ product failure.
+3. **USE_REAL_USD=True by default.** CognitiveStage (pxr.Usd) is the backend. MockUsdStage is the fallback if USD import fails.
+4. **Every `try/except` logs the exception.** No silent swallowing. `logging.getLogger(__name__)` everywhere.
+5. **The first real session is the acceptance test.** If observations don't emit during a real Claude Desktop conversation, the sprint is not done.
 
 ---
 
-## PHASE 0: USD 26 BUILD ENVIRONMENT (The Gate-of-Gates)
-
-### Purpose
-This is the single highest-risk task in Sprint 2. If USD 26 + OpenExec won't compile on your hardware, everything downstream is blocked. Kill this risk first.
+## PHASE 0: Audit Current Wiring (Architect)
 
 ### Tasks:
 
-1. **Check if USD is already available:**
-   ```bash
-   python -c "from pxr import Usd; print(Usd.GetVersion())"
-   ```
-   If this works and reports 26.x, skip to Task 5.
+1. **Read `src/cognitive_engine.py`** — does it currently import CognitiveStage or MockUsdStage?
+2. **Read `python/cognitive_twin/mcp_server.py`** — is CognitiveEngine hooked in? If Sprint 3 added the hook, verify it uses the real USD backend.
+3. **Read `src/engine_config.py`** — what's the current state of all toggles?
+4. **Read `.mcp.json`** — what's the entry point? How does Claude Desktop launch the server?
+5. **Map the exact path:** Claude Desktop → `.mcp.json` → MCP server process → tool handler → CognitiveEngine → CognitiveStage → `.usda`
+6. **Identify every gap in this path.** What's connected? What's not?
 
-2. **Check prerequisites:**
-   ```bash
-   cmake --version          # Need 3.24+
-   python --version         # Need 3.10-3.12 (USD constraint)
-   git --version
-   ```
-   On Windows: verify MSVC/Visual Studio build tools installed.
-   On macOS: verify Xcode command-line tools (`xcode-select --install`).
+### Gate: Print the wiring audit. What works, what's disconnected. Stop. Await approval.
 
-3. **Clone OpenUSD:**
-   ```bash
-   git clone https://github.com/PixarAnimationStudios/OpenUSD.git
-   cd OpenUSD
-   git checkout v26.03    # or latest 26.x tag
-   ```
+---
 
-4. **Headless build with OpenExec (Gemini R2 recommended flags):**
-   ```bash
-   python build_scripts/build_usd.py \
-       --no-imaging \
-       --no-usdview \
-       --no-ptex \
-       --no-embree \
-       --openexec \
-       /opt/usd-26.03
-   ```
-   On Windows, adjust install path: `C:\USD\26.03`
+## PHASE 1: Wire CognitiveEngine to Real USD (Forge)
 
-   **Expected:** ~15 minutes on Mac Studio. ~20-30 minutes on Threadripper.
-   **If it fails:** Capture full CMake output + error. Surface as blocker. Do NOT retry with different flags without human approval.
+### Gate: Phase 0 approved.
 
-5. **Verify OpenExec is functional:**
+### Tasks:
+
+1. **Update `src/cognitive_engine.py`** to use stage_factory:
    ```python
-   from pxr import Usd, Exec
-   stage = Usd.Stage.CreateInMemory()
-   print("USD version:", Usd.GetVersion())
-   print("OpenExec available:", hasattr(Exec, 'ExecUsdSystem'))
+   from src.stage_factory import create_stage
+
+   class CognitiveEngine:
+       def __init__(self):
+           try:
+               self.stage = create_stage()  # Real USD if available, mock fallback
+               self.stage_type = "real_usd" if hasattr(self.stage, 'stage') else "mock"
+           except Exception as e:
+               logger.warning(f"CognitiveStage init failed, using mock: {e}")
+               from src.mock_usd_stage import MockUsdStage
+               self.stage = MockUsdStage()
+               self.stage_type = "mock"
+
+           self.cogexec = MockCogExec(self.stage)
+           self.registry = DelegateRegistry()
+           self.buffer = ObservationBuffer(...)
+           # ... rest of init with try/except on each component
    ```
 
-6. **Verify usdGenSchema works:**
-   ```bash
-   usdGenSchema --help
-   ```
-   Must be on PATH from the USD install.
-
-### Verification:
-- USD 26 imports in Python
-- OpenExec module accessible
-- usdGenSchema executable
-- No existing tests broken
-
-### Gate: Print USD version, OpenExec status, platform info. Stop if build fails.
-### Git: `git commit -m "Sprint 2 Phase 0: USD 26 + OpenExec build verified"`
-
-### CIRCUIT BREAKER:
-If the build fails after 3 attempts on the primary platform:
-1. Try the secondary platform (if Threadripper fails, try Mac Studio or vice versa)
-2. If both fail: surface blocker. Sprint 2 pauses. Sprint 1 MockCogExec continues to serve. This is acceptable — the architecture is OpenExec-native, the implementation catches up later.
-
----
-
-## PHASE 1: USDA Schema Definitions + usdGenSchema
-
-### Gate: Phase 0 passed (USD 26 builds, OpenExec available).
-
-### Tasks:
-
-1. **Create USDA schema files** under `schemas/`:
-
-   **`schemas/cognitiveStatePrim.usda`:**
-   ```usda
-   #usda 1.0
-   (
-       subLayers = [
-           @usd/schema.usda@
-       ]
-   )
-
-   class "CognitiveStatePrimAPI"
-   (
-       inherits = </APISchemaBase>
-       customData = {
-           token apiSchemaType = "singleApply"
-           dictionary schemaTokens = {
-               dictionary computeMomentum = {}
-               dictionary computeBurnout = {}
-               dictionary computeEnergy = {}
-               dictionary computeBurst = {}
-               dictionary computeAllostatic = {}
-               dictionary computeRouting = {}
-               dictionary computePermission = {}
-           }
-       }
-   )
-   {
-       int momentum = 1                                (doc = "0=crashed,1=cold_start,2=building,3=rolling,4=peak")
-       int burnout = 0                                 (doc = "0=GREEN,1=YELLOW,2=ORANGE,3=RED")
-       int energy = 2                                  (doc = "0=depleted,1=low,2=medium,3=high")
-       string altitude = "10k"
-       int exercise_recency = 0
-       string sleep_quality = "unknown"
-       string context = "desk"
-       int building_task_threshold = 3                  (doc = "Tunable: tasks needed for cold_start→building")
-       float rolling_coherence_threshold = 0.7          (doc = "Tunable: coherence needed for building→rolling")
-       float burst_detection_velocity = 3.0             (doc = "Tunable: velocity for burst detection")
-       int burnout_yellow_threshold = 30                (doc = "Tunable: exchanges before YELLOW")
-       int tasks_completed = 0
-       int exchanges_without_break = 0
-       bool frustration_signal = false
-       int adrenaline_debt = 0
-       bool exogenous_red = false
-       float exchange_velocity = 0.0
-       float topic_coherence = 0.5
-       float wall_clock_delta = 0.0
-       float allostatic_load = 0.0
-   }
-   ```
-
-   **`schemas/injectionPrim.usda`:**
-   ```usda
-   class "InjectionPrimAPI" (inherits = </APISchemaBase>)
-   {
-       string profile = "none"
-       float s_nm = 0.0
-       float alpha = 0.0
-       string phase = "baseline"
-       int exchange_count = 0
-       string routing_mode = "standard"
-       float cross_expert_bleed = 0.0
-   }
-   ```
-
-   **`schemas/anchorPhaseAPI.usda`:**
-   ```usda
-   class "AnchorPhaseAPI" (inherits = </APISchemaBase>)
-   {
-       float gain = 1.0    (doc = "ALWAYS 1.0. Structural immunity.")
-   }
-   ```
-
-   **`schemas/delegatePrim.usda`:**
-   ```usda
-   class "DelegatePrimAPI" (inherits = </APISchemaBase>)
-   {
-       string delegate_id = "claude"
-       string status = "idle"
-       string latency_class = "interactive"
-       int raw_context_tokens = 200000
-       float compression_factor = 1.0
-       int effective_context_tokens = 200000
-   }
-   ```
-
-2. **Run usdGenSchema:**
-   ```bash
-   usdGenSchema schemas/cognitiveStatePrim.usda plugins/cognitiveSchema/
-   usdGenSchema schemas/injectionPrim.usda plugins/injectionSchema/
-   usdGenSchema schemas/anchorPhaseAPI.usda plugins/anchorSchema/
-   usdGenSchema schemas/delegatePrim.usda plugins/delegateSchema/
-   ```
-   This generates C++ classes, Python bindings, plugInfo.json for each schema.
-
-3. **Verify generated code compiles:**
-   ```bash
-   cd plugins/cognitiveSchema
-   cmake . -DUSD_ROOT=/opt/usd-26.03
-   make -j$(nproc)
-   ```
-
-### Verification:
-- usdGenSchema produces C++ files without errors
-- Generated code compiles against USD 26
-- Python bindings import: `from CognitiveStatePrimAPI import CognitiveStatePrimAPI`
-- Schema applies to a prim: `prim.ApplyAPI(CognitiveStatePrimAPI)`
-
-### Gate: Print generated file list + compile result + Python import test. Stop. Await approval.
-### Git: `git commit -m "Sprint 2 Phase 1: USDA schemas + usdGenSchema output"`
-
----
-
-## PHASE 2: C++ Computation Callbacks
-
-### Gate: Phase 1 passed (schemas generated and compiled).
-
-### Tasks:
-
-1. **Write computation callbacks** in the generated plugin directories.
-
-   Each callback:
-   - Uses `EXEC_REGISTER_COMPUTATIONS_FOR_SCHEMA(SchemaName)` macro
-   - Reads inputs from authored stage attributes (NOT from own output)
-   - Reads thresholds from stage attributes (parameterized)
-   - Returns computed value
-   - Is a pure function (stateless)
-
-   **Reference:** `src/computations/` from Sprint 1 contains the Python logic. The C++ callback must produce identical results for identical inputs.
-
-2. **Key computation: `computeMomentum`** (example pattern for all):
-   ```cpp
-   #include "pxr/exec/exec/register.h"
-   #include "cognitiveStatePrimAPI.h"
-
-   PXR_NAMESPACE_OPEN_SCOPE
-
-   EXEC_REGISTER_COMPUTATIONS_FOR_SCHEMA(CognitiveStatePrimAPI)
-   {
-       RegisterComputation("computeMomentum",
-           [](const auto& inputs) -> int {
-               // Read authored values (NOT own output — no cycles)
-               int tasks = inputs.Get<int>("tasks_completed");
-               float coherence = inputs.Get<float>("topic_coherence");
-               float velocity = inputs.Get<float>("exchange_velocity");
-               int prev_momentum = inputs.Get<int>("momentum");  // t-1, authored by Bridge
-               int energy = inputs.Get<int>("energy");  // computed by computeEnergy
-
-               // Read thresholds from stage (tunable via USDA)
-               int building_threshold = inputs.Get<int>("building_task_threshold");
-               float rolling_threshold = inputs.Get<float>("rolling_coherence_threshold");
-
-               // State machine logic (must match Sprint 1 MockCogExec exactly)
-               if (prev_momentum == 1 && tasks >= building_threshold && energy >= 2) return 2;
-               if (prev_momentum == 2 && coherence >= rolling_threshold) return 3;
-               // ... full transition table from State Machine Spec §3
-               return prev_momentum;  // no transition
-           }
-       );
-   }
-
-   PXR_NAMESPACE_CLOSE_SCOPE
-   ```
-
-3. **Anchor immunity** (AnchorPhaseAPI — separate schema, separate callback):
-   ```cpp
-   EXEC_REGISTER_COMPUTATIONS_FOR_SCHEMA(AnchorPhaseAPI)
-   {
-       RegisterComputation("computeGain",
-           [](const auto& inputs) -> float {
-               return 1.0f;  // Unconditional. Always. No inputs evaluated.
-           }
-       );
-   }
-   ```
-
-4. **Write ALL computation callbacks:**
-   - computeMomentum (CognitiveStatePrimAPI)
-   - computeBurnout (CognitiveStatePrimAPI) — with RED event exception
-   - computeEnergy (CognitiveStatePrimAPI) — with adrenaline masking
-   - computeBurst (CognitiveStatePrimAPI)
-   - computeAllostatic (CognitiveStatePrimAPI)
-   - computeRouting (CognitiveStatePrimAPI) — outputs capability requirements
-   - computePermission (CognitiveStatePrimAPI)
-   - computeGain (AnchorPhaseAPI) — always returns 1.0
-   - computeGain (InjectionPrimAPI) — g = 1 + s_nm * d
-   - computePredictionAudit (CognitiveStatePrimAPI) — compares prediction vs actual
-
-5. **Compile the plugin library:**
-   ```bash
-   cmake . -DUSD_ROOT=/opt/usd-26.03
-   make -j$(nproc)
-   ```
-   Produces: `libCognitiveExecPlugins.so` (Linux/Mac) or `.dll` (Windows)
-
-### Verification:
-- All callbacks compile without warnings
-- Plugin library loads in USD: `Plug.Registry().RegisterPlugins(["./plugins/"])`
-- Each computation can be invoked via ExecUsdSystem
-
-### Gate: Print compile result + plugin load test. Stop. Await approval.
-### Git: `git commit -m "Sprint 2 Phase 2: C++ computation callbacks compiled"`
-
----
-
-## PHASE 3: ExecUsdSystem Integration
-
-### Gate: Phase 2 passed (plugin compiles and loads).
-
-### Tasks:
-
-1. **Create `src/openexec_bridge.py`** — replaces MockCogExec:
+2. **Update `src/engine_config.py`:**
    ```python
-   from pxr import Usd, Exec
+   USE_REAL_USD = True              # Real pxr.Usd.Stage by default
+   ENGINE_ENABLED = True            # Master kill switch
+   OBSERVATION_LOGGING = True       # Emit observations
+   PREDICTION_ENABLED = True        # Run XGBoost predictions
+   GRACEFUL_FALLBACK = True         # On failure: fall back, don't crash
 
-   class OpenExecBridge:
-       """
-       Replaces MockCogExec. Uses real OpenExec to evaluate
-       cognitive computations against a real USD stage.
-       """
-       def __init__(self, stage: Usd.Stage):
-           self.stage = stage
-           self.system = Exec.ExecUsdSystem(stage)
+   USD_STAGE_DIR = "data/stages"
+   OBSERVATION_DB = "data/observations.db"
+   MODEL_PATH = "models/cognitive_predictor_v1.joblib"
+   SYNTHETIC_DATA = "synthetic_data/trajectories"
 
-       def evaluate(self, prim_path: str, computation_name: str):
-           """Request a computed value via OpenExec."""
-           prim = self.stage.GetPrimAtPath(prim_path)
-           request = self.system.BuildRequest()
-           key = Exec.ExecUsdValueKey(prim, computation_name)
-           request.Add(key)
-           results = self.system.Compute(request)
-           return results.Get(key)
-
-       def evaluate_all(self, prim_path: str):
-           """Evaluate all cognitive computations for a prim."""
-           prim = self.stage.GetPrimAtPath(prim_path)
-           request = self.system.BuildRequest()
-           computations = [
-               "computeMomentum", "computeBurnout", "computeEnergy",
-               "computeBurst", "computeAllostatic", "computeRouting",
-               "computePermission"
-           ]
-           keys = {}
-           for comp in computations:
-               key = Exec.ExecUsdValueKey(prim, comp)
-               request.Add(key)
-               keys[comp] = key
-           results = self.system.Compute(request)
-           return {name: results.Get(key) for name, key in keys.items()}
+   LOG_LEVEL = "INFO"
    ```
 
-2. **Create adapter** that makes OpenExecBridge satisfy the same interface as MockCogExec:
-   - Same method signatures
-   - Same return types
-   - Sprint 1 bridge.py can use either backend via a config flag
+3. **Verify the MCP server hook from Sprint 3:**
+   - `python/cognitive_twin/mcp_server.py` should import and initialize CognitiveEngine
+   - `twin_coach` handler should call `engine.process_exchange()`
+   - If the hook doesn't exist yet, add it (minimal, non-invasive)
 
-3. **Wire into existing bridge.py** with a backend switch:
+4. **Ensure USD Python path is set at server startup:**
    ```python
-   if config.backend == "openexec":
-       engine = OpenExecBridge(usd_stage)
-   else:
-       engine = MockCogExec(mock_stage)
+   # In mcp_server.py or cognitive_engine.py, before any pxr import:
+   from src.usd_bootstrap import bootstrap_usd
+   bootstrap_usd()  # Adds C:\USD\26.03-exec\lib\python to sys.path
    ```
-
-### Verification:
-- OpenExecBridge evaluates computeMomentum on a test prim
-- Results match MockCogExec for the same inputs
-- bridge.py works with both backends
-
-### Gate: Print side-by-side comparison (MockCogExec vs OpenExec) for 10 test cases. Stop. Await approval.
-### Git: `git commit -m "Sprint 2 Phase 3: OpenExecBridge integrated"`
-
----
-
-## PHASE 4: Parity Verification (The Contract)
-
-### Gate: Phase 3 passed.
-
-### Purpose:
-Run ALL 84 Sprint 1 tests against the OpenExec backend. Every test must produce identical results. This is the contract: same inputs → same outputs.
-
-### Tasks:
-
-1. **Create `tests/test_sprint2/test_openexec_parity.py`:**
-   - For each Sprint 1 computation test, run the same inputs through both MockCogExec and OpenExecBridge
-   - Assert results are identical
-   - Cover all computations, all edge cases, all boundary conditions
-
-2. **Run the full parity suite:**
-   ```bash
-   python -m pytest tests/test_sprint2/test_openexec_parity.py -v
-   ```
-
-3. **Run the Sprint 1 tests with OpenExec backend:**
-   ```bash
-   COGTWIN_BACKEND=openexec python -m pytest tests/test_sprint1/ -v
-   ```
-
-4. **Verify anchor immunity in native OpenExec:**
-   - AnchorPhaseAPI.computeGain returns 1.0 for ALL injection profiles
-   - No code path from InjectionPrimAPI attributes to AnchorPhaseAPI computation
-
-5. **Verify no cycles:**
-   - OpenExec's cycle detector does not abort during any computation
-   - Time-sampled t-1 reads work correctly
 
 ### Verification:
 ```bash
-# All three must pass:
-python -m pytest tests/test_sprint1/ -v                              # Sprint 1 (MockCogExec)
-python -m pytest tests/test_sprint2/test_openexec_parity.py -v       # Parity
-COGTWIN_BACKEND=openexec python -m pytest tests/test_sprint1/ -v     # Sprint 1 on OpenExec
+python -m pytest tests/test_sprint5/test_engine_wiring.py -v
 ```
+- CognitiveEngine initializes with real USD stage
+- process_exchange evaluates DAG against real .usda
+- Observation emitted after process_exchange
+- Prediction authored to /prediction on real stage
+- Stage saved to disk after exchange
+- Fallback: if USD import fails, engine uses MockUsdStage (logged)
+- Fallback: if model missing, prediction disabled (logged), rest works
+- Fallback: if DB locked, observation queued in memory (logged)
 
-### Gate: Print test results for all three suites. Stop. Await approval.
-### Git: `git commit -m "Sprint 2 Phase 4: 84/84 parity tests passing on OpenExec"`
+### Gate: Print wiring tests. Stop. Await approval.
+### Git: `git commit -m "Sprint 5 Phase 1: CognitiveEngine wired to real USD"`
 
 ---
 
-## PHASE 5: Cutover + Cleanup
+## PHASE 2: Error Handling + Graceful Degradation (Forge)
 
-### Gate: Phase 4 passed (100% parity).
+### Gate: Phase 1 approved.
 
 ### Tasks:
 
-1. **Set OpenExec as default backend** in bridge.py config
-2. **Rename MockCogExec → mock_cogexec_legacy.py** (keep for reference, not imported)
-3. **Update AGENTS.md** to reflect Sprint 2 completion
-4. **Run full test suite** (84 Sprint 1 + parity + 890 existing):
-   ```bash
-   python -m pytest tests/ -v
+1. **Wrap every CognitiveEngine component with graceful fallback:**
+
+   ```python
+   class CognitiveEngine:
+       def process_exchange(self, tool_name, tool_input):
+           if not engine_config.ENGINE_ENABLED:
+               return None  # Engine disabled, MCP continues normally
+
+           try:
+               self.exchange_index += 1
+               self._author_exchange(tool_name, tool_input)
+           except Exception as e:
+               logger.error(f"Stage authoring failed: {e}")
+               return None  # MCP continues without cognitive state
+
+           try:
+               computed = self.cogexec.evaluate_all()
+           except Exception as e:
+               logger.error(f"DAG evaluation failed: {e}")
+               computed = self._default_computed_values()
+
+           try:
+               routing = computed.get("computeRouting", {})
+               delegate = self.registry.select(routing.get("requirements", {}))
+               delegate.sync(...)
+               result = delegate.execute(tool_input)
+               delegate.commit_resources(result)
+           except Exception as e:
+               logger.error(f"Delegate cycle failed: {e}")
+               result = None
+
+           if engine_config.OBSERVATION_LOGGING:
+               try:
+                   observation = self._build_observation(computed, tool_name)
+                   self.buffer.ingest(observation)
+               except Exception as e:
+                   logger.error(f"Observation logging failed: {e}")
+
+           if engine_config.PREDICTION_ENABLED:
+               try:
+                   prediction = self.predictor.predict(observation)
+                   self.stage.author("/prediction/forecast", prediction, self.exchange_index)
+               except Exception as e:
+                   logger.error(f"Prediction failed: {e}")
+
+           try:
+               self.stage.save()
+           except Exception as e:
+               logger.error(f"Stage save failed: {e}")
+
+           return result
    ```
-5. **Document the build** — capture exact build flags, platform, versions in `docs/OPENEXEC_BUILD.md`
+
+   **The principle:** Each component fails independently. A prediction failure doesn't kill observation logging. A delegate failure doesn't kill the DAG. Nothing kills the MCP server.
+
+2. **File locking protection for `.usda`:**
+   ```python
+   def save(self):
+       try:
+           self.stage.GetRootLayer().Save()
+       except Exception as e:
+           logger.warning(f"Stage save failed (file locked?): {e}")
+           # Queue for next save attempt
+           self._pending_save = True
+   ```
+
+3. **Missing model graceful handling:**
+   ```python
+   def _init_predictor(self):
+       if not os.path.exists(engine_config.MODEL_PATH):
+           logger.warning(f"Predictor model not found at {engine_config.MODEL_PATH}")
+           self.predictor = None
+           return
+       self.predictor = Predictor(engine_config.MODEL_PATH)
+   ```
+
+4. **Observation buffer overflow protection:**
+   ```python
+   class ObservationBuffer:
+       MAX_MEMORY_QUEUE = 100  # If DB is locked, buffer in memory up to this limit
+
+       def ingest(self, observation):
+           try:
+               self._write_to_db(observation)
+           except sqlite3.OperationalError:  # DB locked
+               if len(self._memory_queue) < self.MAX_MEMORY_QUEUE:
+                   self._memory_queue.append(observation)
+                   logger.warning("DB locked, observation queued in memory")
+               else:
+                   logger.error("Memory queue full, observation dropped")
+
+       def flush_memory_queue(self):
+           """Called periodically to drain memory queue to DB."""
+           while self._memory_queue:
+               try:
+                   self._write_to_db(self._memory_queue.popleft())
+               except sqlite3.OperationalError:
+                   break  # Still locked, try again later
+   ```
+
+5. **Health check endpoint:**
+   ```python
+   def get_health(self) -> dict:
+       return {
+           "engine": "active" if engine_config.ENGINE_ENABLED else "disabled",
+           "stage_type": self.stage_type,  # "real_usd" or "mock"
+           "stage_file": os.path.exists(os.path.join(engine_config.USD_STAGE_DIR, "cognitive_twin.usda")),
+           "predictor": self.predictor is not None,
+           "observations_logged": self.buffer.count() if self.buffer else 0,
+           "exchange_index": self.exchange_index,
+           "delegates_registered": len(self.registry.list_delegates()),
+           "memory_queue_size": len(self.buffer._memory_queue) if self.buffer else 0,
+       }
+   ```
 
 ### Verification:
-- OpenExec is the default backend
-- All tests pass
-- No MockCogExec imports remain in production code
-- Build documented
+```bash
+python -m pytest tests/test_sprint5/test_error_handling.py -v
+```
+Must pass:
+- Engine works normally when everything is healthy
+- USD import failure → falls back to mock (logged, not crashed)
+- Model file missing → prediction disabled (logged), rest works
+- DB locked → observations queue in memory (logged)
+- Memory queue overflow → oldest dropped (logged)
+- Stage save failure → queued for retry (logged)
+- Delegate failure → returns None (logged), MCP continues
+- DAG failure → returns defaults (logged), MCP continues
+- Health check returns accurate status for all components
+- **CRITICAL: MCP server NEVER raises an unhandled exception from the engine**
 
-### Gate: Print full test suite results. Stop.
-### Git: `git commit -m "Sprint 2 Phase 5: OpenExec native — MockCogExec retired"`
+### Gate: Print error handling tests. Stop. Await approval.
+### Git: `git commit -m "Sprint 5 Phase 2: Graceful degradation — nothing crashes the MCP"`
 
 ---
 
-## DIRECTORY STRUCTURE (Sprint 2 additions)
+## PHASE 3: MCP Server Integration Verification (Forge)
 
+### Gate: Phase 2 approved.
+
+### Tasks:
+
+1. **Simulate the real MCP flow** end-to-end:
+   ```python
+   # test_mcp_live.py
+   # Simulates what Claude Desktop does when calling twin_coach
+
+   def test_mcp_twin_coach_with_engine():
+       """
+       The full path:
+       Claude Desktop → MCP stdio → twin_coach handler
+       → CognitiveEngine.process_exchange()
+       → DAG evaluates against real .usda
+       → Delegate routes by capability
+       → Observation emitted to buffer
+       → Prediction authored to stage
+       → Response returned to Claude
+       """
+       # Initialize MCP server context
+       # Call twin_coach with real parameters
+       # Verify: cognitive_twin.usda updated on disk
+       # Verify: observation in buffer
+       # Verify: prediction on stage
+       # Verify: response contains enriched cognitive context
+   ```
+
+2. **Test all 7 MCP tools with engine active:**
+   - twin_coach → full engine cycle
+   - twin_store → engine observes the store event
+   - twin_recall → engine evaluates state before recall
+   - twin_patterns → engine observes
+   - twin_session_status → engine provides enriched status
+   - resolve_verifications → engine observes
+   - trigger_cognitive_recalibration → engine observes
+
+3. **Test all 7 MCP tools with engine DISABLED (kill switch):**
+   - Every tool returns exactly the same result as pre-Sprint 3
+   - No errors, no warnings (engine is off, not broken)
+
+4. **Test engine failure during MCP call:**
+   - Engine raises during process_exchange
+   - MCP tool still returns valid response (pre-engine behavior)
+   - Error logged
+
+### Verification:
+```bash
+python -m pytest tests/test_sprint5/test_mcp_live.py -v
 ```
-Cognitive_Twin/
-├── schemas/                              # NEW — USDA schema definitions
-│   ├── cognitiveStatePrim.usda
-│   ├── injectionPrim.usda
-│   ├── anchorPhaseAPI.usda
-│   └── delegatePrim.usda
-├── plugins/                              # NEW — Generated + compiled C++ plugins
-│   ├── cognitiveSchema/
-│   ├── injectionSchema/
-│   ├── anchorSchema/
-│   └── delegateSchema/
-├── src/
-│   ├── openexec_bridge.py               # NEW — Real OpenExec evaluator
-│   ├── mock_cogexec.py → _legacy.py     # RENAMED — kept for reference
-│   └── [all Sprint 1 files unchanged]
-├── tests/
-│   ├── test_sprint1/                     # UNCHANGED — now runs against OpenExec too
-│   └── test_sprint2/                     # NEW — parity tests
-│       └── test_openexec_parity.py
-└── docs/
-    └── OPENEXEC_BUILD.md                 # NEW — build documentation
-```
+- All 7 tools work with engine ON
+- All 7 tools work with engine OFF (identical pre-Sprint behavior)
+- Engine crash mid-call → MCP tool still responds
+- .usda updated after twin_coach call
+- Observation count increases after each tool call
+
+### Gate: Print MCP integration tests. Stop. Await approval.
+### Git: `git commit -m "Sprint 5 Phase 3: MCP integration verified — 7 tools hardened"`
+
+---
+
+## PHASE 4: First Real Session Test (Forge)
+
+### Gate: Phase 3 approved.
+
+### Tasks:
+
+1. **Create `scripts/first_session.py`** — simulates a real 10-exchange session:
+   ```python
+   """
+   Simulates a real session as if Claude Desktop were calling the MCP server.
+   10 exchanges. Verifies everything works end-to-end with real USD.
+   """
+   from src.cognitive_engine import CognitiveEngine
+   import json, os
+
+   engine = CognitiveEngine()
+   print(f"Engine health: {json.dumps(engine.get_health(), indent=2)}")
+
+   # 10 exchanges simulating a real session
+   exchanges = [
+       ("twin_coach", {"context": "session_start"}),
+       ("twin_store", {"message": "Working on Cognitive Twin patent filing"}),
+       ("twin_coach", {"context": "architecture_question"}),
+       ("twin_coach", {"context": "deep_work"}),
+       ("twin_coach", {"context": "deep_work"}),
+       ("twin_coach", {"context": "deep_work"}),
+       ("twin_store", {"message": "Decided on XGBoost over HMM for prediction"}),
+       ("twin_coach", {"context": "energy_check"}),
+       ("twin_patterns", {}),
+       ("twin_coach", {"context": "session_end"}),
+   ]
+
+   for i, (tool, input_data) in enumerate(exchanges):
+       print(f"\n--- Exchange {i+1}: {tool} ---")
+       result = engine.process_exchange(tool, input_data)
+       print(f"Exchange index: {engine.exchange_index}")
+       print(f"Stage type: {engine.stage_type}")
+
+   # Verify
+   print("\n\n=== VERIFICATION ===")
+   health = engine.get_health()
+   print(f"Health: {json.dumps(health, indent=2)}")
+
+   # Check .usda exists and has content
+   usda_path = os.path.join(engine.stage.stage_dir, "cognitive_twin.usda")
+   print(f"\n.usda exists: {os.path.exists(usda_path)}")
+   print(f".usda size: {os.path.getsize(usda_path)} bytes")
+
+   # Check observations
+   print(f"Observations logged: {health['observations_logged']}")
+
+   # Print the actual .usda content
+   if hasattr(engine.stage, 'export_flat'):
+       engine.stage.export_flat("data/stages/session_flat.usda")
+       print("\nFlattened stage exported to data/stages/session_flat.usda")
+
+   assert health['exchange_index'] == 10, f"Expected 10 exchanges, got {health['exchange_index']}"
+   assert health['observations_logged'] >= 10, f"Expected >=10 observations, got {health['observations_logged']}"
+   assert health['stage_file'], "cognitive_twin.usda not found!"
+   print("\n✓ FIRST SESSION: ALL CHECKS PASSED")
+   ```
+
+2. **Run the first session:**
+   ```bash
+   python scripts/first_session.py
+   ```
+
+3. **Print the cognitive state:**
+   ```bash
+   type data\stages\cognitive_twin.usda
+   ```
+   This is the moment. Your cognitive state. Real USD. On disk.
+
+4. **Print observation count:**
+   ```bash
+   python -c "from src.observation_buffer import ObservationBuffer; b = ObservationBuffer('data/observations.db'); print(f'Observations: {b.count()}')"
+   ```
+
+### Verification:
+- 10 exchanges processed without errors
+- cognitive_twin.usda exists with authored state
+- ≥10 observations in the buffer
+- Health check shows all systems green
+- No unhandled exceptions
+
+### Gate: Print session output + .usda content + observation count. Stop.
+### Git: `git commit -m "Sprint 5 Phase 4: First session verified — organic data flowing"`
+
+---
+
+## PHASE 5: Production Readiness Checklist (Forge)
+
+### Gate: Phase 4 approved.
+
+### Tasks:
+
+1. **Full test suite:**
+   ```bash
+   python -m pytest tests/ -v --ignore=tests/test_encoder --ignore=tests/test_daemon
+   ```
+   Everything green. Every sprint. Every existing test.
+
+2. **Document the production configuration:**
+   Create `docs/PRODUCTION.md`:
+   - How to start the MCP server with the cognitive engine
+   - Environment variables (USE_REAL_USD, ENGINE_ENABLED, etc.)
+   - Kill switches and how to use them
+   - Where data lives (stages/, observations/, models/)
+   - How to monitor health (engine.get_health())
+   - How to disable components independently
+   - Backup strategy for .usda files
+
+3. **Log verification:**
+   - Run first_session.py
+   - Check logs contain INFO for normal operations
+   - Check logs contain WARNING for any fallbacks triggered
+   - No ERROR or CRITICAL in clean run
+
+4. **Create `scripts/health_check.py`:**
+   ```python
+   from src.cognitive_engine import CognitiveEngine
+   import json
+   engine = CognitiveEngine()
+   print(json.dumps(engine.get_health(), indent=2))
+   ```
+
+### Gate: Print full test suite + health check. Stop.
+### Git: `git commit -m "Sprint 5 Phase 5: Production ready — Cognitive Twin is live"`
 
 ---
 
@@ -514,44 +456,46 @@ Cognitive_Twin/
 
 | Phase | Gate | Approval Signal |
 |-------|------|-----------------|
-| 0 | USD 26 + OpenExec builds and imports | "Approved. Phase 1." |
-| 1 | usdGenSchema output compiles | "Approved. Phase 2." |
-| 2 | C++ plugin library compiles and loads | "Approved. Phase 3." |
-| 3 | OpenExecBridge evaluates computations correctly | "Approved. Phase 4." |
-| 4 | 84/84 parity tests pass | "Approved. Phase 5." |
-| 5 | Full cutover, all tests green | "Sprint 2 complete." |
+| 0 | Wiring audit | "Approved. Phase 1." |
+| 1 | Engine wired to real USD | "Approved. Phase 2." |
+| 2 | Error handling tests | "Approved. Phase 3." |
+| 3 | MCP integration (7 tools) | "Approved. Phase 4." |
+| 4 | First session verified | "Approved. Phase 5." |
+| 5 | Full suite + health check | "Sprint 5 complete." |
 
 ---
 
-## CIRCUIT BREAKER: THE BUILD FAILS
+## WHAT SHIPS
 
-If Phase 0 fails after 3 attempts:
+When Sprint 5 gates, the Cognitive Twin is **production-live:**
 
-**This is expected and acceptable.** OpenExec is 4 days old in the wild (USD v26.03 shipped March 26, 2026). Non-Pixar developers building it from source is uncharted territory.
+- Every MCP call evaluates cognitive state against real `.usda`
+- Observations accumulate from real sessions
+- Failures degrade gracefully — MCP never crashes
+- Kill switches for every component independently
+- Health check endpoint for monitoring
+- First organic data verified flowing
 
-**Fallback:** Sprint 1 MockCogExec continues to serve. The architecture is OpenExec-native. The implementation catches up when:
-- Pixar ships pre-built wheels with OpenExec
-- Community Docker images with OpenExec emerge
-- A subsequent USD release stabilizes the build
-
-**Do not treat a build failure as a project failure.** The cognitive twin works today on MockCogExec. OpenExec is the upgrade, not the requirement.
+**After Sprint 5, open Claude Desktop. Have a real conversation. The twin is watching, learning, predicting.**
 
 ---
 
 ## INITIATION PROMPT
 
 ```
-Read AGENTS.md. This is Sprint 2: Native OpenExec.
-Acknowledge the CONSTITUTION and COMMANDMENTS.
-Execute Phase 0: USD 26 Build Environment.
-Determine platform (Windows or macOS).
-Attempt the headless build with OpenExec.
-Stop and report build status. If it fails, surface the exact error.
-Do NOT proceed past Phase 0 without approval.
+Read AGENTS.md. Sprint 5: Production Hardening.
+Acknowledge CONSTITUTION and COMMANDMENTS.
+
+ultrathink. Execute all phases sequentially. Stop ONLY on:
+- Test failures after 3 retries
+- Import errors
+- Genuine blockers
+
+Do NOT stop for routine gates. Ship it.
 ```
 
 ---
 
-*AGENTS.md — Cognitive Twin Sprint 2*
-*Native OpenExec: The Hard Architecture Move*
+*AGENTS.md — Cognitive Twin Sprint 5*
+*Production Hardening: Wire it. Harden it. Run it.*
 *Joseph O. Ibrahim | March 2026*

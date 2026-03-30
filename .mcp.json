@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "cognitive-twin": {
-      "command": "C:/Users/User/Cognitive_Twin/.venv/Scripts/cognitive-twin.exe",
+      "command": "C:/Users/User/Cognitive_Twin/.venv312/Scripts/cognitive-twin.exe",
       "env": {
         "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
       }
