@@ -1,8 +1,11 @@
 # Changelog
 
-## v3.3.1 — Production Live (March 30, 2026)
+## v9.0.0 — Cognitive State Machine + Production Engine (March 30, 2026)
 
-Production release. 5 sprints, 250 tests, real USD stage, organic data flowing.
+Complete v8→v9 rewrite. 5 sprints shipped: Cognitive State Machine simulation,
+Hydra Cognitive Delegates, real USD Stage backend, XGBoost state prediction,
+and production-hardened MCP engine with independent failure isolation.
+250 sprint-specific tests, 1,067 Python tests total, 41 Rust tests. All passing.
 
 ### Sprint 1: Cognitive State Machine Simulation
 - Pydantic schemas with IntEnum ordinal types (Momentum, Burnout, Energy, Burst, Injection)
