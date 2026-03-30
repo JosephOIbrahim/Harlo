@@ -4,7 +4,7 @@ Your AI forgets you every time. This fixes that.
 
 The Cognitive Twin is a living model of how you think — not a chat log, not a search history, but a persistent layer of *you* that any AI can consult. It remembers your patterns, learns your instincts, verifies what it tells you, and evolves as you do.
 
-> **Latest:** Sprint 1 complete — cognitive state machine simulation with 10,000 validated trajectories, XGBoost predictor, and full integration pipeline. Sprint 2 (Native OpenExec) circuit-breaker triggered: USD 26.03 C++ libs built, but Python bindings not yet shipped by Pixar. MockCogExec continues to serve.
+> **Latest: Production-live.** Sprint 5 complete. Every MCP call evaluates cognitive state against real `.usda` files, delegates route by capability, observations accumulate, XGBoost predicts next state. 250 tests across 5 sprints. Kill switches for every component. The twin is watching, learning, predicting.
 
 ## The Problem
 
@@ -690,6 +690,183 @@ graph LR
     classDef waiting fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
 ```
 
+### Hydra Delegate Routing (Sprint 3)
+
+The Hydra pattern: DAG outputs capability requirements, registry selects the delegate. The DAG never names a specific LLM.
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph TB
+    MCP["MCP Tool Call\ntwin_coach, twin_store, ..."]:::input
+
+    subgraph ENGINE["CognitiveEngine"]
+        direction TB
+        DAG["DAG Evaluation\nburst → energy → momentum\n→ burnout → allostasis"]:::dag
+        ROUTE["compute_routing\nOutputs: requirements\nNOT delegate names"]:::route
+
+        subgraph SAFETY["Safety Overrides"]
+            direction LR
+            RED["RED → force restorer\nconsent ignored"]:::red
+            ORANGE["ORANGE + no consent\n→ force restorer"]:::orange
+            CONSENT["OOB Consent Token\nHMAC-signed · TTL · revocable\napplication-layer only"]:::consent
+        end
+
+        DAG --> ROUTE
+        ROUTE --> SAFETY
+    end
+
+    subgraph REGISTRY["Delegate Registry · Capability Matching"]
+        direction TB
+        MATCH["Filter: requires_coding\nFilter: supported_tasks\nFilter: latency_class\nFilter: context_budget"]:::registry
+
+        subgraph DELEGATES["Registered Delegates"]
+            direction LR
+            CLAUDE["HdClaude\nreasoning · coaching\narchitecture · analysis\ninteractive · 200K ctx"]:::claude
+            CODE["HdClaudeCode\nimplementation · debugging\ncode_generation · testing\nbatch · 200K ctx"]:::code
+            FUTURE["Future Delegate\nimplement interface\nregister · done"]:::future
+        end
+
+        MATCH --> DELEGATES
+    end
+
+    subgraph SUBLAYERS["Per-Delegate Sublayers"]
+        direction LR
+        SUB_C["claude.usda\ninteractive opinions\nSTRONGEST"]:::sub
+        SUB_CC["claude_code.usda\nbatch opinions"]:::sub
+    end
+
+    MCP --> ENGINE
+    SAFETY --> REGISTRY
+    DELEGATES --> SUBLAYERS
+
+    OBSERVE["Observation Buffer\nanchor 20% · organic 80%\nSQLite priority queue"]:::observe
+    PREDICT["XGBoost Predictor\n3-step window\n111 features → 4 targets"]:::predict
+
+    SUBLAYERS --> OBSERVE
+    SUBLAYERS --> PREDICT
+
+    classDef input fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
+    classDef dag fill:#0f3460,stroke:#3b82f6,color:#93c5fd
+    classDef route fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
+    classDef red fill:#7f1d1d,stroke:#ef4444,color:#fff,font-weight:bold
+    classDef orange fill:#5c1a1a,stroke:#ef4444,color:#fca5a5
+    classDef consent fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef registry fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
+    classDef claude fill:#0f3460,stroke:#3b82f6,color:#93c5fd,font-weight:bold
+    classDef code fill:#1a3a4a,stroke:#06b6d4,color:#a5f3fc,font-weight:bold
+    classDef future fill:#1a1a2e,stroke:#6b7280,color:#9ca3af,stroke-dasharray: 5 5
+    classDef sub fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0
+    classDef observe fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef predict fill:#3a1a4a,stroke:#d946ef,color:#f0abfc
+```
+
+### Production Data Flow (Sprint 5)
+
+The live pipeline from Claude Desktop through the cognitive engine to `.usda` on disk:
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph LR
+    CLAUDE["Claude Desktop\nvia MCP stdio"]:::input
+
+    subgraph MCP_SERVER["MCP Server · 8 Tools"]
+        direction TB
+        TOOLS["twin_coach · twin_store\ntwin_recall · twin_patterns\ntwin_session_status\nquery_past_experience\nresolve_verifications\ntrigger_recalibration"]:::tools
+    end
+
+    subgraph COGNITIVE_ENGINE["CognitiveEngine · Singleton"]
+        direction TB
+        AUTHOR["1. Author\nexchange data"]:::step
+        EVAL["2. Evaluate\nDAG"]:::step
+        ROUTING["3. Route\nby capability"]:::step
+        DELEGATE["4. Delegate\nsync/execute/commit"]:::step
+        OBS["5. Observe\nemit to buffer"]:::step
+        PRED["6. Predict\nXGBoost forecast"]:::step
+        SAVE["7. Save\n.usda to disk"]:::step
+        AUTHOR --> EVAL --> ROUTING --> DELEGATE --> OBS --> PRED --> SAVE
+    end
+
+    subgraph PERSISTENCE["On Disk · Git-Trackable"]
+        direction TB
+        USDA["cognitive_twin.usda\nReal USD · Time-sampled\nHuman-readable"]:::usda
+        SUBS["delegates/\nclaude.usda\nclaude_code.usda"]:::usda
+        OBSDB["observations.db\nSQLite buffer\nanchor + organic"]:::db
+    end
+
+    RESPONSE["Enriched Response\ncognitive context\ndelegate ID · expert\nprediction"]:::output
+
+    CLAUDE --> MCP_SERVER
+    MCP_SERVER --> COGNITIVE_ENGINE
+    COGNITIVE_ENGINE --> PERSISTENCE
+    COGNITIVE_ENGINE --> RESPONSE
+    RESPONSE --> CLAUDE
+
+    classDef input fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
+    classDef tools fill:#0f3460,stroke:#3b82f6,color:#93c5fd
+    classDef step fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
+    classDef usda fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold,stroke-width:3px
+    classDef db fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef output fill:#22c55e,stroke:#4ade80,color:#fff,font-weight:bold
+```
+
+### Graceful Degradation (Sprint 5)
+
+Every component fails independently. The MCP server never crashes.
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph TB
+    ENGINE["CognitiveEngine"]:::engine
+
+    subgraph COMPONENTS["Independent Failure Isolation"]
+        direction TB
+        STAGE_OK{"Stage\ninit?"}:::check
+        DAG_OK{"DAG\neval?"}:::check
+        DELEGATE_OK{"Delegate\ncycle?"}:::check
+        OBS_OK{"Observation\nwrite?"}:::check
+        PRED_OK{"Prediction\nrun?"}:::check
+        SAVE_OK{"Stage\nsave?"}:::check
+    end
+
+    subgraph FALLBACKS["Fallback Behaviors"]
+        direction TB
+        F1["MockUsdStage\n(dict fallback)"]:::fallback
+        F2["Default computed\nvalues"]:::fallback
+        F3["Empty context\nreturned"]:::fallback
+        F4["Memory queue\n(max 100)"]:::fallback
+        F5["Prediction\nskipped"]:::fallback
+        F6["Queued for\nnext exchange"]:::fallback
+    end
+
+    MCP["MCP Server\nNEVER CRASHES"]:::safe
+
+    ENGINE --> STAGE_OK
+    STAGE_OK -->|"fail"| F1
+    STAGE_OK -->|"ok"| DAG_OK
+    DAG_OK -->|"fail"| F2
+    DAG_OK -->|"ok"| DELEGATE_OK
+    DELEGATE_OK -->|"fail"| F3
+    DELEGATE_OK -->|"ok"| OBS_OK
+    OBS_OK -->|"fail"| F4
+    OBS_OK -->|"ok"| PRED_OK
+    PRED_OK -->|"fail"| F5
+    PRED_OK -->|"ok"| SAVE_OK
+    SAVE_OK -->|"fail"| F6
+
+    F1 --> MCP
+    F2 --> MCP
+    F3 --> MCP
+    F4 --> MCP
+    F5 --> MCP
+    F6 --> MCP
+    SAVE_OK -->|"ok"| MCP
+
+    classDef engine fill:#0f3460,stroke:#3b82f6,color:#93c5fd,font-weight:bold
+    classDef check fill:#1a1a2e,stroke:#f59e0b,color:#fde68a,font-weight:bold
+    classDef fallback fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef safe fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold,stroke-width:3px
+```
+
 ## Key Design Decisions
 
 **Actor/Observer split (v8.0).** The Actor (Claude) reasons. The Observer (Twin) stores and projects. The MCP server requires no `ANTHROPIC_API_KEY` — it is a pure data layer. The Observer runs background SDR encoding and promotion without any LLM dependency. The Coach projects cognitive state as a system prompt for the Actor.
@@ -798,24 +975,34 @@ maturin develop -r
 ## Project Structure
 
 ```
-src/                               Sprint 1: Cognitive State Machine Simulation
+src/                               Cognitive State Machine + Production Engine
 ├── schemas.py                     Pydantic IntEnum ordinals + CognitiveObservation model
-├── mock_usd_stage.py              Dict-based USD stage mock (prim_path × exchange_index)
+├── cognitive_engine.py            Production singleton: DAG → route → delegate → observe → predict
+├── cognitive_stage.py             Real pxr.Usd.Stage wrapper (Sprint 4)
+├── mock_usd_stage.py              Dict-based fallback stage (Sprint 1)
+├── stage_factory.py               Backend toggle: real USD or dict mock
 ├── mock_cogexec.py                networkx DAG evaluator — topological computation sort
-├── computations/                  Pure functions (Commandment 2: no internal counters)
+├── usd_bootstrap.py               USD 26.03 sys.path + DLL directory setup
+├── engine_config.py               Kill switches: ENGINE_ENABLED, USE_REAL_USD, etc.
+├── delegate_base.py               HdCognitiveDelegate ABC (Hydra pattern)
+├── delegate_registry.py           Capability-matching delegate selection
+├── delegate_claude.py             Interactive reasoning delegate
+├── delegate_claude_code.py        Implementation/code delegate
+├── consent.py                     OOB consent tokens (HMAC-signed, TTL, revocable)
+├── computations/                  Pure functions (no internal counters)
 │   ├── compute_momentum.py        CRASHED→COLD_START→BUILDING→ROLLING→PEAK
 │   ├── compute_burnout.py         GREEN→YELLOW→ORANGE→RED + exogenous override
 │   ├── compute_energy.py          Adrenaline masking during burst, debt on exit
-│   ├── compute_injection_gain.py  Anchor gain = 1.0 ALWAYS (Commandment 6)
+│   ├── compute_injection_gain.py  Anchor gain = 1.0 ALWAYS
 │   ├── compute_context_budget.py  Hysteresis: promote >4.2x, demote <3.8x
 │   ├── compute_burst.py           5-phase hyperfocus lifecycle
-│   └── compute_allostasis.py      6-weight composite load + trend detection
+│   ├── compute_allostasis.py      6-weight composite load + trend detection
+│   └── compute_routing.py         Capability requirements (NOT delegate names)
 ├── trajectory_generator.py        Profile-Driven Markov Biasing — 10K sessions
 ├── validator.py                   26 invariants (INV-01 to INV-26, RED exception)
 ├── train_predictor.py             XGBoost MultiOutputRegressor — ordinal encoding
 ├── predict.py                     Inference: 3-step window → next state prediction
-├── bridge.py                      Full exchange loop coordinator
-├── delegate_claude.py             Mock HdClaude — Sync/Execute/CommitResources
+├── bridge.py                      Exchange loop coordinator (simulation)
 └── observation_buffer.py          SQLite priority queue — anchor 20% / organic 80%
 
 python/cognitive_twin/             Core Twin: MCP server + biologically-architected memory
@@ -846,42 +1033,49 @@ python/cognitive_twin/             Core Twin: MCP server + biologically-architec
 
 crates/hippocampus/                Rust hot path — SDR encode, XOR search, lazy decay, apoptosis
 config/                            Barrier schema, verification depth, default profile
-data/                              Runtime data — stages, reflexes, audit, training data
-models/                            ONNX model files + cognitive_predictor_v1.joblib
-scripts/                           Daemon start/stop, model download, USD build scripts
-docs/                              Architecture docs + OpenExec build report
-tests/                             31 test modules + Sprint 1 suite
+data/
+├── stages/                        Real .usda files — your cognitive state on disk
+│   ├── cognitive_twin.usda        Root stage with time-sampled observations
+│   └── delegates/                 Per-delegate sublayers (claude.usda, claude_code.usda)
+├── observations.db                Organic observation buffer (SQLite)
+└── twin.db                        Core Twin database (traces, sessions, trust)
+models/                            ONNX models + cognitive_predictor_v1.joblib (XGBoost)
+scripts/                           first_session.py, health_check.py, daemon, USD build
+docs/                              PRODUCTION.md, ARCHITECTURE.md, OPENEXEC_BUILD.md
+tests/                             35 test modules across 5 sprints + core
 ```
 
 ## Testing
 
-**974 tests** (890 core + 84 Sprint 1), all passing.
+**250 sprint tests** (5 sprints) + **890 core Twin tests** + **41 Rust tests**. All passing.
 
 ```bash
-python -m pytest tests/ -v                               # Full suite (974 tests)
-cargo test -p hippocampus                                # Rust tests (41)
+# All sprint tests (Python 3.12 for real USD)
+.venv312/Scripts/python -m pytest tests/test_sprint1/ tests/test_sprint3/ \
+    tests/test_sprint4/ tests/test_sprint5/ -v                    # 250 tests
 
-# Sprint 1: Cognitive State Machine
-python -m pytest tests/test_sprint1/ -v                  # All Sprint 1 (84 tests)
-python -m pytest tests/test_sprint1/test_schemas.py -v   # Schemas + MockUsdStage (29)
-python -m pytest tests/test_sprint1/test_cogexec.py -v   # DAG + computations (41)
-python -m pytest tests/test_sprint1/test_integration.py -v # Bridge integration (14)
+# Individual sprints
+python -m pytest tests/test_sprint1/ -v                           # S1: State machine (84)
+python -m pytest tests/test_sprint3/ -v                           # S3: Hydra delegates (85)
+.venv312/Scripts/python -m pytest tests/test_sprint4/ -v          # S4: Real USD (59)
+python -m pytest tests/test_sprint5/ -v                           # S5: Production (22)
 
 # Core Twin
-python -m pytest tests/test_hot_store/ -v                # Hot Tier CRUD + FTS5
-python -m pytest tests/test_onnx/ -v                     # ONNX encoding fidelity
-python -m pytest tests/test_federated_recall/ -v         # Federated recall
-python -m pytest tests/test_observer/ -v                 # Observer lifecycle
-python -m pytest tests/test_coach/ -v                    # Coach Core projection
-python -m pytest tests/test_trust/ -v                    # Trust Ledger
-python -m pytest tests/test_elenchus_v8/ -v              # Elenchus v8 deferral
-python -m pytest tests/test_compaction/ -v               # Temporal compaction
-python -m pytest tests/test_latency/ -v                  # SLA enforcement
+python -m pytest tests/ -v --ignore=tests/test_sprint* \
+    --ignore=tests/test_encoder --ignore=tests/test_daemon        # 890 tests
+
+# Rust + health
+cargo test -p hippocampus                                         # 41 tests
+python scripts/health_check.py                                    # Production status
 ```
 
-**Sprint 1 coverage:** Pydantic IntEnum ordinal ordering, CognitiveObservation serialization round-trip, MockUsdStage baseline guarantees (Commandment 5: never None), DAG topological correctness, all 7 computation functions (3+ tests each), 20-exchange trajectory evaluation, exogenous RED override (Commandment 7), adrenaline masking (Commandment 8), anchor gain = 1.0 (Commandment 6), context budget hysteresis (Commandment 9), 26 invariant validation, 10,000 trajectory distribution compliance (±5%), XGBoost parity, Bridge integration with delegate + buffer + predictor.
-
-**Core Twin coverage:** Hot Tier CRUD + FTS5 search, ONNX encoding fidelity (Hamming correlation >= 0.95), federated recall merge + deduplication, Observer promotion lifecycle, Coach Core XML projection, Trust Ledger continuous updates + tier gating, Elenchus v8 pending queue + claim resolution, temporal compaction with decay commutation, latency SLAs (store <2ms, FTS5 <2ms, Coach <10ms), USD serialization round-trip, hex SDR encoding, LIVRPS composition, adapter fidelity (Hypothesis), Z-score surprise routing, Merkle isolation, dual-mask Hebbian correctness, homeostatic stability, episodic reconstruction, apoptosis clamp, reconsolidation boost gating, training data JSONL, cognitive profile scoring, GVR protocol, spec-gaming detection, Basal Ganglia gating, structured provenance, and compliance with all 33 architectural rules.
+| Sprint | Tests | Coverage |
+|--------|-------|----------|
+| **S1** | 84 | Schemas, DAG, 7 computations, 26 invariants, 10K trajectories, XGBoost |
+| **S3** | 85 | Delegate ABC, registry, routing, consent tokens, sublayers, 20-exchange e2e |
+| **S4** | 59 | CognitiveStage (pxr.Usd), parity (mock vs real USD), .usda on disk |
+| **S5** | 22 | Engine wiring, graceful degradation, 7 MCP tools hardened, crash recovery |
+| **Core** | 890 | Memory tiers, SDR encoding, Elenchus, Hebbian, composition, motor, inquiry |
 
 ## Research Alignment
 
@@ -906,6 +1100,11 @@ python -m pytest tests/test_latency/ -v                  # SLA enforcement
 | (No equivalent in literature) | Profile-Driven Markov Biasing for synthetic trajectories | **Sprint 1** |
 | (No equivalent in literature) | XGBoost cognitive state predictor (ordinal + one-hot encoding) | **Sprint 1** |
 | OpenUSD 26 OpenExec | C++ libs built, Python bindings pending from Pixar | **Sprint 2 (blocked)** |
+| (No equivalent in literature) | Hydra Cognitive Delegate pattern (capability-requirement routing) | **Sprint 3** |
+| (No equivalent in literature) | OOB consent tokens (HMAC-signed, TTL, revocable, app-layer only) | **Sprint 3** |
+| (No equivalent in literature) | Sublayer-per-delegate concurrency (LIVRPS composition) | **Sprint 3** |
+| (No equivalent in literature) | Real `pxr.Usd.Stage` with time-sampled cognitive state | **Sprint 4** |
+| (No equivalent in literature) | Production graceful degradation (independent failure isolation) | **Sprint 5** |
 
 ## MCP Quick Reference
 
@@ -1033,7 +1232,7 @@ Add to `claude_desktop_config.json`:
 
 ## The 33 Rules
 
-The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), motor safety (inhibition default, one action at a time, RED kills everything), and Hebbian constraints (Merkle isolation, dual masks not XOR, homeostatic plasticity). These aren't guidelines — they're structural constraints enforced by 974 tests. See `CLAUDE.md` for the full specification.
+The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), motor safety (inhibition default, one action at a time, RED kills everything), and Hebbian constraints (Merkle isolation, dual masks not XOR, homeostatic plasticity). These aren't guidelines — they're structural constraints enforced by 1,140+ tests across core + 5 sprints. See `CLAUDE.md` for the full specification.
 
 ## Philosophy
 
