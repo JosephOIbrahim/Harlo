@@ -1,574 +1,557 @@
-# Cognitive Twin v8.0 — Agent Team Execution Spec
-# Pattern: Sequential MoE (Architect → Forge → Crucible) × 7 Phases
-# Source: v8.0 Surgical Directives ADR (Gemini Deep Think → Claude Opus)
-# Mode: Autonomous sequential execution in Claude Code
+# AGENTS.md — Cognitive Twin Sprint 2
+# Native OpenExec: Replace MockCogExec with C++ Computation Plugins
+# Author: Joseph O. Ibrahim
+# Date: March 30, 2026
+# Prerequisite: Sprint 1 complete (84 tests passing, MockCogExec functional)
 
 ---
 
-## COMMANDMENTS (Violation = Abort)
+## CONSTITUTION (Unchanged from Sprint 1 — Still Law)
 
-1. **RECON = THIS FILE.** The ADR is the spec. Do not re-explore the codebase to "understand the architecture." The specification documents every decision, every constraint, every gate. Trust it.
-2. **VERIFY EVERY MUTATION.** After every file creation or modification: `python -m pytest tests/ -v --ignore=tests/test_encoder --ignore=tests/test_daemon`. If ANY existing test breaks, STOP and fix. Non-negotiable.
-3. **CIRCUIT BREAKER.** 3 failed attempts at the same fix → STOP. Surface a structured blocker at `.agent-team/blockers/phase-{N}-{description}.md` with: reason, what_would_help, partial_progress. Never silently degrade.
-4. **COMPLETE OR BLOCKED.** No stubs. No TODOs. No `pass` bodies. No truncated files. Every function has a docstring. Every file is finished. If you can't finish, produce a blocker — don't leave debris.
-5. **TRACE EXCLUSION: ROLE ISOLATION IS STRUCTURAL.** Architect designs. Forge builds. Crucible breaks. Forge reads the design artifact, not the reasoning. Disagreements are notes at `.agent-team/blockers/`, not unilateral changes.
-6. **EXPLICIT HANDOFFS.** Designs at `.agent-team/designs/phase-{N}.md`. Blockers at `.agent-team/blockers/`. Gate results at `.agent-team/gates/phase-{N}-gate.md`. Every artifact is named and pathed.
-7. **CRUCIBLE IS ELENCHUS.** The verifier receives intent (spec) and output (implementation). It evaluates without seeing the builder's reasoning. It detects spec-gaming: code that technically passes but doesn't answer the actual requirement. Fix code, never weaken tests.
-8. **HUMAN GATE AFTER PHASE 1.** Pause for Joe's review before proceeding to Phase 2. This is the AND-chain blocker — encoding fidelity is the hardest subtask.
-9. **SEQUENTIAL PHASES.** One phase at a time. No parallelization across phases. Each gate MUST pass before the next phase begins.
-10. **MATURIN DEVELOP FOR RUST.** Use `maturin develop` (not `pip install -e .`) for the Rust extension. Run from the same shell where `ANTHROPIC_API_KEY` is set.
-11. **PYTHON VERSION.** Run `python -m pytest` (not bare `pytest`) — Python 3.12/3.14 coexist.
-12. **THIS FILE IS LAW.** Verification commands, module boundaries, frozen boundaries, coding conventions — all constraints, not suggestions.
+### LAW 1: SCOUT BEFORE YOU ACT
+### LAW 2: VERIFY AFTER EVERY MUTATION
+### LAW 3: BOUNDED FAILURE → ESCALATE (3 retries then stop)
+### LAW 4: COMPLETE OUTPUT OR EXPLICIT BLOCKER
+### LAW 5: ROLE ISOLATION
+### LAW 6: EXPLICIT HANDOFFS
+### LAW 7: ADVERSARIAL VERIFICATION
+### LAW 8: HUMAN GATES AT IRREVERSIBLE TRANSITIONS
+
+Full text in Sprint 1 AGENTS.md (AGENTS_sprint1.md). All eight laws apply unchanged.
 
 ---
 
 ## MISSION
 
-Disaggregate Cognitive Twin from v7.0 monolith to v8.0 Actor/Observer architecture per the resolved ADR. Seven phases, each running the full Architect → Forge → Crucible cycle with hard verification gates.
+Replace the Sprint 1 Python mock (MockCogExec + networkx DAG) with native USD 26 OpenExec computation plugins. The cognitive state machines become C++ callbacks compiled into a plugin library, evaluated by OpenExec's multithreaded engine against a real USD stage.
 
-### Key Architectural Moves
+**The contract:** Sprint 1's 84 tests are the verification suite. Every test that passed against MockCogExec must produce identical results against native OpenExec. Same inputs → same outputs. When that's true, MockCogExec is deleted.
 
-| Move | What Changes |
-|------|-------------|
-| Actor/Observer Split | LLM (Actor) reasons. Twin (Observer/Stage) stores and projects. No more twin_ask. |
-| USD-as-House | `.usda` stage is the live truth. usd_lite is the fast runtime layer (our Fabric). |
-| Hot/Warm Tiered Memory | FTS5 plaintext (Hot, zero-encoding) + SDR Hamming (Warm, encoded). Federated query merges both. |
-| Coach Core Projection | MCP server generates a system prompt injection from current stage state. Claude-only for v8.0. |
-| Trust as Float | Continuous [0.0–1.0] trust score replaces any bitmask. Basal Ganglia evaluates the float. |
-| Elenchus → Actor | Observer queues unverified claims. Actor verifies when connected. No local LLM required. |
-| Replay-Then-Archive | Epoch compaction replays variants chronologically with decay, writes resolved baseline, archives originals. |
+**The risk:** The USD 26 build environment. If it won't compile, nothing else in this sprint matters. Phase 0 exists to kill this risk immediately.
 
 ---
 
-## PHASE SEQUENCE (AND-node: each must pass before the next begins)
+## COMMANDMENTS (Sprint 2 Specific)
 
-```
-Phase 1: Encoding & Hot Path      → Gate 1a + 1b        [RISK-1, TENSION-1]
-Phase 2: Disaggregation           → Gate 2a + 2b + 2c   [RISK-2, GAP-4]
-Phase 3: Trust & Cognitive Profile → Gate 3a + 3b        [RISK-3, GAP-1]
-Phase 4: Elenchus Deferral        → Gate 4a + 4b        [GAP-2]
-Phase 5: Temporal Compaction       → Gate 5a + 5b        [GAP-3]
-Phase 6: Federated Recall & MCP   → Gate 6a + 6b + 6c   [TENSION-1]
-Phase 7: Test Suite Rewrite        → Gate 7a + 7b + 7c   [GAP-5]
-```
-
-**AlphaProof value = Phase 1.** This is the AND-chain blocker. If encoding fidelity fails, nothing downstream works. Surface it early, kill it fast.
+1. **Sprint 1 tests are sacred.** The 84 Sprint 1 tests AND the 890 existing tests are invariants. Breaking any is higher priority than any Sprint 2 work.
+2. **USDA schemas first, C++ second.** Define schemas in USDA. Generate boilerplate via `usdGenSchema`. Write computation callbacks in the generated structure. Do not hand-write USD schema boilerplate.
+3. **Parameterized, not hardcoded.** C++ callbacks read thresholds from USD stage attributes. `building_task_threshold`, `rolling_coherence_threshold`, etc. are USD attributes, not C++ constants. Personality tuning via USDA, not recompilation.
+4. **Anchor immunity is structural.** AnchorPhaseAPI and ModulatedPhaseAPI are separate schemas with separate registered callbacks. There is no code path from injection parameters to anchor gain output.
+5. **Time-sampled state.** Computations read `exchange_index` t-1 from authored time samples. No self-referential queries. No cycles. OpenExec cycle detector will abort if violated.
+6. **Headless build.** `build_usd.py --no-imaging --no-usdview --no-ptex --no-embree --openexec`. Strip all VFX rendering. USD is a data substrate here, not a graphics engine.
+7. **MockCogExec is the oracle.** When in doubt about what a computation should return, run the Sprint 1 Python mock. The C++ callback must produce the same result.
+8. **If the build fails after 3 attempts, STOP.** Surface the exact error, the platform, the CMake output. Do not attempt heroic workarounds. This is a known high-risk phase.
 
 ---
 
-## AGENT ROLES
+## PLATFORM DETECTION
 
-### ARCHITECT (Phase Designer)
+Sprint 2 must determine which machine to build on:
 
-**Authority:** Design ONLY. Produce plans, schemas, APIs, file layouts.
-**Output:** `.agent-team/designs/phase-{N}.md`
-**Rules:** No implementation code. No file creation outside `.agent-team/designs/`. Read 2-3 existing files of the same kind before designing. Match codebase conventions.
+| Machine | OS | CPU | GPU | USD Build Feasibility |
+|---------|-----|-----|-----|----------------------|
+| Threadripper Workstation | Windows 11 Pro | AMD 7965WX | RTX 4090 | Possible but harder. MSVC + CMake. |
+| Mac Studio | macOS | Apple M1 | Integrated | Recommended by Gemini. Clang + CMake. ~15min headless. |
 
-### FORGE (Implementer)
-
-**Authority:** Build ONLY what the Architect designed.
-**Rules:**
-- Read the design artifact (`.agent-team/designs/phase-{N}.md`), not the reasoning
-- Run verification after every mutation (Commandment 2)
-- No stubs (Commandment 4)
-- Circuit breaker at 3 failures (Commandment 3)
-- Convention matching: read existing files, match import style / naming / error handling / docstrings
-- No freelancing: implement the design. Disagreements → `.agent-team/blockers/`
-- Git commit after each sub-task: `v8-phase{N}: {description}`
-- File ownership: implementation files only. Do NOT modify designs or gate results.
-
-### CRUCIBLE (Adversarial Verifier)
-
-**Authority:** Break ONLY. Run tests, write adversarial tests, verify gate conditions.
-**Rules:**
-- Receive intent (spec) and output (implementation). Evaluate blind.
-- Write adversarial tests that attempt to break assumptions
-- Detect spec-gaming (technically passes but doesn't satisfy the intent)
-- If something fails: describe the failure. Do NOT fix it. Forge fixes.
-- Gate results go to `.agent-team/gates/phase-{N}-gate.md`
-- Tests are sacred: fix code, NEVER weaken tests
-- On gate failure: loop Forge → Crucible until pass
+Phase 0 determines which platform succeeds first.
 
 ---
 
-## PHASE 1: ENCODING & HOT PATH
-**Resolves:** RISK-1 (Encoding Fidelity), TENSION-1 (Store vs Recall Latency)
-**AND-chain blocker. Hardest subtask. Do this first.**
+## PHASE 0: USD 26 BUILD ENVIRONMENT (The Gate-of-Gates)
 
-### Architect Scope
-Design the dual-tier memory architecture:
+### Purpose
+This is the single highest-risk task in Sprint 2. If USD 26 + OpenExec won't compile on your hardware, everything downstream is blocked. Kill this risk first.
 
-**Hot Tier (L1 — zero encoding, zero latency):**
-- SQLite table with FTS5 full-text index
-- Schema: `trace_id TEXT PK, message TEXT, tags JSON, domain TEXT, timestamp REAL, encoded BOOLEAN DEFAULT FALSE`
-- `twin_store` writes here immediately with `encoded=FALSE`
-- Zero-encoding constraint: no model loading in the MCP hot path
-- Target: <2ms store latency
+### Tasks:
 
-**Warm Tier (L2 — SDR encoded, Hamming search):**
-- Existing Rust hippocampus crate (unchanged per Commandment — crates/hippocampus is frozen unless encoding gate requires it)
-- Background Observer process promotes Hot → Warm after SDR encoding
-- SDR encoding via ONNX Runtime (not sentence-transformers — eliminates the BGE load hang)
+1. **Check if USD is already available:**
+   ```bash
+   python -c "from pxr import Usd; print(Usd.GetVersion())"
+   ```
+   If this works and reports 26.x, skip to Task 5.
 
-**Encoder Pipeline:**
-- Convert BAAI/bge-small-en-v1.5 to ONNX format
-- Attempt INT8 quantization
-- Validation: 1,000-trace reference corpus, 0.95 Hamming distance correlation threshold
-- **If INT8 fails the 0.95 gate: fall back to FP16 ONNX immediately. Do not attempt QAT.**
-- FP16 payload (~60-100MB) is acceptable for desktop consumer hardware
-- ONNX model loads ONCE at Observer startup, not per-call
+2. **Check prerequisites:**
+   ```bash
+   cmake --version          # Need 3.24+
+   python --version         # Need 3.10-3.12 (USD constraint)
+   git --version
+   ```
+   On Windows: verify MSVC/Visual Studio build tools installed.
+   On macOS: verify Xcode command-line tools (`xcode-select --install`).
 
-**Design output:** File layout, schemas, API signatures for Hot Tier CRUD, promotion pipeline, ONNX encoder wrapper.
+3. **Clone OpenUSD:**
+   ```bash
+   git clone https://github.com/PixarAnimationStudios/OpenUSD.git
+   cd OpenUSD
+   git checkout v26.03    # or latest 26.x tag
+   ```
 
-### Forge Scope
-1. Create `python/cognitive_twin/hot_store/` — SQLite + FTS5 Hot Tier
-2. Create `python/cognitive_twin/encoder/onnx_encoder.py` — ONNX Runtime wrapper
-3. Export BGE-small-en-v1.5 to ONNX, attempt INT8 quantization
-4. Build reference corpus (1,000 traces from existing test data or synthetic)
-5. Run Hamming correlation validation
-6. If INT8 < 0.95: switch to FP16, re-validate (must be ≥ 0.95)
-7. Create `python/cognitive_twin/hot_store/promotion.py` — Hot → Warm async promotion
-8. Modify `twin_store` MCP tool: write to Hot Tier only (zero-encoding path)
-9. Tests in `tests/test_hot_store/`
+4. **Headless build with OpenExec (Gemini R2 recommended flags):**
+   ```bash
+   python build_scripts/build_usd.py \
+       --no-imaging \
+       --no-usdview \
+       --no-ptex \
+       --no-embree \
+       --openexec \
+       /opt/usd-26.03
+   ```
+   On Windows, adjust install path: `C:\USD\26.03`
 
-### Crucible Gates
+   **Expected:** ~15 minutes on Mac Studio. ~20-30 minutes on Threadripper.
+   **If it fails:** Capture full CMake output + error. Surface as blocker. Do NOT retry with different flags without human approval.
 
-**Gate 1a: Encoding Fidelity**
-- Run 1,000-trace corpus through both the original sentence-transformers encoder AND the ONNX encoder
-- Compute SDRs from both
-- Hamming distance correlation between the two sets ≥ 0.95
-- **If this fails, Phase 1 loops. Nothing proceeds.**
+5. **Verify OpenExec is functional:**
+   ```python
+   from pxr import Usd, Exec
+   stage = Usd.Stage.CreateInMemory()
+   print("USD version:", Usd.GetVersion())
+   print("OpenExec available:", hasattr(Exec, 'ExecUsdSystem'))
+   ```
 
-**Gate 1b: Hot Path Latency**
-- `twin_store` completes in <2ms (measured over 100 calls, p99)
-- No model loading occurs during `twin_store`
-- FTS5 search returns results for a plaintext query
-- Hot Tier correctly marks traces as `encoded=FALSE`
+6. **Verify usdGenSchema works:**
+   ```bash
+   usdGenSchema --help
+   ```
+   Must be on PATH from the USD install.
 
-**⚠️ HUMAN GATE: Pause here. Present Gate 1a/1b results to Joe before proceeding.**
+### Verification:
+- USD 26 imports in Python
+- OpenExec module accessible
+- usdGenSchema executable
+- No existing tests broken
 
----
+### Gate: Print USD version, OpenExec status, platform info. Stop if build fails.
+### Git: `git commit -m "Sprint 2 Phase 0: USD 26 + OpenExec build verified"`
 
-## PHASE 2: DISAGGREGATION
-**Resolves:** RISK-2 (Kill twin_ask), GAP-4 (Claude-only v8.0)
-
-### Architect Scope
-Design the Actor/Observer disaggregation:
-
-**Actor (LLM — Claude via MCP):**
-- Receives structured context via Coach Core system prompt injection
-- All reasoning happens in the Actor. No LLM calls from the Twin.
-- MCP tools are read/write data operations, not reasoning operations
-
-**Observer (Background daemon):**
-- Runs locally as a persistent process
-- Handles: SDR encoding (Hot → Warm promotion), structural USD updates, Hebbian decay
-- Does NOT call any external LLM
-- Communicates with the stage via usd_lite
-
-**Coach Core Projection:**
-- New MCP tool: `twin_coach` — returns a formatted system prompt block
-- Reads current stage state, projects it into Anthropic XML format
-- Includes: active cognitive profile, trust level, recent patterns, pending Elenchus items
-- Claude-only formatting for v8.0 (hardcoded Anthropic XML)
-
-**Kill twin_ask:**
-- Remove `twin_ask` MCP tool entirely
-- Remove any LLM client code from the MCP server
-- Remove `ANTHROPIC_API_KEY` requirement from the MCP server (Observer needs no API key)
-
-**Design output:** Observer process architecture, Coach Core template, twin_coach tool signature, deletion manifest for twin_ask.
-
-### Forge Scope
-1. Create `python/cognitive_twin/observer/` — background daemon process
-2. Create `python/cognitive_twin/coach/` — Coach Core projection engine
-3. Implement `twin_coach` MCP tool
-4. Delete `twin_ask` and all associated LLM client code
-5. Remove `ANTHROPIC_API_KEY` from MCP server requirements
-6. Update MCP server tool registry
-7. Tests in `tests/test_observer/`, `tests/test_coach/`
-
-### Crucible Gates
-
-**Gate 2a: twin_ask is Dead**
-- `grep -r "twin_ask" python/` returns zero results
-- No LLM client imports remain in MCP server code
-- MCP server starts without `ANTHROPIC_API_KEY` in env
-
-**Gate 2b: Coach Core Projection**
-- `twin_coach` returns valid Anthropic XML system prompt block
-- Projection includes cognitive profile, trust level, recent patterns
-- Output is deterministic for the same stage state
-
-**Gate 2c: Observer Lifecycle**
-- Observer process starts, runs encoding promotion loop, shuts down cleanly
-- Hot → Warm promotion moves traces correctly
-- Observer does not import any LLM client libraries
+### CIRCUIT BREAKER:
+If the build fails after 3 attempts on the primary platform:
+1. Try the secondary platform (if Threadripper fails, try Mac Studio or vice versa)
+2. If both fail: surface blocker. Sprint 2 pauses. Sprint 1 MockCogExec continues to serve. This is acceptable — the architecture is OpenExec-native, the implementation catches up later.
 
 ---
 
-## PHASE 3: TRUST & COGNITIVE PROFILE
-**Resolves:** RISK-3 (3-Tier Float Trust), GAP-1 (Intake Migration)
+## PHASE 1: USDA Schema Definitions + usdGenSchema
 
-### Architect Scope
+### Gate: Phase 0 passed (USD 26 builds, OpenExec available).
 
-**Trust Ledger:**
-- USD path: `/RelationalModel/Trust`
-- Schema: `trust_score: float [0.0–1.0]`
-- Thresholds: 0.0–0.3 (New: passive store), 0.3–0.7 (Familiar: context/pattern surfacing), 0.7–1.0 (Trusted: proactive coaching/pushback)
-- Basal Ganglia evaluates the float directly — smooth continuous updates
-- Update formula: define based on interaction quality signals (session length, explicit feedback, correction acceptance)
+### Tasks:
 
-**Cognitive Recalibration:**
-- New MCP tool: `trigger_cognitive_recalibration`
-- Resets `/Meta/intake_complete` to `false`
-- Clears `/CognitiveProfile` sublayer
-- Actor can invoke autonomously when user indicates major life/role change
-- Re-triggerable: can be called multiple times across the lifetime
+1. **Create USDA schema files** under `schemas/`:
 
-**Design output:** Trust schema, Basal Ganglia integration points, update formula, recalibration tool signature, intake re-entry flow.
+   **`schemas/cognitiveStatePrim.usda`:**
+   ```usda
+   #usda 1.0
+   (
+       subLayers = [
+           @usd/schema.usda@
+       ]
+   )
 
-### Forge Scope
-1. Implement trust float in `/RelationalModel/Trust` USD schema
-2. Wire Basal Ganglia to read trust float with threshold-based behavior gating
-3. Implement trust update logic (interaction quality → score delta)
-4. Create `trigger_cognitive_recalibration` MCP tool
-5. Implement intake flag reset + CognitiveProfile sublayer clearing
-6. Update Coach Core to inject trust-appropriate behavior directives
-7. Tests in `tests/test_trust/`, `tests/test_recalibration/`
+   class "CognitiveStatePrimAPI"
+   (
+       inherits = </APISchemaBase>
+       customData = {
+           token apiSchemaType = "singleApply"
+           dictionary schemaTokens = {
+               dictionary computeMomentum = {}
+               dictionary computeBurnout = {}
+               dictionary computeEnergy = {}
+               dictionary computeBurst = {}
+               dictionary computeAllostatic = {}
+               dictionary computeRouting = {}
+               dictionary computePermission = {}
+           }
+       }
+   )
+   {
+       int momentum = 1                                (doc = "0=crashed,1=cold_start,2=building,3=rolling,4=peak")
+       int burnout = 0                                 (doc = "0=GREEN,1=YELLOW,2=ORANGE,3=RED")
+       int energy = 2                                  (doc = "0=depleted,1=low,2=medium,3=high")
+       string altitude = "10k"
+       int exercise_recency = 0
+       string sleep_quality = "unknown"
+       string context = "desk"
+       int building_task_threshold = 3                  (doc = "Tunable: tasks needed for cold_start→building")
+       float rolling_coherence_threshold = 0.7          (doc = "Tunable: coherence needed for building→rolling")
+       float burst_detection_velocity = 3.0             (doc = "Tunable: velocity for burst detection")
+       int burnout_yellow_threshold = 30                (doc = "Tunable: exchanges before YELLOW")
+       int tasks_completed = 0
+       int exchanges_without_break = 0
+       bool frustration_signal = false
+       int adrenaline_debt = 0
+       bool exogenous_red = false
+       float exchange_velocity = 0.0
+       float topic_coherence = 0.5
+       float wall_clock_delta = 0.0
+       float allostatic_load = 0.0
+   }
+   ```
 
-### Crucible Gates
+   **`schemas/injectionPrim.usda`:**
+   ```usda
+   class "InjectionPrimAPI" (inherits = </APISchemaBase>)
+   {
+       string profile = "none"
+       float s_nm = 0.0
+       float alpha = 0.0
+       string phase = "baseline"
+       int exchange_count = 0
+       string routing_mode = "standard"
+       float cross_expert_bleed = 0.0
+   }
+   ```
 
-**Gate 3a: Trust Float**
-- Trust score initializes at 0.0 for new user
-- Score updates continuously (not discrete jumps)
-- Basal Ganglia gates behavior correctly at each threshold
-- Score is readable via existing `twin_session_status`
+   **`schemas/anchorPhaseAPI.usda`:**
+   ```usda
+   class "AnchorPhaseAPI" (inherits = </APISchemaBase>)
+   {
+       float gain = 1.0    (doc = "ALWAYS 1.0. Structural immunity.")
+   }
+   ```
 
-**Gate 3b: Recalibration**
-- `trigger_cognitive_recalibration` resets intake flag
-- CognitiveProfile sublayer is cleared
-- Next Actor turn receives intake-mode Coach Core projection
-- Calling recalibration twice is idempotent
+   **`schemas/delegatePrim.usda`:**
+   ```usda
+   class "DelegatePrimAPI" (inherits = </APISchemaBase>)
+   {
+       string delegate_id = "claude"
+       string status = "idle"
+       string latency_class = "interactive"
+       int raw_context_tokens = 200000
+       float compression_factor = 1.0
+       int effective_context_tokens = 200000
+   }
+   ```
 
----
+2. **Run usdGenSchema:**
+   ```bash
+   usdGenSchema schemas/cognitiveStatePrim.usda plugins/cognitiveSchema/
+   usdGenSchema schemas/injectionPrim.usda plugins/injectionSchema/
+   usdGenSchema schemas/anchorPhaseAPI.usda plugins/anchorSchema/
+   usdGenSchema schemas/delegatePrim.usda plugins/delegateSchema/
+   ```
+   This generates C++ classes, Python bindings, plugInfo.json for each schema.
 
-## PHASE 4: ELENCHUS DEFERRAL
-**Resolves:** GAP-2 (Observer LLM Requirement)
+3. **Verify generated code compiles:**
+   ```bash
+   cd plugins/cognitiveSchema
+   cmake . -DUSD_ROOT=/opt/usd-26.03
+   make -j$(nproc)
+   ```
 
-### Architect Scope
+### Verification:
+- usdGenSchema produces C++ files without errors
+- Generated code compiles against USD 26
+- Python bindings import: `from CognitiveStatePrimAPI import CognitiveStatePrimAPI`
+- Schema applies to a prim: `prim.ApplyAPI(CognitiveStatePrimAPI)`
 
-**Pending Verification Queue:**
-- USD path: `/Elenchus/Pending`
-- Schema: list of `{claim_id, claim_text, source_traces[], structural_score, timestamp}`
-- Observer evaluates structural/heuristic checks locally
-- Semantic claims that need LLM evaluation are queued here
-
-**Actor-Side Verification:**
-- New MCP tool: `resolve_verifications`
-- Coach Core injects a system block when pending items exist: "Evaluate these claims silently"
-- Actor submits boolean verdicts per claim via `resolve_verifications`
-- Tool moves verified claims to `/Elenchus/Verified` or `/Elenchus/Rejected`
-- "Renting cloud LLM compute to verify sovereign local state"
-
-**Design output:** Pending queue schema, resolve_verifications tool signature, Coach Core injection template for pending claims, Observer-side structural evaluation pipeline.
-
-### Forge Scope
-1. Implement `/Elenchus/Pending` USD layer
-2. Implement Observer-side structural claim evaluation (non-LLM heuristics)
-3. Implement `resolve_verifications` MCP tool
-4. Update Coach Core to inject pending claims when queue is non-empty
-5. Implement claim lifecycle: Pending → Verified/Rejected
-6. Tests in `tests/test_elenchus_v8/`
-
-### Crucible Gates
-
-**Gate 4a: Pending Queue**
-- Observer queues semantic claims correctly
-- Structural claims are resolved locally without queuing
-- Queue persists across Observer restarts
-
-**Gate 4b: Actor Verification**
-- `resolve_verifications` accepts claim_id + boolean verdict
-- Verified claims move to `/Elenchus/Verified`
-- Rejected claims move to `/Elenchus/Rejected`
-- Coach Core stops injecting claims once queue is empty
-
----
-
-## PHASE 5: TEMPORAL COMPACTION
-**Resolves:** GAP-3 (Epoch-Based Flattening Semantics)
-
-### Architect Scope
-
-**Replay-Then-Archive Compaction:**
-- Deep-idle daemon process (runs when system is idle, not real-time)
-- Input: variant stack (temporal layers of USD opinions)
-- Algorithm:
-  1. Chronologically sort variant stack by timestamp
-  2. Replay each layer, applying elapsed-time Hebbian decay at `t_now`
-  3. Write resolved state to `/Baseline`
-  4. Zip variant stack into `.usda.archive/` directory
-- **Critical invariant:** Flattening MUST commute with Hebbian neuroplasticity. `flatten(decay(variants)) == decay(flatten(variants))` — if this doesn't hold, the compaction is lossy.
-- Preserves temporal archaeology: archived variants are queryable but don't bloat the active stage
-
-**Design output:** Compaction algorithm pseudocode, archive format, decay-commutation proof sketch, daemon trigger conditions (idle detection).
-
-### Forge Scope
-1. Create `python/cognitive_twin/compaction/` — replay-then-archive engine
-2. Implement chronological variant replay with decay curves
-3. Implement baseline write after compaction
-4. Implement archive creation (`.usda.archive/`)
-5. Implement idle-trigger daemon hook
-6. Tests in `tests/test_compaction/`
-
-### Crucible Gates
-
-**Gate 5a: Compaction Correctness**
-- Create 10 variants with known decay parameters
-- Compact them
-- Verify: compacted baseline matches manual chronological replay result
-- Verify: decay commutation holds (within floating-point epsilon)
-
-**Gate 5b: Archive Integrity**
-- Archived variants are readable
-- Stage size decreases after compaction
-- Original variant data is recoverable from archive
-- Compaction is idempotent (running twice on already-compacted data = no-op)
+### Gate: Print generated file list + compile result + Python import test. Stop. Await approval.
+### Git: `git commit -m "Sprint 2 Phase 1: USDA schemas + usdGenSchema output"`
 
 ---
 
-## PHASE 6: FEDERATED RECALL & MCP
-**Resolves:** TENSION-1 (Store vs Recall Latency)
+## PHASE 2: C++ Computation Callbacks
 
-### Architect Scope
+### Gate: Phase 1 passed (schemas generated and compiled).
 
-**Federated query_past_experience:**
-- New MCP tool replacing/augmenting `twin_recall`
-- Executes TWO simultaneous queries:
-  1. FTS5 plaintext search on Hot Tier (SQLite, un-encoded, immediate)
-  2. SDR Hamming search on Warm Tier (Rust hippocampus, encoded)
-- Merges results by relevance score (FTS5 rank + Hamming distance normalized)
-- Returns unified result set to Actor
-- Satisfies "what did I just say?" (Hot, zero-latency) and "what patterns exist?" (Warm, semantic)
+### Tasks:
 
-**MCP Tool Registry v8.0:**
-| Tool | Status | Path |
-|------|--------|------|
-| twin_store | MODIFIED | Hot Tier only, zero-encoding |
-| twin_session_status | KEPT | Includes trust float |
-| twin_patterns | KEPT | Reads from Warm Tier |
-| twin_recall → query_past_experience | REPLACED | Federated L1/L2 |
-| twin_ask | DELETED | Killed in Phase 2 |
-| twin_coach | NEW | Coach Core projection |
-| trigger_cognitive_recalibration | NEW | Intake reset |
-| resolve_verifications | NEW | Elenchus actor-side |
+1. **Write computation callbacks** in the generated plugin directories.
 
-**Design output:** query_past_experience signature, merge algorithm, result schema, MCP tool registry diff.
+   Each callback:
+   - Uses `EXEC_REGISTER_COMPUTATIONS_FOR_SCHEMA(SchemaName)` macro
+   - Reads inputs from authored stage attributes (NOT from own output)
+   - Reads thresholds from stage attributes (parameterized)
+   - Returns computed value
+   - Is a pure function (stateless)
 
-### Forge Scope
-1. Implement `query_past_experience` with federated search
-2. Wire FTS5 Hot Tier query path
-3. Wire SDR Warm Tier query path (existing hippocampus)
-4. Implement result merging (normalized scoring)
-5. Update MCP server tool registry
-6. Deprecate `twin_recall` (redirect to query_past_experience)
-7. Tests in `tests/test_federated_recall/`
+   **Reference:** `src/computations/` from Sprint 1 contains the Python logic. The C++ callback must produce identical results for identical inputs.
 
-### Crucible Gates
+2. **Key computation: `computeMomentum`** (example pattern for all):
+   ```cpp
+   #include "pxr/exec/exec/register.h"
+   #include "cognitiveStatePrimAPI.h"
 
-**Gate 6a: Hot Recall**
-- Store a trace via `twin_store`
-- Immediately query via `query_past_experience`
-- Trace appears in results (from FTS5 Hot Tier)
-- Latency <5ms for the Hot path
+   PXR_NAMESPACE_OPEN_SCOPE
 
-**Gate 6b: Warm Recall**
-- After Observer promotion, query returns SDR-matched results from Warm Tier
-- Semantic similarity search works (not just keyword match)
+   EXEC_REGISTER_COMPUTATIONS_FOR_SCHEMA(CognitiveStatePrimAPI)
+   {
+       RegisterComputation("computeMomentum",
+           [](const auto& inputs) -> int {
+               // Read authored values (NOT own output — no cycles)
+               int tasks = inputs.Get<int>("tasks_completed");
+               float coherence = inputs.Get<float>("topic_coherence");
+               float velocity = inputs.Get<float>("exchange_velocity");
+               int prev_momentum = inputs.Get<int>("momentum");  // t-1, authored by Bridge
+               int energy = inputs.Get<int>("energy");  // computed by computeEnergy
 
-**Gate 6c: Federated Merge**
-- Query that matches both Hot and Warm tiers returns merged, deduplicated results
-- Results are ranked by unified relevance score
-- No duplicate traces in output
+               // Read thresholds from stage (tunable via USDA)
+               int building_threshold = inputs.Get<int>("building_task_threshold");
+               float rolling_threshold = inputs.Get<float>("rolling_coherence_threshold");
 
----
+               // State machine logic (must match Sprint 1 MockCogExec exactly)
+               if (prev_momentum == 1 && tasks >= building_threshold && energy >= 2) return 2;
+               if (prev_momentum == 2 && coherence >= rolling_threshold) return 3;
+               // ... full transition table from State Machine Spec §3
+               return prev_momentum;  // no transition
+           }
+       );
+   }
 
-## PHASE 7: TEST SUITE REWRITE
-**Resolves:** GAP-5 (Testing Strategy)
+   PXR_NAMESPACE_CLOSE_SCOPE
+   ```
 
-### Architect Scope
+3. **Anchor immunity** (AnchorPhaseAPI — separate schema, separate callback):
+   ```cpp
+   EXEC_REGISTER_COMPUTATIONS_FOR_SCHEMA(AnchorPhaseAPI)
+   {
+       RegisterComputation("computeGain",
+           [](const auto& inputs) -> float {
+               return 1.0f;  // Unconditional. Always. No inputs evaluated.
+           }
+       );
+   }
+   ```
 
-**Test Architecture:**
-- **REJECT** full backward compatibility with the 720 v7 integration tests
-- **RETAIN** v7 tests as unit tests for pure math (Hamming distance, LIVRPS logic, SDR ops)
-- **NEW** disaggregated test suite organized by v8 component boundaries:
+4. **Write ALL computation callbacks:**
+   - computeMomentum (CognitiveStatePrimAPI)
+   - computeBurnout (CognitiveStatePrimAPI) — with RED event exception
+   - computeEnergy (CognitiveStatePrimAPI) — with adrenaline masking
+   - computeBurst (CognitiveStatePrimAPI)
+   - computeAllostatic (CognitiveStatePrimAPI)
+   - computeRouting (CognitiveStatePrimAPI) — outputs capability requirements
+   - computePermission (CognitiveStatePrimAPI)
+   - computeGain (AnchorPhaseAPI) — always returns 1.0
+   - computeGain (InjectionPrimAPI) — g = 1 + s_nm * d
+   - computePredictionAudit (CognitiveStatePrimAPI) — compares prediction vs actual
 
-```
-tests/
-├── test_unit/              # Pure math, no I/O
-│   ├── test_hamming.py     # Retained from v7
-│   ├── test_livrps.py      # Retained from v7
-│   └── test_sdr_ops.py     # Retained from v7
-├── test_hot_store/         # Phase 1
-├── test_encoder/           # Phase 1 (ONNX pipeline)
-├── test_observer/          # Phase 2
-├── test_coach/             # Phase 2
-├── test_trust/             # Phase 3
-├── test_recalibration/     # Phase 3
-├── test_elenchus_v8/       # Phase 4
-├── test_compaction/         # Phase 5
-├── test_federated_recall/  # Phase 6
-├── test_integration/       # Cross-component flows
-│   ├── test_store_recall_cycle.py
-│   ├── test_observer_promotion.py
-│   └── test_coach_projection.py
-└── test_latency/           # SLA enforcement
-    ├── test_hot_store_sla.py    # <2ms store
-    ├── test_mcp_latency.py      # <2ms Hot Store reads
-    └── test_recall_sla.py       # <50ms federated recall
-```
+5. **Compile the plugin library:**
+   ```bash
+   cmake . -DUSD_ROOT=/opt/usd-26.03
+   make -j$(nproc)
+   ```
+   Produces: `libCognitiveExecPlugins.so` (Linux/Mac) or `.dll` (Windows)
 
-**Latency SLAs (enforced in CI):**
-- Hot Store write: <2ms (p99, 100 calls)
-- Hot Store read (FTS5): <2ms (p99, 100 calls)
-- Federated recall: <50ms (p99, 100 calls)
-- Coach Core projection: <10ms
-- MCP tool round-trip (stdio): <100ms
+### Verification:
+- All callbacks compile without warnings
+- Plugin library loads in USD: `Plug.Registry().RegisterPlugins(["./plugins/"])`
+- Each computation can be invoked via ExecUsdSystem
 
-**Design output:** Test directory structure, SLA thresholds, which v7 tests to retain, integration test scenarios.
-
-### Forge Scope
-1. Reorganize test directory per Architect design
-2. Move retained v7 pure-math tests to `test_unit/`
-3. Write latency SLA tests
-4. Write cross-component integration tests
-5. Ensure all phases' tests are collected properly
-6. Final full suite run: `python -m pytest tests/ -v --ignore=tests/test_encoder --ignore=tests/test_daemon`
-
-### Crucible Gates
-
-**Gate 7a: Unit Test Survival**
-- All retained v7 pure-math tests pass
-- No test regressions from the move
-
-**Gate 7b: Latency SLAs**
-- All latency tests pass their thresholds
-- Hot Store <2ms, federated recall <50ms, Coach Core <10ms
-
-**Gate 7c: Full Suite Green**
-- Complete test suite runs green
-- Total test count documented
-- No skipped tests (except explicitly excluded: test_encoder, test_daemon)
+### Gate: Print compile result + plugin load test. Stop. Await approval.
+### Git: `git commit -m "Sprint 2 Phase 2: C++ computation callbacks compiled"`
 
 ---
 
-## FROZEN BOUNDARIES (Do Not Touch)
+## PHASE 3: ExecUsdSystem Integration
 
-| Path | Reason |
-|------|--------|
-| `crates/hippocampus/` | Rust core. Warm Tier engine. Untouched unless encoding gate requires it. |
-| `pyproject.toml` | Only modify if adding new dependencies required by v8 components |
-| `.mcp.json` | MCP config — modify only to add new tools |
+### Gate: Phase 2 passed (plugin compiles and loads).
+
+### Tasks:
+
+1. **Create `src/openexec_bridge.py`** — replaces MockCogExec:
+   ```python
+   from pxr import Usd, Exec
+
+   class OpenExecBridge:
+       """
+       Replaces MockCogExec. Uses real OpenExec to evaluate
+       cognitive computations against a real USD stage.
+       """
+       def __init__(self, stage: Usd.Stage):
+           self.stage = stage
+           self.system = Exec.ExecUsdSystem(stage)
+
+       def evaluate(self, prim_path: str, computation_name: str):
+           """Request a computed value via OpenExec."""
+           prim = self.stage.GetPrimAtPath(prim_path)
+           request = self.system.BuildRequest()
+           key = Exec.ExecUsdValueKey(prim, computation_name)
+           request.Add(key)
+           results = self.system.Compute(request)
+           return results.Get(key)
+
+       def evaluate_all(self, prim_path: str):
+           """Evaluate all cognitive computations for a prim."""
+           prim = self.stage.GetPrimAtPath(prim_path)
+           request = self.system.BuildRequest()
+           computations = [
+               "computeMomentum", "computeBurnout", "computeEnergy",
+               "computeBurst", "computeAllostatic", "computeRouting",
+               "computePermission"
+           ]
+           keys = {}
+           for comp in computations:
+               key = Exec.ExecUsdValueKey(prim, comp)
+               request.Add(key)
+               keys[comp] = key
+           results = self.system.Compute(request)
+           return {name: results.Get(key) for name, key in keys.items()}
+   ```
+
+2. **Create adapter** that makes OpenExecBridge satisfy the same interface as MockCogExec:
+   - Same method signatures
+   - Same return types
+   - Sprint 1 bridge.py can use either backend via a config flag
+
+3. **Wire into existing bridge.py** with a backend switch:
+   ```python
+   if config.backend == "openexec":
+       engine = OpenExecBridge(usd_stage)
+   else:
+       engine = MockCogExec(mock_stage)
+   ```
+
+### Verification:
+- OpenExecBridge evaluates computeMomentum on a test prim
+- Results match MockCogExec for the same inputs
+- bridge.py works with both backends
+
+### Gate: Print side-by-side comparison (MockCogExec vs OpenExec) for 10 test cases. Stop. Await approval.
+### Git: `git commit -m "Sprint 2 Phase 3: OpenExecBridge integrated"`
 
 ---
 
-## VERIFICATION COMMANDS
+## PHASE 4: Parity Verification (The Contract)
 
+### Gate: Phase 3 passed.
+
+### Purpose:
+Run ALL 84 Sprint 1 tests against the OpenExec backend. Every test must produce identical results. This is the contract: same inputs → same outputs.
+
+### Tasks:
+
+1. **Create `tests/test_sprint2/test_openexec_parity.py`:**
+   - For each Sprint 1 computation test, run the same inputs through both MockCogExec and OpenExecBridge
+   - Assert results are identical
+   - Cover all computations, all edge cases, all boundary conditions
+
+2. **Run the full parity suite:**
+   ```bash
+   python -m pytest tests/test_sprint2/test_openexec_parity.py -v
+   ```
+
+3. **Run the Sprint 1 tests with OpenExec backend:**
+   ```bash
+   COGTWIN_BACKEND=openexec python -m pytest tests/test_sprint1/ -v
+   ```
+
+4. **Verify anchor immunity in native OpenExec:**
+   - AnchorPhaseAPI.computeGain returns 1.0 for ALL injection profiles
+   - No code path from InjectionPrimAPI attributes to AnchorPhaseAPI computation
+
+5. **Verify no cycles:**
+   - OpenExec's cycle detector does not abort during any computation
+   - Time-sampled t-1 reads work correctly
+
+### Verification:
 ```bash
-# Primary test command (use after every mutation)
-python -m pytest tests/ -v --ignore=tests/test_encoder --ignore=tests/test_daemon
+# All three must pass:
+python -m pytest tests/test_sprint1/ -v                              # Sprint 1 (MockCogExec)
+python -m pytest tests/test_sprint2/test_openexec_parity.py -v       # Parity
+COGTWIN_BACKEND=openexec python -m pytest tests/test_sprint1/ -v     # Sprint 1 on OpenExec
+```
 
-# Rust extension rebuild (only if touching crates/)
-maturin develop
+### Gate: Print test results for all three suites. Stop. Await approval.
+### Git: `git commit -m "Sprint 2 Phase 4: 84/84 parity tests passing on OpenExec"`
 
-# Type checking (if mypy is configured)
-python -m mypy python/cognitive_twin/ --ignore-missing-imports
+---
 
-# Latency SLA tests (Phase 7)
-python -m pytest tests/test_latency/ -v --tb=short
+## PHASE 5: Cutover + Cleanup
+
+### Gate: Phase 4 passed (100% parity).
+
+### Tasks:
+
+1. **Set OpenExec as default backend** in bridge.py config
+2. **Rename MockCogExec → mock_cogexec_legacy.py** (keep for reference, not imported)
+3. **Update AGENTS.md** to reflect Sprint 2 completion
+4. **Run full test suite** (84 Sprint 1 + parity + 890 existing):
+   ```bash
+   python -m pytest tests/ -v
+   ```
+5. **Document the build** — capture exact build flags, platform, versions in `docs/OPENEXEC_BUILD.md`
+
+### Verification:
+- OpenExec is the default backend
+- All tests pass
+- No MockCogExec imports remain in production code
+- Build documented
+
+### Gate: Print full test suite results. Stop.
+### Git: `git commit -m "Sprint 2 Phase 5: OpenExec native — MockCogExec retired"`
+
+---
+
+## DIRECTORY STRUCTURE (Sprint 2 additions)
+
+```
+Cognitive_Twin/
+├── schemas/                              # NEW — USDA schema definitions
+│   ├── cognitiveStatePrim.usda
+│   ├── injectionPrim.usda
+│   ├── anchorPhaseAPI.usda
+│   └── delegatePrim.usda
+├── plugins/                              # NEW — Generated + compiled C++ plugins
+│   ├── cognitiveSchema/
+│   ├── injectionSchema/
+│   ├── anchorSchema/
+│   └── delegateSchema/
+├── src/
+│   ├── openexec_bridge.py               # NEW — Real OpenExec evaluator
+│   ├── mock_cogexec.py → _legacy.py     # RENAMED — kept for reference
+│   └── [all Sprint 1 files unchanged]
+├── tests/
+│   ├── test_sprint1/                     # UNCHANGED — now runs against OpenExec too
+│   └── test_sprint2/                     # NEW — parity tests
+│       └── test_openexec_parity.py
+└── docs/
+    └── OPENEXEC_BUILD.md                 # NEW — build documentation
 ```
 
 ---
 
-## CODING CONVENTIONS (Match Existing Codebase)
+## BINARY GATES
 
-- **Imports:** `from cognitive_twin.module import Class` (absolute, never relative)
-- **Docstrings:** Google style, one-line summary + Args/Returns/Raises
-- **Type hints:** All function signatures typed. Use `typing` for complex types.
-- **Error handling:** Custom exceptions in `cognitive_twin/exceptions.py`. Never bare `except`.
-- **USD paths:** String constants in `cognitive_twin/usd_lite/paths.py`
-- **Logging:** `logging.getLogger(__name__)` — no print statements
-- **Tests:** pytest + fixtures. One assert per test where practical. Descriptive test names: `test_{what}_{condition}_{expected}`.
-- **Commits:** `v8-phase{N}: {description}` — one commit per sub-task minimum
-
----
-
-## EXECUTION SEQUENCE
-
-```
-mkdir -p .agent-team/designs .agent-team/blockers .agent-team/gates
-
-For phase in 1..7:
-    ARCHITECT:
-        Read this file + existing codebase patterns
-        Produce .agent-team/designs/phase-{N}.md
-    
-    FORGE:
-        Read .agent-team/designs/phase-{N}.md
-        Implement per design
-        Run verification after every mutation
-        Git commit per sub-task
-    
-    CRUCIBLE:
-        Run gate tests
-        Write adversarial tests
-        Produce .agent-team/gates/phase-{N}-gate.md
-        If FAIL → Forge fixes → Crucible re-verifies (loop)
-        If PASS → proceed to next phase
-    
-    If phase == 1:
-        ⚠️ HUMAN GATE — present results, wait for Joe
-```
+| Phase | Gate | Approval Signal |
+|-------|------|-----------------|
+| 0 | USD 26 + OpenExec builds and imports | "Approved. Phase 1." |
+| 1 | usdGenSchema output compiles | "Approved. Phase 2." |
+| 2 | C++ plugin library compiles and loads | "Approved. Phase 3." |
+| 3 | OpenExecBridge evaluates computations correctly | "Approved. Phase 4." |
+| 4 | 84/84 parity tests pass | "Approved. Phase 5." |
+| 5 | Full cutover, all tests green | "Sprint 2 complete." |
 
 ---
 
-## ADR DECISION SUMMARY (Quick Reference)
+## CIRCUIT BREAKER: THE BUILD FAILS
 
-| ID | Decision | Binding Directive |
-|----|----------|------------------|
-| RISK-1 | FP16 fallback authorized | 0.95 Hamming correlation gate. No QAT. INT8 first, FP16 if needed. |
-| RISK-2 | Kill twin_ask | Actor reasons. Twin stores. No LLM in MCP server. |
-| RISK-3 | 3-tier float trust | [0.0–1.0] continuous. Basal Ganglia evaluates float. |
-| GAP-1 | Intake re-triggerable | trigger_cognitive_recalibration MCP tool. Resets flag + clears profile. |
-| GAP-2 | Defer Elenchus to Actor | Observer queues. Actor verifies via resolve_verifications. |
-| GAP-3 | Replay-then-archive | Chronological replay with decay. Commutes with Hebbian math. |
-| GAP-4 | Claude-only v8.0 | Coach Core hardcoded Anthropic XML. Multi-model deferred to v8.1. |
-| GAP-5 | Clean test rewrite | Reject v7 integration backward compat. Retain pure-math unit tests. |
-| TENSION-1 | FTS5 + SDR federated | L1 Hot (FTS5, zero-encoding) + L2 Warm (SDR). Merged query. |
+If Phase 0 fails after 3 attempts:
+
+**This is expected and acceptable.** OpenExec is 4 days old in the wild (USD v26.03 shipped March 26, 2026). Non-Pixar developers building it from source is uncharted territory.
+
+**Fallback:** Sprint 1 MockCogExec continues to serve. The architecture is OpenExec-native. The implementation catches up when:
+- Pixar ships pre-built wheels with OpenExec
+- Community Docker images with OpenExec emerge
+- A subsequent USD release stabilizes the build
+
+**Do not treat a build failure as a project failure.** The cognitive twin works today on MockCogExec. OpenExec is the upgrade, not the requirement.
 
 ---
 
-## KICKOFF PROMPT (Paste into Claude Code)
+## INITIATION PROMPT
 
 ```
-You are executing a 7-phase architectural rewrite of the Cognitive Twin codebase from v7.0 to v8.0.
-
-Read AGENTS.md in the project root. It is your operating specification.
-
-You are a Sequential MoE pipeline: Architect → Forge → Crucible, repeated for each of 7 phases. There is no Scout phase — the AGENTS.md IS the reconnaissance.
-
-Your agent rules are derived from the Twin's own architecture:
-- Rule 2 = Basal Ganglia Gate: Every mutation is gated. Default state is INHIBIT.
-- Rule 3 = UNPROVABLE: 3 failures → park with dignity.
-- Rule 5 = Trace Exclusion: Role boundaries are structural.
-- Rule 7 = Crucible IS Elenchus: Blind verification. Spec-gaming detection.
-
-Begin Phase 1: Encoding & Hot Path. Start as Architect.
+Read AGENTS.md. This is Sprint 2: Native OpenExec.
+Acknowledge the CONSTITUTION and COMMANDMENTS.
+Execute Phase 0: USD 26 Build Environment.
+Determine platform (Windows or macOS).
+Attempt the headless build with OpenExec.
+Stop and report build status. If it fails, surface the exact error.
+Do NOT proceed past Phase 0 without approval.
 ```
 
 ---
 
-*v8.0 Agentic Build Teams Execution Spec — derived from Gemini Deep Think ADR*
-*AlphaProof AND/OR decomposition — hardest subtask (Phase 1) surfaced first*
-*MoE pattern: Architect → Forge → Crucible × 7 sequential phases*
+*AGENTS.md — Cognitive Twin Sprint 2*
+*Native OpenExec: The Hard Architecture Move*
+*Joseph O. Ibrahim | March 2026*

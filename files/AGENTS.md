@@ -1,253 +1,245 @@
-# Cognitive Twin v7.0 — Agent Team Specification
-# Pattern: Sequential MoE (Architect → Forge → Crucible) × 5 Phases
-# Scope: Full v6→v7 rewrite + Frontier Neuroplasticity + Cognitive Profile Intake
-# Research: Titans, Mnemis, SSGM, REMem, HiMem, LoCoMo-Plus + Neuropsych Calibration
-# Gemini Pass: ALL 6 patches propagated to gate checklists.
-# Gemini Phase 1 Review: 5 additional patches (7-11) propagated.
+# AGENTS.md — Cognitive Twin Sprint 1
+# Version: FINAL (Gemini R1-R4 + Constitution + Codebase Recon)
+# Author: Joseph O. Ibrahim
+# Date: March 30, 2026
 
 ---
 
-## Mission Overview
+## CONSTITUTION (Immutable — Applies to ALL Phases, ALL Agents)
 
-Rewrite Cognitive Twin from v6.0 to v7.0. Three architectural moves, five phases,
-plus a neuropsych-informed cognitive profile system that calibrates the Twin to each
-individual user's brain — turning universal defaults into personal baselines.
+These eight laws govern every agent in every phase. They are not guidelines. They are constraints. Violating any one is a harder failure than a crashed test.
 
-**The spec is the recon.** Trust the specification.
+### LAW 1: SCOUT BEFORE YOU ACT
+Your first action in any phase is reconnaissance, never mutation.
+- Search for relevant files/context. Don't ingest everything.
+- Before creating anything, read 2-3 existing examples of the same kind. Match patterns, imports, naming.
+- Before touching anything, identify what you CANNOT touch. Frozen boundaries first, then work area.
+
+### LAW 2: VERIFY AFTER EVERY MUTATION
+The distance between a change and its verification is exactly one step.
+- After every file create/modify, run the verification suite. Not "later." Not "after this batch."
+- Existing passing tests are invariants. Breaking one is higher priority than any new work.
+- You leave more verification than you found.
+
+### LAW 3: BOUNDED FAILURE → ESCALATE
+Three retries, then stop. No exceptions.
+- After 3 attempts at the same fix, reclassify from "task" to "blocker."
+- Surface what you tried, what failed, and what you think the issue is.
+- NEVER silently weaken a test to make it pass. NEVER silently skip a requirement.
+
+### LAW 4: COMPLETE OUTPUT OR EXPLICIT BLOCKER
+Every output is either fully realized or explicitly flagged as incomplete.
+- No `# TODO: implement later`. No stubs. No truncation.
+- `// ... existing code ...` is corruption. Write the whole thing.
+- If you can't complete something, say exactly what's missing. That is a valid output. Stubs are not.
+
+### LAW 5: ROLE ISOLATION
+Each agent has a defined scope. Operating outside it is a violation even if the output would be correct.
+- The Architect does NOT implement. The Forge does NOT redesign. The Crucible does NOT patch.
+- Implement what was specified. Flag disagreements as notes in the handoff artifact.
+- Competence ≠ authority.
+
+### LAW 6: EXPLICIT HANDOFFS
+The interface between agents is a defined artifact, not ambient context.
+- Each phase produces a specific, named output that the next phase reads.
+- Types, signatures, state transitions — specific enough that the receiving agent doesn't guess.
+- Between every phase, `git commit`. Rollback to any phase boundary is always possible.
+
+### LAW 7: ADVERSARIAL VERIFICATION
+The agent that verifies must be motivated to find failures, not confirm success.
+- Happy path, error path, boundary conditions, state transitions — ALL required.
+- Vague assertions (`assert x`) are test bugs. Tests must catch regressions, not just confirm "it runs."
+- If a test reveals a bug, fix the implementation. NEVER weaken the test.
+
+### LAW 8: HUMAN GATES AT IRREVERSIBLE TRANSITIONS
+Decisions expensive to reverse require explicit human confirmation.
+- Gate goes after design (before implementation commits you), not after implementation.
+- Gate surfaces what was decided, what the tradeoffs are, what proceeding costs.
+- Minimal gates. Every gate is a momentum break. Use only what's necessary.
 
 ---
 
-## Architecture-Native Agent Rules
+## COMMANDMENTS (Technical — Cognitive Twin Specific)
 
-### Rule 2 → BASAL GANGLIA GATE: Verify Every Mutation
-
-The Motor Cortex defaults to INHIBIT ALL. Every action must pass 5 checks or it's blocked.
-After every file create or modify, run `pytest tests/ -v`. Default state is INHIBIT.
-Existing passing tests are invariants. You leave more tests than you found.
-
-### Rule 3 → UNPROVABLE WITH DIGNITY: Bounded Failure
-
-3 failed attempts → UNPROVABLE. Surface reason, what_would_help, partial_progress.
-Never silently degrade quality — that's spec-gaming, and you're building the system
-that detects it.
-
-### Rule 5 → TRACE EXCLUSION: Role Isolation Is Structural
-
-Authority boundaries are structural. Forge reads the Architect's design artifact, not
-its reasoning. Disagreements are notes, not unilateral action.
-
-### Rule 7 → ELENCHUS PATTERN: Adversarial Verification
-
-The Crucible IS Elenchus. Blind verification. Spec-gaming detection.
-Fix the code, never weaken the test.
-
-### Rules 1, 4, 6, 8, 9, 10 (Generic)
-
-1. **RECON = READ THE SPEC.** Identify frozen boundaries.
-4. **COMPLETE OR BLOCKED.** No stubs, no TODOs.
-6. **EXPLICIT HANDOFFS.** Designs at `.agent-team/designs/`. Blockers at `.agent-team/blockers/`.
-8. **HUMAN GATE AFTER PHASE 1 DESIGN.**
-9. **SEQUENTIAL PHASES.** One at a time.
-10. **CLAUDE.md IS LAW.**
+1. NO C++. NO usdGenSchema. NO USD builds. This is the Python mock sprint.
+2. Every computation is a pure function: `def compute_X(authored_t, state_t_minus_1) -> new_state_t`. Pure functions DO NOT track counters internally. Accumulators (exchanges_without_break, adrenaline_debt) are authored to the stage by the Bridge/Generator. Pure functions read and evaluate them.
+3. exchange_index is a monotonic integer. The ONLY temporal key. Never use wall-clock time as a TimeCode.
+4. State machines read t-1 from authored history. Never query own output. No cycles.
+5. At exchange_index == 0, read_previous() returns schema default baseline (Momentum.COLD_START, Burnout.GREEN, Energy.MEDIUM). NEVER returns None. NEVER throws KeyError.
+6. Anchor gain = 1.0 ALWAYS. Separate function. No code path from injection params to anchor output.
+7. RED event is an exogenous override: ANY → RED, bypassing sequential burnout rule (INV-14 exception).
+8. Energy decrements SUSPEND during active burst — adrenaline masking. Debt applies on burst exit.
+9. Context budget uses hysteresis: promote Payload→Reference at >4.2x, demote at <3.8x.
+10. XGBoost: Ordinal encoding for progressive states (GREEN=0..RED=3). One-Hot for nominals (action_type, context). XGBRegressor with reg:squarederror to preserve ordinality. MultiOutputRegressor wrapping. Round predictions to nearest valid integer class. Drop exchange_index and session_id from features.
+11. Trajectory generator uses Profile-Driven Markov Biasing, NOT uniform random sampling. Deep Work sessions forcibly skew coherence/velocity to 95%+ to guarantee burst states are reachable.
+12. git commit after every phase gate. Clean commit message: "Sprint 1 Phase N: [description]".
 
 ---
 
-## Phase Sequence
+## MoE AGENT ROLES
+
+ARCHITECT (Phase 0)     → Reconnaissance. Maps existing codebase. Produces inventory.
+                          DOES NOT modify any files.
+
+FORGE (Phases 1-5)      → Implementation. Builds what the spec defines.
+                          DOES NOT redesign architecture.
+                          DOES NOT skip verification.
+
+CRUCIBLE (within Forge)  → Adversarial verification after every mutation.
+                          Writes tests. Runs tests. Reports failures.
+                          NEVER weakens a test to make it pass.
+
+---
+
+## PHASE 0: CODEBASE RECONNAISSANCE (Architect)
+
+### Purpose
+The Cognitive Twin repo (C:\Users\User\Cognitive_Twin) has existing code from prior versions (v8 MCP server, twin_store, twin_recall, twin_patterns, twin_session_status). Before writing anything, the Architect maps what exists, what's reusable, what must be preserved, and what's frozen.
+
+### Tasks:
+1. Map the repository structure. Produce a complete directory tree.
+2. Inventory every source file: path, purpose, key classes/functions, status (REUSE|REFACTOR|REPLACE|FROZEN).
+3. Identify MCP server state: tools, transport, entry point, known issues.
+4. Map dependencies: requirements.txt / pyproject.toml, installed packages, conflicts with Sprint 1 needs.
+5. Identify frozen boundaries: files that must NOT be modified.
+6. Produce the Reconnaissance Artifact (structured inventory document).
+
+### Verification:
+- Inventory is complete (every .py file documented)
+- No files were modified
+- Frozen boundaries explicitly listed
+
+### Gate: Print the Reconnaissance Artifact. Stop. Await human approval.
+### Git: git commit -m "Sprint 1 Phase 0: Codebase reconnaissance"
+
+---
+
+## PHASE 1: Substrate & Schemas (Forge)
+
+### Gate: Phase 0 approved.
+
+### Tasks:
+1. Create src/schemas.py with Pydantic models.
+   - Ordinal IntEnum for progressive states: Burnout(GREEN=0..RED=3), Energy(DEPLETED=0..HIGH=3), Momentum(CRASHED=0..PEAK=4)
+   - CognitiveObservation model with ALL fields including telemetry block: tasks_completed, exchanges_without_break, frustration_signal, adrenaline_debt (R4 Trap 2 fix)
+
+2. Create src/mock_usd_stage.py:
+   - Dict storage keyed by (prim_path, exchange_index)
+   - author(), read(), read_previous()
+   - read_previous(path, 0) returns schema defaults. NEVER None. NEVER KeyError. (R4 Trap 1 fix)
+   - Stage-level threshold config (building_task_threshold=3, rolling_coherence_threshold=0.7, etc.)
+
+### Verification: pytest tests/test_schemas.py -v
+### Gate: Print schemas + test results. Stop. Await approval.
+### Git: git commit -m "Sprint 1 Phase 1: Schemas and MockUsdStage"
+
+---
+
+## PHASE 2: Logic Core — MockCogExec (Forge)
+
+### Gate: Phase 1 approved.
+
+### Tasks:
+1. Create src/mock_cogexec.py using networkx.DiGraph (topologically sorted DAG).
+2. Create computation modules under src/computations/ (one file per computation).
+   - ALL pure functions. NO internal counters. Accumulators authored by Bridge/Generator. (R4 Trap 3 fix)
+   - Adrenaline masking in compute_energy: suspend decrements during burst, apply debt on exit.
+   - RED event exception in compute_burnout: exogenous_red=True → ANY → RED.
+   - Anchor immunity in compute_injection_gain: separate function, returns 1.0 unconditionally.
+3. Context budget with hysteresis (promote >4.2x, demote <3.8x).
+
+### Verification: pytest tests/test_cogexec.py -v (minimum 3 test cases per computation)
+### Gate: Print DAG evaluation for 20-exchange test trajectory. Stop. Await approval.
+### Git: git commit -m "Sprint 1 Phase 2: MockCogExec DAG and computation functions"
+
+---
+
+## PHASE 3: Autoresearch Trajectory Generator (Forge)
+
+### Gate: Phase 2 approved.
+
+### Tasks:
+1. Create src/trajectory_generator.py: Forward-chaining causal simulator. NOT random-walk-then-reject.
+2. Profile-Driven Markov Biasing (R4 Trap 4 fix): Deep Work sessions forcibly skew coherence/velocity to 95%+.
+3. Distribution targets (±5%): normal=40%, deep_work=15%, struggling=15%, recovery=10%, injection=10%, crisis=5%, mobile=5%.
+4. Bridge/Generator maintains and authors accumulators per exchange.
+5. Create src/validator.py: 26 invariants as asserts. INV-14 amended for RED exception.
+6. Edge cases: RED during burst, injection during depleted, adrenaline debt on burst exit, rising allostatic arcs.
+7. Output: 10,000 JSONL trajectories + coverage/distribution/validation reports.
+
+### Verification: trajectory_generator.py --count 100 --validate (then --count 10000)
+### Gate: Print coverage report, distribution stats, edge case counts. Stop. Await approval.
+### Git: git commit -m "Sprint 1 Phase 3: Trajectory generator with 10K validated sessions"
+
+---
+
+## PHASE 4: XGBoost Predictor (Forge)
+
+### Gate: Phase 3 approved.
+
+### Tasks:
+1. Create src/train_predictor.py.
+2. Data: 3-step sliding window. DROP exchange_index and session_id.
+3. Encoding (R4 Trap 5 fix): Ordinal for progressive states. One-Hot for nominals. NOT label encoding for nominals.
+4. Model: MultiOutputRegressor(XGBRegressor(objective='reg:squarederror')). Round predictions to nearest valid integer. Clamp to valid range.
+5. Split: 80/10/10. Metrics: per-field accuracy, rare-class accuracy, MAE.
+6. Save: models/cognitive_predictor_v1.joblib
+7. Create src/predict.py: load model, accept state+action, output prediction.
+
+### Verification: train_predictor.py (target >85% per-field accuracy on synthetic test)
+### Gate: Print per-field accuracy, rare-class accuracy, MAE. Stop. Await approval.
+### Git: git commit -m "Sprint 1 Phase 4: XGBoost predictor trained on 10K trajectories"
+
+---
+
+## PHASE 5: Integration (Forge)
+
+### Gate: Phase 4 approved.
+
+### Tasks:
+1. Create src/bridge.py: full exchange loop coordinator.
+2. Create src/delegate_claude.py: HdClaude mock (Sync/Execute/CommitResources).
+3. Create src/observation_buffer.py: SQLite priority queue, anchor partition (20% locked synthetic), organic partition (80% surprise-weighted).
+4. End-to-end test: 50-exchange simulated session, all systems connected.
+
+### Verification: pytest tests/test_integration.py -v
+### Gate: Print end-to-end test results. Stop. Await approval.
+### Git: git commit -m "Sprint 1 Phase 5: Full integration"
+
+---
+
+## BINARY GATES
+
+| Phase | Agent | Gate Artifact | Approval Signal |
+|-------|-------|--------------|-----------------|
+| 0 | Architect | Codebase reconnaissance inventory | "Approved. Phase 1." |
+| 1 | Forge | Pydantic schemas + MockUsdStage tests | "Approved. Phase 2." |
+| 2 | Forge | DAG evaluation for 20-exchange trajectory | "Approved. Phase 3." |
+| 3 | Forge | Coverage report + distribution stats | "Approved. Phase 4." |
+| 4 | Forge | Per-field accuracy metrics | "Approved. Phase 5." |
+| 5 | Forge | End-to-end integration test results | "Sprint 1 complete." |
+
+DO NOT proceed past ANY gate without explicit human approval.
+DO NOT combine phases. One phase at a time. One gate at a time.
+
+---
+
+## INITIATION PROMPT
+
+Copy-paste this into Claude Code to begin:
 
 ```
-Phase 1: Foundation (USD Layer)              → Gate 1
-Phase 2: Core Transport + Metacognition      → Gate 2a + 2b + 2c
-Phase 3: Subsystem Cutover + Provenance      → Gate 3a + 3b + 3c + 3d
-Phase 4: Observation + Intake + Migration    → Gate 4a + 4b + 4c + 4d + 4e
-Phase 5: Hebbian + Reconstruction + Data     → Gate 5a + 5b + 5c + 5d
-```
-
----
-
-## Agent Roles
-
-### ARCHITECT (Phase Designer)
-
-**Authority:** Design ONLY. Produce plans, schemas, file layouts. No code.
-
-**Per-phase responsibilities:**
-
-- **Phase 1:** Design `usd_lite/` — dataclasses (including Provenance, surprise/confidence session fields, CognitiveProfile types, Hebbian dual-mask config as forward-declared types), `.usda` stringifier with compact hex encoding for 2048-bit arrays (Patch 9), `BrainStage.__eq__` with `math.isclose()` for float fields, LIVRPS composition with permanent-prim handling.
-- **Phase 2:** Design `brainstem/` — `to_stage()`, `from_stage()`, `full_stage()`, `elenchus_stage()`, Merkle hashing. **NEW:** Design the surprise metric computation (Z-score over rolling mean/std_dev of last 100 best-hamming values, with `max(std_dev, 1.0)` cold-start floor), the dual-process routing logic (threshold-based escalation from Association to Composition), and the `/Session` prim updates (`surprise_rolling_mean`, `surprise_rolling_std`, `last_query_surprise`, `last_retrieval_path`). Design `conftest.py` Hypothesis strategies.
-- **Phase 3:** Design subsystem adapter interfaces. Design `bridge/` deprecation shim. **NEW:** Design the structured Provenance dataclass migration — how existing layers get `SYSTEM_INFERRED` provenance, how new layers populate automatically.
-- **Phase 4:** Design `skills/` (with incremental `last_processed_timestamp` cursor for ghost window compliance — Patch 10), `twin_skills` MCP tool contract, `intake/`, `twin_intake` MCP tool contract, `migrate_v7.py`, `bridge/` deletion checklist. **NEW:** Design the intake's continuous [0.0, 1.0] scoring with deterministic linear interpolation, semantic `user_disengaged` ceiling detection, and multiplier derivation rubric.
-- **Phase 5:** Design `hebbian/` — co-activation tracking, bit-level strengthening/weakening math, stability constraints, homeostatic plasticity, lazy decay interaction. **NEW:** Hebbian deltas stored as dual directional masks (`strengthen_mask`, `weaken_mask`) in `[V] Variant` USD layer (not destructive SQLite mutation). `effective_sdr = (base_sdr | strengthen_mask) & ~weaken_mask` — NOT XOR (Patch 7). Design episodic context reconstruction with apoptosis twilight zone clamp `max(apoptosis_threshold + 0.05, threshold)` and reconsolidation boost on user-facing retrieval (Patch 11). Design Elenchus training data pipeline with `cognitive_profile_hash` AND `cognitive_profile_features` (full float vector), using O(1) log rotation (Patch 8).
-
-**Rules:** Read spec first (Rule 1). Match existing patterns (Rule 1). Complete designs only (Rule 4). Design only, no code (Rule 5).
-
-### FORGE (Builder)
-
-**Authority:** Implement the Architect's design. Write code and tests. No design changes.
-
-**Per-phase responsibilities:**
-
-- **Phase 1:** Implement `usd_lite/` to exact schema. 100% test coverage.
-- **Phase 2:** Implement `brainstem/` with Hypothesis fuzz tests. **NEW:** Implement Z-score surprise metric, dual-process routing, `/Session` prim updates, profile-aware threshold fallback.
-- **Phase 3:** Write subsystem adapters. Create bridge shim. **NEW:** Implement structured Provenance dataclass. Migrate existing layers to `SYSTEM_INFERRED`.
-- **Phase 4:** Implement `skills/`, `intake/`, register both MCP tools, write `migrate_v7.py`, delete `bridge/`. **NEW:** Implement continuous scoring, semantic ceiling detection, multiplier derivation, `INTAKE_CALIBRATED` provenance.
-- **Phase 5:** Implement `hebbian/`. **NEW:** Implement dual-mask Variant layer storage (`strengthen_mask` + `weaken_mask`, NOT XOR — Patch 7), apoptosis clamp on reconstruction threshold, reconsolidation boost on user-facing retrieval (Patch 11), training data with `cognitive_profile_features` (full float vector alongside hash), O(1) log rotation at max_rows (Patch 8).
-
-**Rules:** Follow the design (Rule 5). Complete implementations (Rule 4). Run tests after every file change (Rule 2). No shortcuts — stubs are spec-gaming (Rule 3).
-
-### CRUCIBLE (Adversarial Verifier)
-
-**Authority:** Break things. Find spec-gaming. Write adversarial tests. Never weaken a test.
-
-**Responsibilities:** Run the full gate checklist for each phase. Write adversarial test cases. Report blockers with full metadata. Detect spec-gaming.
-
----
-
-## Gate Checklists (Crucible Reference)
-
-### Phase 1 — Gate 1
-- [ ] All prim types instantiate without error
-- [ ] LIVRPS composition produces correct precedence order
-- [ ] Permanent prims override normal LIVRPS recency rules
-- [ ] Round-trip fidelity: `parse(serialize(stage)) == stage` for every prim type
-- [ ] **[Patch 9+] Float tolerance:** `BrainStage.__eq__` uses `math.isclose(rel_tol=1e-9)` for float fields, exact equality for all others. Round-trip test passes with this tolerance.
-- [ ] **[Patch 9] Hex SDR serialization:** 2048-bit arrays (`sdr`, `strengthen_mask`, `weaken_mask`) serialize as 512-char hex strings, NOT text arrays. Round-trip through hex encoding is lossless.
-- [ ] 100% test coverage on `usd_lite/`
-- [ ] Forward-declared types for Provenance, CognitiveProfile, Hebbian dual-mask fields exist as stubs
-- [ ] **Spec-gaming:** Are dataclasses truly typed, or are they just dicts with a class wrapper?
-
-### Phase 2 — Gate 2a + 2b + 2c
-- [ ] `from_stage(to_stage(x)) == x` for every subsystem, Hypothesis 1000+ examples
-- [ ] `elenchus_stage()` output contains zero traces (structural inspection)
-- [ ] Merkle hash correctly computed over `/Association/Traces`
-- [ ] **[Patch 1] Surprise Z-score:** `surprise = (best_hamming - rolling_mean) / max(rolling_std_dev, 1.0)` computes correctly
-- [ ] **[Patch 1] Z-score default:** Escalation triggers at Z-score > 2.0 when no profile exists
-- [ ] **[Patch 1] Cold-start:** With < 10 recalls, `max(rolling_std_dev, 1.0)` floor prevents division issues
-- [ ] Rolling mean and std_dev update after each recall
-- [ ] `last_retrieval_path` correctly reflects SYSTEM_1 vs SYSTEM_2
-- [ ] `/Session` prims (`surprise_rolling_mean`, `surprise_rolling_std`, `last_query_surprise`) update correctly
-- [ ] Profile multiplier scales the threshold when `/CognitiveProfile` exists
-- [ ] **Fallback:** When `/CognitiveProfile` is empty/default, routing uses hardcoded 2.0 and does not crash
-- [ ] **Spec-gaming:** Does the routing actually change behavior, or is it just recorded without affecting recall?
-
-### Phase 3 — Gate 3a + 3b + 3c + 3d
-- [ ] All subsystems read/write through Brainstem
-- [ ] No direct subsystem-to-subsystem communication bypasses Brainstem
-- [ ] All existing tests pass (bridge shim transparent)
-- [ ] Every `/Composition/Layer` has fully populated structured Provenance
-- [ ] Layers from different sessions carry different event_hashes
-- [ ] `SYSTEM_INFERRED` correctly applied to migrated legacy layers
-- [ ] New layers auto-populate provenance with correct `source_type`
-- [ ] **Spec-gaming:** Is provenance a real dataclass with validation, or just a string field renamed?
-
-### Phase 4 — Gate 4a + 4b + 4c + 4d + 4e
-- [ ] `twin_skills` returns valid JSON for all 4 query patterns
-- [ ] **[Patch 10] Incremental observer:** Skills observer tracks `last_processed_timestamp` cursor, processes only new traces. Completes within ghost window budget (< 5 seconds for 100 new traces). Cursor persisted in SQLite.
-- [ ] End-to-end MCP integration passes for both new tools
-- [ ] `migrate_v7` bootstraps `/Skills` from legacy DB with 10+ traces, Growth Arcs non-zero
-- [ ] `bridge/` completely eradicated, zero broken imports, all tests pass, total tests ≥ 500
-- [ ] **[Patch 3] Continuous scoring:** Intake multiplier derivation uses continuous float [0.0, 1.0], NOT bucketed categories
-- [ ] **[Patch 3] Deterministic:** Same intake answers always produce identical multipliers
-- [ ] **[Patch 3] Linear interpolation:** `multiplier = base + (score * range)` verified for each dimension
-- [ ] **[Patch 6] Semantic ceiling:** Disengagement detected via `user_disengaged: bool` (dismissal language, identical answers, explicit opt-out), NOT raw answer length
-- [ ] **[Patch 6] TERSE resilience:** Short but substantive answers do NOT trigger ceiling detection
-- [ ] Profile stored in `/CognitiveProfile/Multipliers` with correct types
-- [ ] Re-run updates existing profile (not append)
-- [ ] History has `INTAKE_CALIBRATED` provenance
-- [ ] After intake, Phase 2 routing uses calibrated thresholds (test: same query routes differently with vs without profile)
-- [ ] **Spec-gaming:** Does the intake actually derive multipliers from answers, or just store raw responses? Storing without deriving is a stub.
-
-### Phase 5 — Gate 5a + 5b + 5c + 5d
-- [ ] Co-activation counts increment on co-recall
-- [ ] Bits strengthen proportionally to co-activation
-- [ ] Competing traces weaken shared bits
-- [ ] Stability: max drift holds after 1,000 updates
-- [ ] Homeostasis: traces stay in [3%, 5%] activation band
-- [ ] Hebbian boosts integrate with lazy decay (additive, 2× half-life)
-- [ ] Idempotent: same event twice doesn't double shift
-- [ ] Profile-scaled `hebbian_alpha` produces different learning rates for different profiles
-- [ ] **[Patch 7] Dual masks:** Hebbian uses `strengthen_mask` (bits to SET) and `weaken_mask` (bits to CLEAR), NOT a single XOR delta mask
-- [ ] **[Patch 7] Set/Clear formula:** `effective_sdr = (base_sdr | strengthen_mask) & ~weaken_mask` — idempotent and directionally correct
-- [ ] **[Patch 7] Conflict resolution:** If same bit appears in both masks, `weaken_mask` wins (bias toward forgetting)
-- [ ] **[Patch 7] Reinforcement test:** Strengthening a bit already set to 1 in base_sdr keeps it 1 (XOR would flip to 0 — this is the bug Patch 7 fixes)
-- [ ] **[Patch 4] Merkle isolation:** Dual masks live in `[V] Variant` USD layer, NOT destructive SQLite mutation
-- [ ] **[Patch 4] Base pristine:** `base_sdr` in SQLite is untouched by Hebbian updates
-- [ ] **[Patch 4] Merkle hash:** Computed over base traces only, not effective traces
-- [ ] **[Patch 2] Apoptosis clamp:** Reconstruction threshold = `max(apoptosis_threshold + 0.05, configured_threshold)` — always above apoptosis by ≥ 0.05
-- [ ] Degraded trace (strength < reconstruction_threshold) with Hebbian links → reconstructed episode
-- [ ] Reconstruction marked `reconstructed: true` with contributing trace IDs
-- [ ] Reconstruction uses LIVRPS composition
-- [ ] Reconstruction provenance = `HEBBIAN_DERIVED`
-- [ ] Reconstruction computation is READ-ONLY — original traces not modified during composition
-- [ ] **[Patch 11] Reconsolidation boost:** When reconstructed episode is surfaced to user (user-facing retrieval), contributing base traces receive a standard retrieval boost
-- [ ] **[Patch 11] Boost gating:** Reconsolidation boost does NOT fire on internal-only computation — only on user-facing retrieval. Traces must not bootstrap their own survival without user engagement.
-- [ ] Profile-scaled `reconstruction_threshold` produces different aggressiveness for different profiles
-- [ ] **Adversarial:** Degraded trace with zero Hebbian links → return trace as-is, not crash
-- [ ] **Adversarial:** Contributing traces already below apoptosis → reconstruction still works with available fragments, does not crash
-- [ ] Training data: every verification → valid JSONL row
-- [ ] Training data: no reasoning traces (Rule 11)
-- [ ] Training data: `retrieval_path` field correctly reflects SYSTEM_1 vs SYSTEM_2
-- [ ] Training data: `cognitive_profile_hash` present and deterministic
-- [ ] **[Patch 5] Training data:** `cognitive_profile_features` present and non-empty when profile exists; empty dict `{}` when no profile (never null, never missing key)
-- [ ] **[Patch 8] Log rotation:** Training data file rotates at max_rows (10,000) with O(1) amortized cost. No full-file rewrite. Rotated files named with timestamp. Max 3 rotated files retained.
-- [ ] All prior tests pass. Total ≥ 550. Rule 33 preserved.
-- [ ] All configurable thresholds read from `/CognitiveProfile/Multipliers/` when available, fall back to hardcoded defaults when not
-- [ ] **Spec-gaming:** Hebbian actually modifies bits (via dual masks)? Reconstruction actually composes via LIVRPS? Reconsolidation boost only fires on user retrieval? Profile multipliers actually flow through? Training data includes actual feature vector, not just hash? Log rotation is O(1), not O(N) rewrite?
-
----
-
-## Coordination
-
-### File Ownership
-```
-Architect:  .agent-team/designs/
-Forge:      python/cognitive_twin/usd_lite/      (Phase 1)
-            python/cognitive_twin/brainstem/     (Phase 2)
-            python/cognitive_twin/intake/        (Phase 4)
-            python/cognitive_twin/skills/        (Phase 4)
-            python/cognitive_twin/hebbian/       (Phase 5)
-            tests/ (new test files)
-Crucible:   .agent-team/blockers/
-            tests/ (adversarial tests)
-FROZEN:     crates/hippocampus/
-            python/cognitive_twin/encoder/
-```
-
-### Phase Transitions
-1. Forge declares complete → Crucible runs full gate (including spec-gaming checks)
-2. Gate passes → git tag `v7-phase-{N}-complete` → next phase
-3. Gate fails → Crucible writes blocker → Forge fixes → loop
-
----
-
-## Verification Commands
-```bash
-pytest tests/ -v                           # Primary gate (every mutation)
-cargo test -p hippocampus                  # Rust (phase boundaries)
-pytest tests/test_usd_lite/ --cov=python/cognitive_twin/usd_lite --cov-report=term-missing
-pytest tests/test_usd_lite/test_hex_roundtrip.py -v    # Phase 1 Patch 9 hex SDR
-pytest tests/test_usd_lite/test_float_eq.py -v         # Phase 1 float tolerance
-pytest tests/test_brainstem/test_fidelity.py -v --hypothesis-seed=0
-pytest tests/test_brainstem/test_routing.py -v          # Phase 2 metacognitive routing
-pytest tests/test_intake/test_adaptive.py -v            # Phase 4 intake
-pytest tests/test_intake/test_multipliers.py -v         # Phase 4 derivation
-pytest tests/test_intake/test_ceiling.py -v             # Phase 4 semantic ceiling
-pytest tests/test_skills/test_incremental.py -v         # Phase 4 Patch 10 cursor
-pytest tests/test_hebbian/test_stability.py -v          # Phase 5 stability
-pytest tests/test_hebbian/test_dual_masks.py -v         # Phase 5 Patch 7 set/clear
-pytest tests/test_hebbian/test_merkle_isolation.py -v   # Phase 5 Patch 4
-pytest tests/test_hebbian/test_reconstruction.py -v     # Phase 5 episodic + Patch 11
-pytest tests/test_hebbian/test_training_data.py -v      # Phase 5 JSONL + features + rotation
-pytest tests/ -v && cargo test -p hippocampus           # Full regression
+Read AGENTS.md. Acknowledge the CONSTITUTION (8 laws) and COMMANDMENTS (12 rules).
+Execute Phase 0 ONLY: Codebase Reconnaissance.
+Map the existing repository at C:\Users\User\Cognitive_Twin.
+Produce the Reconnaissance Artifact.
+Stop and print it for my review.
+Do NOT modify any files.
 ```
 
 ---
 
-## Frozen Boundaries (NEVER MODIFY)
-- `crates/hippocampus/` — Rust hot path
-- All 33 inviolable rules
-- SQLite as source of truth
-- Existing 5 MCP tools
-- Encoder (BGE + LSH → 2048-bit SDR)
-- Socket-activated daemon (Rule 33)
-- Lazy decay (Rule 4)
-- Trace exclusion (Rule 11)
+AGENTS.md — Cognitive Twin Sprint 1
+Constitution + Codebase Recon + 5 Phases + Binary Gates
+Gemini R1-R4 integrated (14 architectural + 5 execution patches)
+Joseph O. Ibrahim | March 2026
