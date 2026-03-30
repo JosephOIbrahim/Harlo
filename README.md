@@ -4,6 +4,8 @@ Your AI forgets you every time. This fixes that.
 
 The Cognitive Twin is a living model of how you think — not a chat log, not a search history, but a persistent layer of *you* that any AI can consult. It remembers your patterns, learns your instincts, verifies what it tells you, and evolves as you do.
 
+> **Latest:** Sprint 1 complete — cognitive state machine simulation with 10,000 validated trajectories, XGBoost predictor, and full integration pipeline. Sprint 2 (Native OpenExec) circuit-breaker triggered: USD 26.03 C++ libs built, but Python bindings not yet shipped by Pixar. MockCogExec continues to serve.
+
 ## The Problem
 
 Every conversation with an AI starts from scratch. Close the window and everything you built together — your context, your shorthand, the way it was starting to *get* you — vanishes. The next session is a stranger again.
@@ -525,6 +527,169 @@ graph TB
     classDef philosophy fill:#1a1a2e,stroke:#7c3aed,color:#c4b5fd,font-style:italic
 ```
 
+### Cognitive State Machine (Sprint 1)
+
+The cognitive state simulation pipeline — from authored observations through the DAG evaluator to validated trajectories and XGBoost prediction:
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph TB
+    subgraph GEN["Trajectory Generator · Profile-Driven Markov"]
+        direction TB
+        PROFILES["7 Session Profiles\nnormal 40% · deep_work 15%\nstruggling 15% · recovery 10%\ninjection 10% · crisis 5% · mobile 5%"]:::gen
+        AUTHOR["Author Observations\nvelocity · coherence · frustration\ntasks · burst · injection"]:::gen
+        PROFILES --> AUTHOR
+    end
+
+    subgraph STAGE["MockUsdStage · Dict Storage"]
+        direction TB
+        STORE["(prim_path, exchange_index) → value\nread_previous(path, 0) = baseline\nNEVER None · NEVER KeyError"]:::stage
+    end
+
+    subgraph DAG["MockCogExec · networkx DiGraph"]
+        direction TB
+        TOPO["Topological Sort\nburst → energy → momentum → burnout → allostasis"]:::dag
+
+        subgraph COMPUTE["Pure Computation Functions"]
+            direction LR
+            BURST["compute_burst\nNONE→DETECTED→\nPROTECTED→WINDING→\nEXIT_PREP→NONE"]:::compute
+            ENERGY["compute_energy\nadrenaline masking\nRED degradation\nexercise recovery"]:::compute
+            MOMENTUM["compute_momentum\nCRASHED→COLD_START→\nBUILDING→ROLLING→PEAK"]:::compute
+            BURNOUT["compute_burnout\nGREEN→YELLOW→\nORANGE→RED\nexogenous override"]:::compute
+            ALLO["compute_allostasis\n6-weight composite\ntrend detection"]:::compute
+        end
+
+        subgraph INDEPENDENT["Independent Computations"]
+            direction LR
+            INJECT["compute_injection_gain\nanchor = 1.0 ALWAYS\n4 profile curves"]:::compute
+            CONTEXT["compute_context_budget\nhysteresis 3.8x / 4.2x"]:::compute
+        end
+
+        TOPO --> COMPUTE
+        TOPO --> INDEPENDENT
+    end
+
+    subgraph POST["Post-DAG Invariant Enforcement"]
+        direction LR
+        INV11["INV-11: RED → CRASHED"]:::enforce
+        INV15["INV-15: RED kills burst"]:::enforce
+    end
+
+    subgraph VALIDATE["Validator · 26 Invariants"]
+        direction TB
+        V26["INV-01 to INV-26\nstate ranges · transitions\nanchors · temporal monotonicity\nadrenaline masking · RED rules"]:::validate
+    end
+
+    subgraph OUTPUT["Output"]
+        direction LR
+        JSONL["10,000 JSONL trajectories\n278,577 exchanges\n0 violations"]:::output
+        XGBOOST["XGBoost Predictor\n100% per-field accuracy\n111 features · 4 targets"]:::output
+        BRIDGE["Bridge Integration\n50-exchange end-to-end\nDelegate + Buffer + Predictor"]:::output
+    end
+
+    AUTHOR --> STAGE
+    STAGE -->|"read_previous(t-1)"| DAG
+    DAG --> POST
+    POST -->|"author(t)"| STAGE
+    POST --> VALIDATE
+    VALIDATE --> OUTPUT
+
+    classDef gen fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
+    classDef stage fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,stroke-width:3px
+    classDef dag fill:#0f3460,stroke:#3b82f6,color:#93c5fd
+    classDef compute fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
+    classDef enforce fill:#5c1a1a,stroke:#ef4444,color:#fca5a5,font-weight:bold
+    classDef validate fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef output fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold
+```
+
+### State Machine Transitions
+
+The five cognitive state machines and their transition rules:
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+stateDiagram-v2
+    direction LR
+
+    state Momentum {
+        direction LR
+        [*] --> COLD_START
+        CRASHED --> COLD_START: always
+        COLD_START --> BUILDING: tasks ≥ threshold
+        BUILDING --> ROLLING: coherence + velocity
+        ROLLING --> PEAK: exchanges + burst
+        PEAK --> CRASHED: burnout ≥ ORANGE
+    }
+
+    state Burnout {
+        direction LR
+        [*] --> GREEN
+        GREEN --> YELLOW: frustration or duration
+        YELLOW --> ORANGE: sustained frustration
+        ORANGE --> RED: extreme frustration
+        note right of RED: ANY → RED via exogenous override
+    }
+
+    state Energy {
+        direction LR
+        [*] --> MEDIUM
+        HIGH --> MEDIUM: natural decay
+        MEDIUM --> LOW: session length
+        LOW --> DEPLETED: continued work
+        note right of DEPLETED: Burst suspends decay\nDebt applies on exit
+    }
+
+    state Burst {
+        direction LR
+        [*] --> NONE_B
+        NONE_B --> DETECTED: velocity + coherence
+        DETECTED --> PROTECTED: sustained
+        PROTECTED --> WINDING: exchange threshold
+        WINDING --> EXIT_PREP: exit threshold
+        EXIT_PREP --> NONE_B: next exchange
+    }
+```
+
+### OpenExec Build Status (Sprint 2)
+
+The USD 26.03 build pipeline and current status:
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+graph LR
+    subgraph BUILD["USD 26.03 Build · Windows"]
+        direction TB
+        MSVC["MSVC 19.44\nVS2022 Build Tools"]:::ready
+        CMAKE["CMake 4.2.1"]:::ready
+        PY312["Python 3.12.10"]:::ready
+        FLAGS["--no-imaging\n--no-usdview\n-DPXR_BUILD_EXEC=ON"]:::ready
+    end
+
+    subgraph RESULT["Build Output"]
+        direction TB
+        CORE["USD Core\npxr.Usd, Sdf, Tf\n31 plugins"]:::pass
+        CPP["Exec C++ Libraries\nusd_exec.dll\nusd_execGeom.dll\nusd_execIr.dll\nusd_execUsd.dll"]:::pass
+        SCHEMA["usdGenSchema\navailable"]:::pass
+        PYTHON["Exec Python Bindings\nZERO wrap files\nin v26.03 source"]:::fail
+    end
+
+    subgraph STATUS["Sprint 2 Status"]
+        direction TB
+        MOCK["MockCogExec\ncontinues to serve\n84 tests passing"]:::active
+        FUTURE["Awaiting Pixar\nPython bindings\nin future USD release"]:::waiting
+    end
+
+    BUILD --> RESULT
+    PYTHON -->|"CIRCUIT BREAKER"| STATUS
+
+    classDef ready fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0
+    classDef pass fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold
+    classDef fail fill:#5c1a1a,stroke:#ef4444,color:#fca5a5,font-weight:bold,stroke-width:3px
+    classDef active fill:#0f3460,stroke:#3b82f6,color:#93c5fd,font-weight:bold
+    classDef waiting fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+```
+
 ## Key Design Decisions
 
 **Actor/Observer split (v8.0).** The Actor (Claude) reasons. The Observer (Twin) stores and projects. The MCP server requires no `ANTHROPIC_API_KEY` — it is a pure data layer. The Observer runs background SDR encoding and promotion without any LLM dependency. The Coach projects cognitive state as a system prompt for the Actor.
@@ -633,51 +798,76 @@ maturin develop -r
 ## Project Structure
 
 ```
-python/cognitive_twin/
-├── elenchus/          Verification engine — GVR loop, spec-gaming, trace exclusion
-├── elenchus_v8/       v8 deferred verification — pending queue, Actor-side resolution
-├── brainstem/         Lossless translation — adapters, routing, generation pipeline,
-│                        amygdala, consolidation, provenance, escalation
-├── cli/               Click CLI — human + JSON output
-│   └── commands/      Individual command implementations
-├── coach/             v8 Coach Core — stage → system prompt projection (Anthropic XML)
-├── compaction/        v8 temporal compaction — replay-then-archive, decay commutation
-├── composition/       Left hemisphere — Merkle stages, LIVRPS resolution, audit trail
-├── daemon/            Socket-activated daemon — router, config, lifecycle
-├── encoder/           Triple-path encoding — semantic (BGE+LSH), lexical (Rust),
-│                        ONNX (v8, BGE+CLS pooling)
-├── federated_recall.py  v8 federated query — FTS5 + SDR Hamming merged search
-├── hebbian/           Neuroplasticity — dual-mask SDR evolution, reconstruction,
-│                        training data pipeline
-├── hot_store/         v8 Hot Tier (L1) — SQLite + FTS5, zero-encoding, promotion pipeline
-├── inquiry/           Default Mode Network — pattern surfacing, safeguards, co-evolution
-├── intake/            Cognitive profile — adaptive questionnaire, multiplier derivation
-├── modulation/        Brainstem — allostatic load, gain, barrier, pattern detection
-├── motor/             Motor cortex — premotor planning, Basal Ganglia gate, executor
-├── observer/          v8 Observer — background Hot→Warm promotion, no LLM deps
-├── provider/          LLM abstraction — Protocol-based, Claude and OpenAI adapters
-├── session/           Session lifecycle — SQLite-backed, history, expiration
-├── skills/            Competence tracking — incremental observer, 4 query patterns
-├── trust/             v8 Trust Ledger — continuous [0,1] score, recalibration
-├── usd_lite/          USD container — 17 prim dataclasses, .usda serialization, LIVRPS
-└── migrate_v7.py      v6 → v7 migration (bootstraps /Skills from legacy traces)
+src/                               Sprint 1: Cognitive State Machine Simulation
+├── schemas.py                     Pydantic IntEnum ordinals + CognitiveObservation model
+├── mock_usd_stage.py              Dict-based USD stage mock (prim_path × exchange_index)
+├── mock_cogexec.py                networkx DAG evaluator — topological computation sort
+├── computations/                  Pure functions (Commandment 2: no internal counters)
+│   ├── compute_momentum.py        CRASHED→COLD_START→BUILDING→ROLLING→PEAK
+│   ├── compute_burnout.py         GREEN→YELLOW→ORANGE→RED + exogenous override
+│   ├── compute_energy.py          Adrenaline masking during burst, debt on exit
+│   ├── compute_injection_gain.py  Anchor gain = 1.0 ALWAYS (Commandment 6)
+│   ├── compute_context_budget.py  Hysteresis: promote >4.2x, demote <3.8x
+│   ├── compute_burst.py           5-phase hyperfocus lifecycle
+│   └── compute_allostasis.py      6-weight composite load + trend detection
+├── trajectory_generator.py        Profile-Driven Markov Biasing — 10K sessions
+├── validator.py                   26 invariants (INV-01 to INV-26, RED exception)
+├── train_predictor.py             XGBoost MultiOutputRegressor — ordinal encoding
+├── predict.py                     Inference: 3-step window → next state prediction
+├── bridge.py                      Full exchange loop coordinator
+├── delegate_claude.py             Mock HdClaude — Sync/Execute/CommitResources
+└── observation_buffer.py          SQLite priority queue — anchor 20% / organic 80%
 
-crates/hippocampus/    Rust hot path — SDR encode, XOR search, lazy decay, apoptosis
-config/                Barrier schema, verification depth, default profile
-data/                  Runtime data — stages, reflexes, audit, training data
-models/                ONNX model files (bge-small-en-v1.5.onnx, tokenizer)
-scripts/               Daemon start/stop, model download
-tests/                 27 test modules across all subsystems
+python/cognitive_twin/             Core Twin: MCP server + biologically-architected memory
+├── mcp_server.py                  8 MCP tools over stdio transport
+├── elenchus/                      Verification engine — GVR loop, spec-gaming, trace exclusion
+├── elenchus_v8/                   v8 deferred verification — pending queue, Actor-side resolution
+├── brainstem/                     Lossless translation — adapters, routing, generation pipeline
+├── cli/                           Click CLI — human + JSON output
+├── coach/                         v8 Coach Core — stage → system prompt projection
+├── compaction/                    v8 temporal compaction — replay-then-archive
+├── composition/                   Left hemisphere — Merkle stages, LIVRPS resolution
+├── daemon/                        Socket-activated daemon — router, config, lifecycle
+├── encoder/                       Triple-path encoding — BGE+LSH, Rust, ONNX
+├── federated_recall.py            v8 federated query — FTS5 + SDR Hamming merged search
+├── hebbian/                       Neuroplasticity — dual-mask SDR evolution, reconstruction
+├── hot_store/                     v8 Hot Tier (L1) — SQLite + FTS5, zero-encoding
+├── inquiry/                       Default Mode Network — pattern surfacing, co-evolution
+├── intake/                        Cognitive profile — adaptive questionnaire
+├── modulation/                    Allostatic load, gain, barrier, pattern detection
+├── motor/                         Motor cortex — Basal Ganglia gate, executor
+├── observer/                      v8 Observer — background Hot→Warm promotion
+├── provider/                      LLM abstraction — Claude and OpenAI adapters
+├── session/                       Session lifecycle — SQLite-backed, history
+├── skills/                        Competence tracking — incremental observer
+├── trust/                         v8 Trust Ledger — continuous [0,1] score
+├── usd_lite/                      USD container — 17 prim dataclasses, .usda serialization
+└── migrate_v7.py                  v6 → v7 migration
+
+crates/hippocampus/                Rust hot path — SDR encode, XOR search, lazy decay, apoptosis
+config/                            Barrier schema, verification depth, default profile
+data/                              Runtime data — stages, reflexes, audit, training data
+models/                            ONNX model files + cognitive_predictor_v1.joblib
+scripts/                           Daemon start/stop, model download, USD build scripts
+docs/                              Architecture docs + OpenExec build report
+tests/                             31 test modules + Sprint 1 suite
 ```
 
 ## Testing
 
-**791 tests**, all passing.
+**974 tests** (890 core + 84 Sprint 1), all passing.
 
 ```bash
-python -m pytest tests/ -v --ignore=tests/test_encoder --ignore=tests/test_daemon
-                                                         # Full Python suite (791)
+python -m pytest tests/ -v                               # Full suite (974 tests)
 cargo test -p hippocampus                                # Rust tests (41)
+
+# Sprint 1: Cognitive State Machine
+python -m pytest tests/test_sprint1/ -v                  # All Sprint 1 (84 tests)
+python -m pytest tests/test_sprint1/test_schemas.py -v   # Schemas + MockUsdStage (29)
+python -m pytest tests/test_sprint1/test_cogexec.py -v   # DAG + computations (41)
+python -m pytest tests/test_sprint1/test_integration.py -v # Bridge integration (14)
+
+# Core Twin
 python -m pytest tests/test_hot_store/ -v                # Hot Tier CRUD + FTS5
 python -m pytest tests/test_onnx/ -v                     # ONNX encoding fidelity
 python -m pytest tests/test_federated_recall/ -v         # Federated recall
@@ -689,7 +879,9 @@ python -m pytest tests/test_compaction/ -v               # Temporal compaction
 python -m pytest tests/test_latency/ -v                  # SLA enforcement
 ```
 
-Coverage spans: Hot Tier CRUD + FTS5 search, ONNX encoding fidelity (Hamming correlation >= 0.95), federated recall merge + deduplication, Observer promotion lifecycle, Coach Core XML projection, Trust Ledger continuous updates + tier gating, Elenchus v8 pending queue + claim resolution, temporal compaction with decay commutation, latency SLAs (store <2ms, FTS5 <2ms, Coach <10ms), plus all v7 coverage: USD serialization round-trip, hex SDR encoding, LIVRPS composition, adapter fidelity (Hypothesis), Z-score surprise routing, Merkle isolation, dual-mask Hebbian correctness, homeostatic stability, episodic reconstruction, apoptosis clamp, reconsolidation boost gating, training data JSONL, cognitive profile scoring, GVR protocol, spec-gaming detection, Basal Ganglia gating, structured provenance, and compliance with all 33 architectural rules.
+**Sprint 1 coverage:** Pydantic IntEnum ordinal ordering, CognitiveObservation serialization round-trip, MockUsdStage baseline guarantees (Commandment 5: never None), DAG topological correctness, all 7 computation functions (3+ tests each), 20-exchange trajectory evaluation, exogenous RED override (Commandment 7), adrenaline masking (Commandment 8), anchor gain = 1.0 (Commandment 6), context budget hysteresis (Commandment 9), 26 invariant validation, 10,000 trajectory distribution compliance (±5%), XGBoost parity, Bridge integration with delegate + buffer + predictor.
+
+**Core Twin coverage:** Hot Tier CRUD + FTS5 search, ONNX encoding fidelity (Hamming correlation >= 0.95), federated recall merge + deduplication, Observer promotion lifecycle, Coach Core XML projection, Trust Ledger continuous updates + tier gating, Elenchus v8 pending queue + claim resolution, temporal compaction with decay commutation, latency SLAs (store <2ms, FTS5 <2ms, Coach <10ms), USD serialization round-trip, hex SDR encoding, LIVRPS composition, adapter fidelity (Hypothesis), Z-score surprise routing, Merkle isolation, dual-mask Hebbian correctness, homeostatic stability, episodic reconstruction, apoptosis clamp, reconsolidation boost gating, training data JSONL, cognitive profile scoring, GVR protocol, spec-gaming detection, Basal Ganglia gating, structured provenance, and compliance with all 33 architectural rules.
 
 ## Research Alignment
 
@@ -710,6 +902,10 @@ Coverage spans: Hot Tier CRUD + FTS5 search, ONNX encoding fidelity (Hamming cor
 | (No equivalent in literature) | Actor/Observer disaggregation (zero-LLM Observer) | **New in v8** |
 | (No equivalent in literature) | Coach Core system prompt projection from cognitive state | **New in v8** |
 | (No equivalent in literature) | Replay-then-archive temporal compaction | **New in v8** |
+| (No equivalent in literature) | Cognitive state DAG simulation (networkx, pure functions) | **Sprint 1** |
+| (No equivalent in literature) | Profile-Driven Markov Biasing for synthetic trajectories | **Sprint 1** |
+| (No equivalent in literature) | XGBoost cognitive state predictor (ordinal + one-hot encoding) | **Sprint 1** |
+| OpenUSD 26 OpenExec | C++ libs built, Python bindings pending from Pixar | **Sprint 2 (blocked)** |
 
 ## MCP Quick Reference
 
@@ -837,7 +1033,7 @@ Add to `claude_desktop_config.json`:
 
 ## The 33 Rules
 
-The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), motor safety (inhibition default, one action at a time, RED kills everything), and Hebbian constraints (Merkle isolation, dual masks not XOR, homeostatic plasticity). These aren't guidelines — they're structural constraints enforced by 791 tests. See `CLAUDE.md` for the full specification.
+The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), motor safety (inhibition default, one action at a time, RED kills everything), and Hebbian constraints (Merkle isolation, dual masks not XOR, homeostatic plasticity). These aren't guidelines — they're structural constraints enforced by 974 tests. See `CLAUDE.md` for the full specification.
 
 ## Philosophy
 
