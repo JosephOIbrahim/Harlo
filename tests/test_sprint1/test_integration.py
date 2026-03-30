@@ -7,6 +7,7 @@ End-to-end test: 50-exchange simulated session with all systems connected.
 import pytest
 
 from src.bridge import Bridge, SessionResult
+from src.delegate_base import TaskContext
 from src.delegate_claude import HdClaude
 from src.mock_usd_stage import MockUsdStage
 from src.observation_buffer import ObservationBuffer
@@ -28,24 +29,25 @@ from src.validator import validate_trajectory
 
 class TestHdClaude:
     def test_sync_and_execute(self):
-        delegate = HdClaude(seed=42)
-        obs = CognitiveObservation()
-        delegate.sync(obs)
-        response = delegate.execute()
+        delegate = HdClaude()
+        ctx = TaskContext(task_type="reasoning", signal_class="test")
+        delegate.sync({}, {"momentum": 1, "burnout": 0, "energy": 2}, ctx)
+        response = delegate.execute("test")
         assert response.tokens_used > 0
-        assert response.content != ""
+        assert response.response != ""
 
     def test_execute_without_sync(self):
-        delegate = HdClaude(seed=42)
-        response = delegate.execute()
-        assert response.content == "[no state synced]"
+        delegate = HdClaude()
+        response = delegate.execute("test")
+        assert response.response == ""  # no sync → empty context
 
     def test_commit_resources(self):
-        delegate = HdClaude(seed=42)
-        delegate.sync(CognitiveObservation())
-        delegate.execute()
-        resources = delegate.commit_resources()
-        assert resources["exchanges"] == 1
+        delegate = HdClaude()
+        ctx = TaskContext(task_type="reasoning", signal_class="test")
+        delegate.sync({}, {}, ctx)
+        result = delegate.execute("test")
+        resources = delegate.commit_resources(result)
+        assert "/delegate/claude/exchange_count" in resources
 
 
 # -------------------------------------------------------------------

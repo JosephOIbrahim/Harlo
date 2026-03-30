@@ -1,7 +1,6 @@
-"""HdClaude — Interactive reasoning delegate.
+"""HdClaudeCode — Implementation delegate.
 
-Connects via the existing MCP server. Claude calls tools,
-the twin evaluates state and returns enriched context.
+Handles code generation, debugging, file manipulation tasks.
 Pure Python. Zero Pixar library dependencies.
 """
 
@@ -15,19 +14,14 @@ from .delegate_base import (
     HdCognitiveDelegate,
     TaskContext,
 )
-from .schemas import (
-    Burnout,
-    Energy,
-    Momentum,
-)
+from .schemas import Burnout, Energy, Momentum
 
 
-class HdClaude(HdCognitiveDelegate):
-    """Interactive reasoning delegate.
+class HdClaudeCode(HdCognitiveDelegate):
+    """Implementation delegate for code-centric tasks.
 
-    For MCP-based delegates, 'execute' returns the enriched cognitive
-    context that will be injected into Claude's system prompt via twin_coach.
-    Claude itself does the reasoning — we provide the state.
+    Provides enriched context tuned for implementation:
+    orientation markers, progress tracking, file context.
     """
 
     def __init__(self) -> None:
@@ -38,31 +32,31 @@ class HdClaude(HdCognitiveDelegate):
         self._exchange_count: int = 0
 
     def get_delegate_id(self) -> str:
-        return "claude"
+        return "claude_code"
 
     def get_capabilities(self) -> DelegateCapabilities:
         return DelegateCapabilities(
-            delegate_id="claude",
+            delegate_id="claude_code",
             supported_tasks=[
-                "reasoning", "coaching", "architecture",
-                "exploration", "writing", "analysis",
+                "implementation", "code_generation",
+                "debugging", "file_manipulation", "testing",
             ],
-            latency_class="interactive",
+            latency_class="batch",
             context_window=200_000,
             compression_factor=1.0,
         )
 
     def sync(self, stage_view: dict, computed_values: dict, context: TaskContext) -> None:
-        """Package cognitive state into enriched context."""
+        """Package cognitive state for implementation context."""
         self._stage_view = stage_view
         self._computed = computed_values
         self._context = context
-        self._cognitive_context = self._build_coach_block(
+        self._cognitive_context = self._build_implementation_block(
             stage_view, computed_values, context
         )
 
     def execute(self, task: str) -> DelegateResult:
-        """Return enriched cognitive context for system prompt injection."""
+        """Return implementation-tuned cognitive context."""
         self._exchange_count += 1
         return DelegateResult(
             response=self._cognitive_context,
@@ -75,41 +69,33 @@ class HdClaude(HdCognitiveDelegate):
         """Write session state back to delegate sublayer."""
         return result.proposed_mutations
 
-    def _build_coach_block(self, stage_view: dict, computed: dict,
-                           context: TaskContext) -> str:
-        """Build structured cognitive context from computed values."""
+    def _build_implementation_block(self, stage_view: dict, computed: dict,
+                                     context: TaskContext) -> str:
+        """Build implementation-tuned context."""
         momentum = computed.get("momentum", 1)
-        burnout = computed.get("burnout", 0)
         energy = computed.get("energy", 2)
-        burst = computed.get("burst", 0)
-        allostasis = computed.get("allostasis", {})
-        load = allostasis.get("load", 0.0) if isinstance(allostasis, dict) else 0.0
+        burnout = computed.get("burnout", 0)
 
         momentum_name = Momentum(momentum).name if isinstance(momentum, int) else str(momentum)
-        burnout_name = Burnout(burnout).name if isinstance(burnout, int) else str(burnout)
         energy_name = Energy(energy).name if isinstance(energy, int) else str(energy)
 
         lines = [
-            "+== COGNITIVE STATE ==================================+",
+            "+== IMPLEMENTATION CONTEXT ===========================+",
             f"| Momentum: {momentum_name:<12} Energy: {energy_name:<12} |",
-            f"| Burnout:  {burnout_name:<12} Burst:  {burst:<12} |",
-            f"| Load:     {load:<12.3f} Exchange: {context.exchange_index:<8} |",
-            f"| Task:     {context.task_type:<12} Signal: {context.signal_class:<10} |",
+            f"| Exchange: {context.exchange_index:<8} Task: {context.task_type:<14} |",
             "+====================================================+",
         ]
         return "\n".join(lines)
 
     def _build_mutations(self) -> dict:
-        """Build proposed state mutations."""
         return {
-            "/delegate/claude/exchange_count": self._exchange_count,
-            "/delegate/claude/status": "active",
+            "/delegate/claude_code/exchange_count": self._exchange_count,
+            "/delegate/claude_code/status": "active",
         }
 
     def _build_observation_data(self) -> dict:
-        """Build observation data for emission."""
         return {
-            "delegate_id": "claude",
+            "delegate_id": "claude_code",
             "exchange_count": self._exchange_count,
             "context_length": len(self._cognitive_context),
         }

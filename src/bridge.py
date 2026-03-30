@@ -10,6 +10,7 @@ import random
 from dataclasses import dataclass, field
 from typing import Optional
 
+from .delegate_base import TaskContext
 from .delegate_claude import HdClaude
 from .mock_cogexec import evaluate_dag
 from .mock_usd_stage import MockUsdStage
@@ -70,7 +71,7 @@ class Bridge:
     ):
         self._rng = random.Random(seed)
         self._stage = MockUsdStage()
-        self._delegate = HdClaude(seed=seed)
+        self._delegate = HdClaude()
         self._buffer = ObservationBuffer(db_path=":memory:", max_size=buffer_max_size)
         self._predictor: Optional[CognitivePredictor] = None
         if predictor_path:
@@ -135,8 +136,20 @@ class Bridge:
             observations.append(resolved)
 
             # Sync to delegate and execute
-            self._delegate.sync(resolved)
-            delegate_response = self._delegate.execute()
+            ctx = TaskContext(
+                task_type="simulation",
+                signal_class="bridge",
+                exchange_index=i,
+            )
+            computed = {
+                "momentum": int(resolved.state.momentum),
+                "burnout": int(resolved.state.burnout),
+                "energy": int(resolved.state.energy),
+                "burst": int(resolved.dynamics.burst_phase),
+                "allostasis": {"load": resolved.allostasis.load},
+            }
+            self._delegate.sync({}, computed, ctx)
+            delegate_response = self._delegate.execute("bridge_exchange")
 
             # Buffer observation
             surprise = abs(velocity - 0.5) + abs(coherence - 0.7)
@@ -177,7 +190,10 @@ class Bridge:
 
     def get_delegate_resources(self) -> dict:
         """Get delegate resource usage."""
-        return self._delegate.commit_resources()
+        return {
+            "delegate_id": self._delegate.get_delegate_id(),
+            "exchanges": self._delegate._exchange_count,
+        }
 
     def close(self) -> None:
         """Clean up resources."""
