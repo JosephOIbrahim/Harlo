@@ -7,6 +7,7 @@ Debt applies on burst exit.
 from __future__ import annotations
 
 from src.schemas import (
+    Burnout,
     BurstPhase,
     CognitiveObservation,
     Energy,
@@ -22,6 +23,7 @@ def compute_energy(
     """Compute next energy level.
 
     Rules:
+      - RED burnout forces energy degradation (INV-12)
       - During active burst (DETECTED-EXIT_PREP): energy decrements suspended
       - On burst exit (prev was burst, now NONE): apply adrenaline_debt
       - Normal: decrement every N exchanges without break
@@ -30,6 +32,13 @@ def compute_energy(
     prev_energy = prev_state.energy
     dynamics = authored.dynamics
     burst = dynamics.burst_phase
+
+    # RED burnout forces energy degradation (INV-12)
+    # Check both authored (current) AND previous state for sustained RED
+    if authored.state.burnout == Burnout.RED or prev_state.burnout == Burnout.RED:
+        if prev_energy > Energy.LOW:
+            return Energy(prev_energy - 1)
+        return prev_energy
 
     # Adrenaline masking: suspend decrements during burst (Commandment 8)
     if burst >= BurstPhase.DETECTED:

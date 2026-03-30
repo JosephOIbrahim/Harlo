@@ -92,6 +92,12 @@ def evaluate_dag(
 
     results: dict[str, Any] = {}
 
+    # Commandment 7: exogenous RED overrides ALL — apply before DAG
+    # This ensures energy, momentum, etc. all see the RED state
+    if exogenous_red:
+        new_state.burnout = Burnout.RED
+        results["burnout"] = Burnout.RED
+
     for node in order:
         if node == "burst":
             new_burst = compute_burst(
@@ -106,9 +112,11 @@ def evaluate_dag(
             results["burst"] = new_burst
 
         elif node == "energy":
-            # Update authored dynamics with computed burst before energy calc
+            # Update authored with computed burst and resolved burnout before energy calc
             authored_with_burst = authored.model_copy(deep=True)
             authored_with_burst.dynamics.burst_phase = results.get("burst", authored.dynamics.burst_phase)
+            if "burnout" in results:
+                authored_with_burst.state.burnout = results["burnout"]
             new_energy = compute_energy(
                 authored_with_burst,
                 prev_state,
@@ -164,6 +172,15 @@ def evaluate_dag(
             )
             new_state.context = new_context
             results["context_budget"] = new_context
+
+    # Post-DAG invariant enforcement:
+    # INV-11: RED burnout → momentum must be CRASHED or COLD_START
+    if new_state.burnout == Burnout.RED and new_state.momentum > Momentum.COLD_START:
+        new_state.momentum = Momentum.CRASHED
+
+    # INV-15: RED burnout → burst must be NONE
+    if new_state.burnout == Burnout.RED and new_dynamics.burst_phase > BurstPhase.NONE:
+        new_dynamics.burst_phase = BurstPhase.NONE
 
     # Assemble final observation
     resolved = authored.model_copy(deep=True)

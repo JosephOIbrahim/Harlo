@@ -38,8 +38,8 @@ def compute_momentum(
     burnout = authored.state.burnout
     dynamics = authored.dynamics
 
-    # RED always crashes (Commandment 7)
-    if burnout == Burnout.RED:
+    # RED always crashes (Commandment 7) — check both authored AND previous
+    if burnout == Burnout.RED or prev_state.burnout == Burnout.RED:
         return Momentum.CRASHED
 
     # ORANGE crashes from PEAK
