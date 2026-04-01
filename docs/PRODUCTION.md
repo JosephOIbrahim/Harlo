@@ -1,4 +1,4 @@
-# Production Configuration — Cognitive Twin
+# Production Configuration — Harlo
 
 ## Starting the MCP Server
 

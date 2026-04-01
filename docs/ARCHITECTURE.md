@@ -1,4 +1,4 @@
-# Cognitive Twin v6.0-MOTOR — Architecture
+# Harlo v6.0-MOTOR — Architecture
 
 For the full architecture specification, refer to the cumulative
 v6.0-MOTOR build spec document. The AGENTS.md in the repo root

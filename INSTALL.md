@@ -1,8 +1,8 @@
-# Installing the Cognitive Twin
+# Installing Harlo
 
 ## What Is This
 
-The Cognitive Twin is an AI assistant that remembers how you work — not just what you said, but your momentum, your energy, your patterns. It sits between you and Claude (or any AI), tracking your cognitive state across sessions. It knows when you're in deep flow and shouldn't be interrupted, when you're burning out and need a break, and when you're stuck and need scaffolding. Your cognitive state is stored as a `.usda` file — the same format as your Houdini scenes. Yes, really.
+Harlo is an AI assistant that remembers how you work — not just what you said, but your momentum, your energy, your patterns. It sits between you and Claude (or any AI), tracking your cognitive state across sessions. It knows when you're in deep flow and shouldn't be interrupted, when you're burning out and need a break, and when you're stuck and need scaffolding. Your cognitive state is stored as a `.usda` file — the same format as your Houdini scenes. Yes, really.
 
 ---
 
@@ -29,8 +29,8 @@ You should see `Python 3.12.x`. If you don't have Python 3.12, download it from 
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/JosephOIbrahim/cognitive-twin.git
-cd cognitive-twin
+git clone https://github.com/JosephOIbrahim/harlo.git
+cd harlo
 ```
 
 ### 2. Create a Python 3.12 Virtual Environment
@@ -210,5 +210,5 @@ crates/hippocampus/                The fast memory engine (Rust)
 
 ---
 
-*Cognitive Twin v3.3.1 — Patent Pending*
+*Harlo v3.3.1 — Patent Pending*
 *Joseph O. Ibrahim, 2026*

@@ -1,6 +1,6 @@
 # Patents
 
-Aspects of the Cognitive Twin architecture are the subject of pending US provisional
+Aspects of the Harlo architecture are the subject of pending US provisional
 patent applications filed by Joseph O. Ibrahim (ORCID: 0009-0009-2689-4966).
 
 ## Patent Pending Status

@@ -1,15 +1,20 @@
-# Cognitive Twin
-
-A biologically-architected AI memory system that models how you think — not what you said. It sits between you and any AI, tracking your cognitive state across sessions: momentum, energy, burnout, burst patterns, allostatic load. Every exchange evaluates a computation DAG against a real USD stage, routes to capability-matched delegates, emits observations, and predicts your next cognitive state.
+# Harlo
 
 **Patent Pending** | [Apache 2.0](LICENSE) | [Patent Details](PATENTS.md)
+
+Your AI coach. Watches your patterns, predicts your crashes, backs off during
+flow, and tells you when to stop before you burn out. Built on USD composition
+semantics for persistent, local-first cognitive state management.
+
+Your memory, your device. Harlo stores all state locally as composable USD
+layers — no cloud dependency, no data mining, no rented access to your own mind.
 
 ---
 
 ## Status
 
 ```
-PRODUCTION LIVE — Cognitive Twin v3.3.1
+PRODUCTION LIVE — Harlo v3.3.1
 250 sprint tests · 890 core tests · 41 Rust tests · All passing
 458 organic observations collected
 5 sprints shipped · Real .usda on disk · Predictions flowing
@@ -369,7 +374,7 @@ data/stages/                       Real .usda files (your cognitive state)
 ## Quick Start
 
 ```bash
-git clone <repo-url> && cd cognitive-twin
+git clone <repo-url> && cd harlo
 python -m venv .venv && source .venv/bin/activate
 pip install -e .
 pip install pydantic networkx xgboost scikit-learn joblib
@@ -399,7 +404,7 @@ The architecture is constrained by 33 inviolable rules covering biological fidel
 
 ## Philosophy
 
-**Your memory, your device.** Cognitive Twin stores all state locally as composable USD layers. Cloud models provide reasoning; your machine provides memory and safety. Nothing leaves your device without explicit action.
+**Your memory, your device.** Harlo stores all state locally as composable USD layers. Cloud models provide reasoning; your machine provides memory and safety. Nothing leaves your device without explicit action.
 
 ---
 
