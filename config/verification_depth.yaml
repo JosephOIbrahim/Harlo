@@ -1,0 +1,13 @@
+domains:
+  medical: 3
+  financial: 3
+  trading: 3
+  legal: 3
+  research: 2
+  analysis: 2
+  general: 2
+  creative: 1
+  vfx: 1
+  brainstorm: 1
+default: 2
+max_allowed: 3

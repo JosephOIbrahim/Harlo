@@ -1,0 +1,36 @@
+data/
+target/
+__pycache__/
+*.pyc
+.venv/
+.venv312/
+*.egg-info/
+dist/
+*.so
+*.dylib
+*.pyd
+*.pdb
+models/ 
+encoder_output/ 
+.hypothesis/
+
+# Secrets
+.env
+.env.*
+*.key
+*.pem
+*.secret
+
+# Local config
+.mcp.json
+
+# Patent confidential (safety net)
+docs/patent/
+specs/
+files/
+
+# Build artifacts
+.agent-team/
+.coverage
+.pytest_cache/
+.claude/
