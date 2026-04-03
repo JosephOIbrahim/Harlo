@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cognitive_twin.injection import InjectionStore, InjectionTrace
+from harlo.injection import InjectionStore, InjectionTrace
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────
@@ -224,7 +224,7 @@ class TestTwinStoreInjection:
 
     def test_store_without_injection_unchanged(self, tmp_path):
         """twin_store without injection_state works exactly as before."""
-        import cognitive_twin.mcp_server as srv
+        import harlo.mcp_server as srv
 
         srv._hot_store = None
         srv._injection_store = None
@@ -239,7 +239,7 @@ class TestTwinStoreInjection:
 
     def test_store_with_injection_state(self, tmp_path, sample_state):
         """twin_store with injection_state stores both trace and injection."""
-        import cognitive_twin.mcp_server as srv
+        import harlo.mcp_server as srv
 
         srv._hot_store = None
         srv._injection_store = None
@@ -260,7 +260,7 @@ class TestTwinStoreInjection:
 
     def test_store_injection_invalid_profile_returns_error(self, tmp_path):
         """Invalid injection_state returns error, not crash."""
-        import cognitive_twin.mcp_server as srv
+        import harlo.mcp_server as srv
 
         srv._hot_store = None
         srv._injection_store = None
@@ -291,8 +291,8 @@ class TestCoachInjection:
 
     def test_coach_no_injection_history(self, db_path):
         """Coach output omits injection section when no history exists."""
-        from cognitive_twin.coach import project_coach
-        from cognitive_twin.hot_store import HotStore
+        from harlo.coach import project_coach
+        from harlo.hot_store import HotStore
 
         HotStore(db_path)  # ensure schema
         result = project_coach(db_path)
@@ -300,8 +300,8 @@ class TestCoachInjection:
 
     def test_coach_includes_injection_section(self, db_path):
         """Coach output includes injection section when history exists."""
-        from cognitive_twin.coach import project_coach
-        from cognitive_twin.hot_store import HotStore
+        from harlo.coach import project_coach
+        from harlo.hot_store import HotStore
 
         HotStore(db_path)  # ensure schema
         inj = InjectionStore(db_path)
@@ -316,8 +316,8 @@ class TestCoachInjection:
 
     def test_coach_injection_shows_recent_sessions(self, db_path):
         """Coach output shows recent activation summaries."""
-        from cognitive_twin.coach import project_coach
-        from cognitive_twin.hot_store import HotStore
+        from harlo.coach import project_coach
+        from harlo.hot_store import HotStore
 
         HotStore(db_path)
         inj = InjectionStore(db_path)
@@ -333,8 +333,8 @@ class TestCoachInjection:
 
     def test_coach_injection_shows_last_state(self, db_path):
         """Coach output shows last injection state."""
-        from cognitive_twin.coach import project_coach
-        from cognitive_twin.hot_store import HotStore
+        from harlo.coach import project_coach
+        from harlo.hot_store import HotStore
 
         HotStore(db_path)
         inj = InjectionStore(db_path)
@@ -347,14 +347,14 @@ class TestCoachInjection:
 
     def test_format_xml_no_injection(self):
         """_format_xml omits injection section when injection_history is None."""
-        from cognitive_twin.coach import _format_xml
+        from harlo.coach import _format_xml
 
         result = _format_xml([], {}, 0)
         assert "<injection-history>" not in result
 
     def test_format_xml_empty_injection(self):
         """_format_xml omits injection section when injection_history is empty list."""
-        from cognitive_twin.coach import _format_xml
+        from harlo.coach import _format_xml
 
         result = _format_xml([], {}, 0, injection_history=[])
         assert "<injection-history>" not in result
@@ -368,7 +368,7 @@ class TestInjectionPatternDetection:
 
     def test_no_pattern_below_threshold(self, db_path):
         """No pattern detected with fewer than 3 activations."""
-        from cognitive_twin.modulation.detector import PatternDetector
+        from harlo.modulation.detector import PatternDetector
 
         inj = InjectionStore(db_path)
         inj.store(profile="classical", s_nm=0.02, alpha=0.9,
@@ -383,7 +383,7 @@ class TestInjectionPatternDetection:
 
     def test_pattern_detected_at_threshold(self, db_path):
         """Pattern detected when profile activated 3+ times."""
-        from cognitive_twin.modulation.detector import PatternDetector
+        from harlo.modulation.detector import PatternDetector
 
         inj = InjectionStore(db_path)
         for i in range(3):
@@ -400,7 +400,7 @@ class TestInjectionPatternDetection:
 
     def test_deactivations_not_counted(self, db_path):
         """Deactivations don't count toward injection frequency pattern."""
-        from cognitive_twin.modulation.detector import PatternDetector
+        from harlo.modulation.detector import PatternDetector
 
         inj = InjectionStore(db_path)
         inj.store(profile="classical", s_nm=0.02, alpha=0.9,
@@ -417,7 +417,7 @@ class TestInjectionPatternDetection:
 
     def test_multiple_profiles_detected(self, db_path):
         """Multiple profiles can each trigger independent patterns."""
-        from cognitive_twin.modulation.detector import PatternDetector
+        from harlo.modulation.detector import PatternDetector
 
         inj = InjectionStore(db_path)
         for i in range(4):
@@ -443,7 +443,7 @@ class TestInjectionPrim:
 
     def test_prim_to_dict_round_trip(self):
         """InjectionPrim serializes and deserializes correctly."""
-        from cognitive_twin.usd_lite.prims import InjectionPrim
+        from harlo.usd_lite.prims import InjectionPrim
 
         prim = InjectionPrim(
             profile="classical",
@@ -465,7 +465,7 @@ class TestInjectionPrim:
 
     def test_container_prim_round_trip(self):
         """InjectionContainerPrim serializes and deserializes correctly."""
-        from cognitive_twin.usd_lite.prims import InjectionPrim, InjectionContainerPrim
+        from harlo.usd_lite.prims import InjectionPrim, InjectionContainerPrim
 
         container = InjectionContainerPrim(history=[
             InjectionPrim(
@@ -486,8 +486,8 @@ class TestInjectionPrim:
 
     def test_brain_stage_includes_injection(self):
         """BrainStage includes injection container."""
-        from cognitive_twin.usd_lite.stage import BrainStage
-        from cognitive_twin.usd_lite.prims import InjectionPrim, InjectionContainerPrim
+        from harlo.usd_lite.stage import BrainStage
+        from harlo.usd_lite.prims import InjectionPrim, InjectionContainerPrim
 
         stage = BrainStage()
         assert hasattr(stage, "injection")
@@ -509,14 +509,14 @@ class TestInjectionPrim:
 
     def test_brain_stage_default_empty_injection(self):
         """BrainStage defaults to empty injection container."""
-        from cognitive_twin.usd_lite.stage import BrainStage
+        from harlo.usd_lite.stage import BrainStage
 
         stage = BrainStage()
         assert stage.injection.history == []
 
     def test_brain_stage_from_dict_without_injection_key(self):
         """BrainStage.from_dict handles missing injection key gracefully."""
-        from cognitive_twin.usd_lite.stage import BrainStage
+        from harlo.usd_lite.stage import BrainStage
 
         # Simulate a pre-injection dict
         d = BrainStage().to_dict()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from cognitive_twin.trust import TrustLedger, TIER_FAMILIAR, TIER_TRUSTED
+from harlo.trust import TrustLedger, TIER_FAMILIAR, TIER_TRUSTED
 
 
 @pytest.fixture

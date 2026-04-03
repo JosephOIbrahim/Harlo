@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cognitive_twin.intake.questionnaire import (
+from harlo.intake.questionnaire import (
     QUESTION_BANK,
     IntakeSession,
     get_next_question,

@@ -331,7 +331,7 @@ class CognitiveEngine:
 
         usda_exists = False
         try:
-            usda_path = os.path.join(engine_config.STAGE_DIR, "cognitive_twin.usda")
+            usda_path = os.path.join(engine_config.STAGE_DIR, "harlo.usda")
             usda_exists = os.path.exists(usda_path)
         except Exception:
             pass

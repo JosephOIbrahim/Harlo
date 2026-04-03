@@ -9,7 +9,7 @@ import random
 
 import pytest
 
-from cognitive_twin.usd_lite.hex_sdr import (
+from harlo.usd_lite.hex_sdr import (
     HEX_LENGTH,
     SDR_LENGTH,
     hex_to_sdr,

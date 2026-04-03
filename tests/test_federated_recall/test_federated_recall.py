@@ -6,8 +6,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from cognitive_twin.hot_store import HotStore
-from cognitive_twin.federated_recall import (
+from harlo.hot_store import HotStore
+from harlo.federated_recall import (
     query_past_experience,
     _query_hot,
     _merge_results,
@@ -67,7 +67,7 @@ class TestFederatedQuery:
 
     def test_hot_only_results(self, db_path, hot_store):
         """With no warm data, returns hot results only."""
-        with patch("cognitive_twin.encoder.semantic_recall") as mock:
+        with patch("harlo.encoder.semantic_recall") as mock:
             mock.return_value = {"traces": [], "confidence": 0.0}
             results = query_past_experience(db_path, "quantum")
 

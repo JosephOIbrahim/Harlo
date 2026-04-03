@@ -7,9 +7,9 @@ import json
 import os
 import tempfile
 
-from cognitive_twin import hippocampus
+from harlo import hippocampus
 
-from cognitive_twin.daemon.main import run_direct
+from harlo.daemon.main import run_direct
 
 
 class TestE2ERecall:

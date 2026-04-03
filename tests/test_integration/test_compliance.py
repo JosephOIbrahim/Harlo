@@ -23,7 +23,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-SRC = ROOT / "python" / "cognitive_twin"
+SRC = ROOT / "python" / "harlo"
 CRATES = ROOT / "crates"
 
 
@@ -141,7 +141,7 @@ class TestRule08_JSONBarrier:
     """Rule 8: jsonschema.validate(), strip epigenetic_wash on write path."""
 
     def test_valid_payload_passes(self):
-        from cognitive_twin.modulation.barrier import validate_llm_output
+        from harlo.modulation.barrier import validate_llm_output
 
         raw = json.dumps({
             "core_memory": {"facts": ["The sky is blue"]},
@@ -151,7 +151,7 @@ class TestRule08_JSONBarrier:
         assert "core_memory" in result
 
     def test_invalid_payload_rejected(self):
-        from cognitive_twin.modulation.barrier import validate_llm_output
+        from harlo.modulation.barrier import validate_llm_output
         import jsonschema
 
         raw = json.dumps({"not_core_memory": True})
@@ -159,7 +159,7 @@ class TestRule08_JSONBarrier:
             validate_llm_output(raw)
 
     def test_epigenetic_wash_stripped(self):
-        from cognitive_twin.modulation.barrier import strip_epigenetic_wash
+        from harlo.modulation.barrier import strip_epigenetic_wash
 
         validated = {
             "core_memory": {"facts": ["fact"]},
@@ -180,7 +180,7 @@ class TestRule10_Anchors:
     ANCHOR_PHASES = ["SAFETY", "CONSENT", "KNOWLEDGE", "CONSTITUTIONAL"]
 
     def test_anchors_always_gain_1(self):
-        from cognitive_twin.modulation.gain import compute_gain
+        from harlo.modulation.gain import compute_gain
 
         for phase in self.ANCHOR_PHASES:
             # Regardless of s_nm and d, anchors must return 1.0
@@ -193,7 +193,7 @@ class TestRule10_Anchors:
                     )
 
     def test_non_anchor_modulated(self):
-        from cognitive_twin.modulation.gain import compute_gain
+        from harlo.modulation.gain import compute_gain
 
         gain = compute_gain(0.5, 1.0, "perception")
         assert gain != 1.0, "Non-anchor phase should be modulated"
@@ -207,20 +207,20 @@ class TestRule11_TraceExclusion:
     """Rule 11: verify() NEVER receives reasoning trace."""
 
     def test_verify_rejects_trace(self):
-        from cognitive_twin.elenchus.verifier import verify
+        from harlo.elenchus.verifier import verify
 
         with pytest.raises(ValueError, match="RULE 11"):
             verify("test intent", "test output", reasoning_trace="some trace")
 
     def test_verify_accepts_none_trace(self):
-        from cognitive_twin.elenchus.verifier import verify
+        from harlo.elenchus.verifier import verify
 
         # Should not raise
         result = verify("What is 2+2?", "4 is the answer.", reasoning_trace=None)
         assert result is not None
 
     def test_verify_accepts_absent_trace(self):
-        from cognitive_twin.elenchus.verifier import verify
+        from harlo.elenchus.verifier import verify
 
         # Default parameter — should not raise
         result = verify("What is 2+2?", "4 is the answer.")
@@ -235,7 +235,7 @@ class TestRule12_VerifiedOnly:
     """Rule 12: Only VERIFIED resolutions become reflexes."""
 
     def test_verified_consolidates(self, tmp_path, monkeypatch):
-        from cognitive_twin.brainstem import consolidation
+        from harlo.brainstem import consolidation
 
         monkeypatch.setattr(consolidation, "_REFLEX_DIR", tmp_path / "reflexes")
 
@@ -248,7 +248,7 @@ class TestRule12_VerifiedOnly:
 
     @pytest.mark.parametrize("state", ["fixable", "spec_gamed", "unprovable", "deferred"])
     def test_unverified_rejected(self, state, tmp_path, monkeypatch):
-        from cognitive_twin.brainstem import consolidation
+        from harlo.brainstem import consolidation
 
         monkeypatch.setattr(consolidation, "_REFLEX_DIR", tmp_path / "reflexes")
 
@@ -268,8 +268,8 @@ class TestRule13_Max3GVR:
     """Rule 13: ADHD guard. After cycle 3, promote FIXABLE to UNPROVABLE."""
 
     def test_gvr_terminates_after_3(self):
-        from cognitive_twin.elenchus.protocol import run_gvr
-        from cognitive_twin.elenchus.states import VerificationState
+        from harlo.elenchus.protocol import run_gvr
+        from harlo.elenchus.states import VerificationState
 
         # Provide an output that is always FIXABLE (too short for intent)
         result = run_gvr(
@@ -287,8 +287,8 @@ class TestRule13_Max3GVR:
         )
 
     def test_gvr_hard_cap(self):
-        from cognitive_twin.elenchus.protocol import run_gvr
-        from cognitive_twin.elenchus.states import VerificationState
+        from harlo.elenchus.protocol import run_gvr
+        from harlo.elenchus.states import VerificationState
 
         call_count = 0
 
@@ -317,8 +317,8 @@ class TestRule23_InhibitionDefault:
     """Rule 23: Basal Ganglia defaults to INHIBIT ALL."""
 
     def test_default_is_inhibit(self):
-        from cognitive_twin.motor.basal_ganglia import gate, GateDecision
-        from cognitive_twin.motor.premotor import PlannedAction
+        from harlo.motor.basal_ganglia import gate, GateDecision
+        from harlo.motor.premotor import PlannedAction
 
         action = PlannedAction(
             action_type="write_file",
@@ -335,9 +335,9 @@ class TestRule23_InhibitionDefault:
         )
 
     def test_single_failure_inhibits(self):
-        from cognitive_twin.motor.basal_ganglia import gate, GateDecision
-        from cognitive_twin.motor.consent import ConsentState
-        from cognitive_twin.motor.premotor import PlannedAction
+        from harlo.motor.basal_ganglia import gate, GateDecision
+        from harlo.motor.consent import ConsentState
+        from harlo.motor.premotor import PlannedAction
 
         action = PlannedAction(
             action_type="write_file",
@@ -362,7 +362,7 @@ class TestRule25_Level3Locked:
     """Rule 25: Level 3 (LOCKED) gate NEVER opens."""
 
     def test_locked_never_opens(self):
-        from cognitive_twin.motor.consent import ConsentLevel, ConsentState, is_locked
+        from harlo.motor.consent import ConsentLevel, ConsentState, is_locked
 
         assert is_locked(ConsentLevel.LOCKED)
 
@@ -372,10 +372,10 @@ class TestRule25_Level3Locked:
         assert state.has_consent(ConsentLevel.LOCKED) is False
 
     def test_basal_ganglia_rejects_locked(self):
-        from cognitive_twin.motor.basal_ganglia import gate, GateDecision
-        from cognitive_twin.motor.consent import ConsentLevel, ConsentState
-        from cognitive_twin.motor.premotor import PlannedAction
-        from cognitive_twin.motor.scope import Scope
+        from harlo.motor.basal_ganglia import gate, GateDecision
+        from harlo.motor.consent import ConsentLevel, ConsentState
+        from harlo.motor.premotor import PlannedAction
+        from harlo.motor.scope import Scope
 
         action = PlannedAction(
             action_type="financial",
@@ -411,7 +411,7 @@ class TestRule29_ReversibilityCap:
     """Rule 29: Level 1 + irreversible = Level 2. NEVER Level 3."""
 
     def test_session_irreversible_becomes_per_action(self):
-        from cognitive_twin.motor.consent import ConsentLevel, effective_consent_level
+        from harlo.motor.consent import ConsentLevel, effective_consent_level
 
         result = effective_consent_level(
             ConsentLevel.SESSION, is_irreversible=True
@@ -419,7 +419,7 @@ class TestRule29_ReversibilityCap:
         assert result == ConsentLevel.PER_ACTION
 
     def test_autonomous_irreversible_becomes_per_action(self):
-        from cognitive_twin.motor.consent import ConsentLevel, effective_consent_level
+        from harlo.motor.consent import ConsentLevel, effective_consent_level
 
         result = effective_consent_level(
             ConsentLevel.AUTONOMOUS, is_irreversible=True
@@ -427,7 +427,7 @@ class TestRule29_ReversibilityCap:
         assert result == ConsentLevel.PER_ACTION
 
     def test_per_action_irreversible_stays_per_action(self):
-        from cognitive_twin.motor.consent import ConsentLevel, effective_consent_level
+        from harlo.motor.consent import ConsentLevel, effective_consent_level
 
         result = effective_consent_level(
             ConsentLevel.PER_ACTION, is_irreversible=True
@@ -436,7 +436,7 @@ class TestRule29_ReversibilityCap:
 
     def test_never_promotes_to_locked(self):
         """Irreversible must NEVER promote to LOCKED (logical deadlock)."""
-        from cognitive_twin.motor.consent import ConsentLevel, effective_consent_level
+        from harlo.motor.consent import ConsentLevel, effective_consent_level
 
         for base in [ConsentLevel.AUTONOMOUS, ConsentLevel.SESSION, ConsentLevel.PER_ACTION]:
             result = effective_consent_level(base, is_irreversible=True, is_depleted=True)
@@ -453,7 +453,7 @@ class TestRule32_MotorZeroTolerance:
     """Rule 32: Single failure = instant de-compilation."""
 
     def test_single_failure_decompiles(self):
-        from cognitive_twin.motor.motor_cerebellum import MotorCerebellum, ActionPattern
+        from harlo.motor.motor_cerebellum import MotorCerebellum, ActionPattern
 
         cb = MotorCerebellum()
         pattern = ActionPattern(
@@ -475,7 +475,7 @@ class TestRule32_MotorZeroTolerance:
         assert p.decompile_reason == "test failure"
 
     def test_decompiled_not_findable(self):
-        from cognitive_twin.motor.motor_cerebellum import MotorCerebellum, ActionPattern
+        from harlo.motor.motor_cerebellum import MotorCerebellum, ActionPattern
 
         cb = MotorCerebellum()
         pattern = ActionPattern(
@@ -499,7 +499,7 @@ class TestSafeguardS1_Apophenia:
     """S1: Minimum evidence threshold per inquiry depth."""
 
     def test_insufficient_evidence_blocked(self):
-        from cognitive_twin.inquiry.apophenia_guard import EvidenceBundle, evaluate
+        from harlo.inquiry.apophenia_guard import EvidenceBundle, evaluate
 
         bundle = EvidenceBundle(
             observations=["obs1", "obs2"],  # Only 2, need 5 at depth 1
@@ -512,7 +512,7 @@ class TestSafeguardS1_Apophenia:
         assert result.reason == "insufficient_evidence"
 
     def test_sufficient_evidence_passes(self):
-        from cognitive_twin.inquiry.apophenia_guard import EvidenceBundle, evaluate
+        from harlo.inquiry.apophenia_guard import EvidenceBundle, evaluate
 
         bundle = EvidenceBundle(
             observations=[f"obs{i}" for i in range(6)],  # 6 >= 5
@@ -524,7 +524,7 @@ class TestSafeguardS1_Apophenia:
         assert result.passed
 
     def test_alt_hypothesis_required(self):
-        from cognitive_twin.inquiry.apophenia_guard import EvidenceBundle, evaluate
+        from harlo.inquiry.apophenia_guard import EvidenceBundle, evaluate
 
         bundle = EvidenceBundle(
             observations=[f"obs{i}" for i in range(10)],
@@ -538,7 +538,7 @@ class TestSafeguardS1_Apophenia:
 
     @pytest.mark.parametrize("depth,threshold", [(1, 5), (2, 8), (3, 15), (4, 25)])
     def test_thresholds_per_depth(self, depth, threshold):
-        from cognitive_twin.inquiry.types import EVIDENCE_THRESHOLDS
+        from harlo.inquiry.types import EVIDENCE_THRESHOLDS
 
         assert EVIDENCE_THRESHOLDS[depth] == threshold
 
@@ -551,28 +551,28 @@ class TestSafeguardS2_EpistemologicalBypass:
     """S2: Inquiry outputs bypass truth, composition does not."""
 
     def test_inquiry_source_bypasses(self):
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
+        from harlo.brainstem.epistemological_bypass import should_bypass_elenchus
 
         assert should_bypass_elenchus(
             source="inquiry", tags=[], consumer="inquiry"
         ) is True
 
     def test_self_reported_inquiry_bypasses(self):
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
+        from harlo.brainstem.epistemological_bypass import should_bypass_elenchus
 
         assert should_bypass_elenchus(
             source="user", tags=["self_reported"], consumer="inquiry"
         ) is True
 
     def test_self_reported_composition_no_bypass(self):
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
+        from harlo.brainstem.epistemological_bypass import should_bypass_elenchus
 
         assert should_bypass_elenchus(
             source="user", tags=["self_reported"], consumer="composition"
         ) is False
 
     def test_composition_gets_standard_verification(self):
-        from cognitive_twin.brainstem.epistemological_bypass import should_bypass_elenchus
+        from harlo.brainstem.epistemological_bypass import should_bypass_elenchus
 
         assert should_bypass_elenchus(
             source="composition", tags=[], consumer="composition"
@@ -587,12 +587,12 @@ class TestSafeguardS3_Rupture:
     """S3: Rejection = permanent non-decaying trace (weight 2.0)."""
 
     def test_rejection_weight_is_2(self):
-        from cognitive_twin.inquiry.rupture_repair import REJECTION_WEIGHT
+        from harlo.inquiry.rupture_repair import REJECTION_WEIGHT
 
         assert REJECTION_WEIGHT == 2.0
 
     def test_rejection_trace_weight(self):
-        from cognitive_twin.inquiry.rupture_repair import RejectionTrace
+        from harlo.inquiry.rupture_repair import RejectionTrace
 
         trace = RejectionTrace(
             inquiry_id="inq1",
@@ -602,7 +602,7 @@ class TestSafeguardS3_Rupture:
         assert trace.weight == 2.0
 
     def test_three_rejections_offer_stop(self):
-        from cognitive_twin.inquiry.rupture_repair import RuptureLedger
+        from harlo.inquiry.rupture_repair import RuptureLedger
 
         ledger = RuptureLedger()
         for i in range(3):
@@ -620,8 +620,8 @@ class TestSafeguardS5_InquiryApoptosis:
     """S5: TTL decay via e^(-3t/ttl). Below 20% = delete."""
 
     def test_vitality_at_zero(self):
-        from cognitive_twin.inquiry.apoptosis import InquiryVitality, VITALITY_THRESHOLD
-        from cognitive_twin.inquiry.types import InquiryType
+        from harlo.inquiry.apoptosis import InquiryVitality, VITALITY_THRESHOLD
+        from harlo.inquiry.types import InquiryType
 
         now = time.time()
         v = InquiryVitality(
@@ -631,8 +631,8 @@ class TestSafeguardS5_InquiryApoptosis:
         assert abs(v.vitality(now) - 1.0) < 1e-9
 
     def test_vitality_decays(self):
-        from cognitive_twin.inquiry.apoptosis import InquiryVitality
-        from cognitive_twin.inquiry.types import InquiryType
+        from harlo.inquiry.apoptosis import InquiryVitality
+        from harlo.inquiry.types import InquiryType
 
         now = time.time()
         v = InquiryVitality(
@@ -647,8 +647,8 @@ class TestSafeguardS5_InquiryApoptosis:
 
     def test_formula_e_neg_3t_over_ttl(self):
         """Verify the exact formula: e^(-3t/ttl)."""
-        from cognitive_twin.inquiry.apoptosis import InquiryVitality, DECAY_K
-        from cognitive_twin.inquiry.types import InquiryType
+        from harlo.inquiry.apoptosis import InquiryVitality, DECAY_K
+        from harlo.inquiry.types import InquiryType
 
         assert DECAY_K == 3.0, f"Decay constant must be 3.0, got {DECAY_K}"
 
@@ -663,8 +663,8 @@ class TestSafeguardS5_InquiryApoptosis:
         assert abs(actual - expected) < 1e-12
 
     def test_below_20_percent_deletes(self):
-        from cognitive_twin.inquiry.apoptosis import InquiryVitality, VITALITY_THRESHOLD
-        from cognitive_twin.inquiry.types import InquiryType
+        from harlo.inquiry.apoptosis import InquiryVitality, VITALITY_THRESHOLD
+        from harlo.inquiry.types import InquiryType
 
         assert VITALITY_THRESHOLD == 0.20
 
@@ -679,8 +679,8 @@ class TestSafeguardS5_InquiryApoptosis:
         assert v.should_delete(now + t_delete)
 
     def test_above_20_percent_survives(self):
-        from cognitive_twin.inquiry.apoptosis import InquiryVitality
-        from cognitive_twin.inquiry.types import InquiryType
+        from harlo.inquiry.apoptosis import InquiryVitality
+        from harlo.inquiry.types import InquiryType
 
         now = 1000000.0
         v = InquiryVitality(
@@ -698,7 +698,7 @@ class TestSafeguardS7_Crystallization:
     """S7: Max 50 crystallized traces. Eviction by lowest preservation_score."""
 
     def test_max_50_cap(self):
-        from cognitive_twin.inquiry.crystallization import (
+        from harlo.inquiry.crystallization import (
             CrystallizationStore,
             MAX_CRYSTALLIZED,
         )
@@ -717,7 +717,7 @@ class TestSafeguardS7_Crystallization:
         assert store.count() <= 50, f"Store has {store.count()} traces, max is 50"
 
     def test_eviction_removes_lowest_score(self):
-        from cognitive_twin.inquiry.crystallization import CrystallizationStore
+        from harlo.inquiry.crystallization import CrystallizationStore
 
         store = CrystallizationStore()
         # Fill to 50
@@ -747,7 +747,7 @@ class TestSafeguardS7_Crystallization:
         assert "trace_new" in ids, "New trace should be present"
 
     def test_crystallization_requires_3_observations(self):
-        from cognitive_twin.inquiry.crystallization import CrystallizationStore
+        from harlo.inquiry.crystallization import CrystallizationStore
 
         store = CrystallizationStore()
         result = store.attempt_crystallize(
@@ -760,7 +760,7 @@ class TestSafeguardS7_Crystallization:
         assert result is None, "Should require 3+ observations"
 
     def test_decay_rate_reduced(self):
-        from cognitive_twin.inquiry.crystallization import CrystallizationStore, DECAY_DIVISOR
+        from harlo.inquiry.crystallization import CrystallizationStore, DECAY_DIVISOR
 
         assert DECAY_DIVISOR == 10
 

@@ -20,7 +20,7 @@ class TestSemanticEncoderFormat:
 
     def test_sdr_is_256_bytes(self):
         """Semantic encoder must produce 256-byte (2048-bit) SDRs."""
-        from cognitive_twin.encoder.semantic_encoder import SemanticEncoder
+        from harlo.encoder.semantic_encoder import SemanticEncoder
 
         enc = SemanticEncoder()
         sdr = enc.encode("The cat sat on the mat")
@@ -28,7 +28,7 @@ class TestSemanticEncoderFormat:
 
     def test_sdr_is_2048_bits(self):
         """SDR bit width must be 2048."""
-        from cognitive_twin.encoder.semantic_encoder import SemanticEncoder
+        from harlo.encoder.semantic_encoder import SemanticEncoder
 
         enc = SemanticEncoder()
         sdr = enc.encode("Hello world")
@@ -36,7 +36,7 @@ class TestSemanticEncoderFormat:
 
     def test_deterministic(self):
         """Same input must produce identical SDR."""
-        from cognitive_twin.encoder.semantic_encoder import SemanticEncoder
+        from harlo.encoder.semantic_encoder import SemanticEncoder
 
         enc = SemanticEncoder()
         sdr1 = enc.encode("determinism test")
@@ -45,7 +45,7 @@ class TestSemanticEncoderFormat:
 
     def test_sparsity_reasonable(self):
         """SDR sparsity should be around 2-5% (TARGET_ACTIVE_BITS=80 of 2048)."""
-        from cognitive_twin.encoder.semantic_encoder import SemanticEncoder, sdr_sparsity
+        from harlo.encoder.semantic_encoder import SemanticEncoder, sdr_sparsity
 
         enc = SemanticEncoder()
         sdr = enc.encode("Testing sparsity of the representation")
@@ -54,7 +54,7 @@ class TestSemanticEncoderFormat:
 
     def test_active_bits_near_target(self):
         """Number of active bits should be close to TARGET_ACTIVE_BITS (80)."""
-        from cognitive_twin.encoder.semantic_encoder import SemanticEncoder
+        from harlo.encoder.semantic_encoder import SemanticEncoder
 
         enc = SemanticEncoder()
         sdr = enc.encode("Active bits count test")
@@ -63,7 +63,7 @@ class TestSemanticEncoderFormat:
 
     def test_empty_text_raises(self):
         """Empty text must raise ValueError."""
-        from cognitive_twin.encoder.semantic_encoder import SemanticEncoder
+        from harlo.encoder.semantic_encoder import SemanticEncoder
 
         enc = SemanticEncoder()
         with pytest.raises(ValueError):
@@ -71,7 +71,7 @@ class TestSemanticEncoderFormat:
 
     def test_whitespace_only_raises(self):
         """Whitespace-only text must raise ValueError."""
-        from cognitive_twin.encoder.semantic_encoder import SemanticEncoder
+        from harlo.encoder.semantic_encoder import SemanticEncoder
 
         enc = SemanticEncoder()
         with pytest.raises(ValueError):
@@ -83,12 +83,12 @@ class TestSemanticSimilarity:
 
     @pytest.fixture(scope="class")
     def encoder(self):
-        from cognitive_twin.encoder.semantic_encoder import SemanticEncoder
+        from harlo.encoder.semantic_encoder import SemanticEncoder
         return SemanticEncoder()
 
     def test_paraphrases_closer_than_unrelated(self, encoder):
         """Paraphrases must have lower hamming distance than unrelated pairs."""
-        from cognitive_twin.encoder.semantic_encoder import hamming_distance
+        from harlo.encoder.semantic_encoder import hamming_distance
 
         # Paraphrase pair
         a = encoder.encode("The cat sat on the mat")
@@ -106,7 +106,7 @@ class TestSemanticSimilarity:
 
     def test_rain_paraphrase(self, encoder):
         """Rain paraphrases should be close."""
-        from cognitive_twin.encoder.semantic_encoder import hamming_distance
+        from harlo.encoder.semantic_encoder import hamming_distance
 
         a = encoder.encode("It's raining outside")
         b = encoder.encode("Rain is falling outdoors")
@@ -119,7 +119,7 @@ class TestSemanticSimilarity:
 
     def test_speed_paraphrase(self, encoder):
         """Speed/vehicle paraphrases should be close."""
-        from cognitive_twin.encoder.semantic_encoder import hamming_distance
+        from harlo.encoder.semantic_encoder import hamming_distance
 
         a = encoder.encode("The car is fast")
         b = encoder.encode("The vehicle has high speed")
@@ -132,7 +132,7 @@ class TestSemanticSimilarity:
 
     def test_identical_text_zero_distance(self, encoder):
         """Identical text must have zero hamming distance."""
-        from cognitive_twin.encoder.semantic_encoder import hamming_distance
+        from harlo.encoder.semantic_encoder import hamming_distance
 
         sdr = encoder.encode("exact match test")
         assert hamming_distance(sdr, sdr) == 0
@@ -152,7 +152,7 @@ class TestSemanticRecallPipeline:
 
     def test_store_and_recall_roundtrip(self):
         """Store traces with semantic encoding and recall them."""
-        from cognitive_twin.encoder import semantic_store, semantic_recall
+        from harlo.encoder import semantic_store, semantic_recall
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -179,7 +179,7 @@ class TestSemanticRecallPipeline:
 
     def test_recall_empty_db(self):
         """Recall on empty database should return empty results."""
-        from cognitive_twin.encoder import semantic_recall
+        from harlo.encoder import semantic_recall
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -193,7 +193,7 @@ class TestSemanticRecallPipeline:
 
     def test_recall_returns_context_string(self):
         """Recall should produce a non-empty context string."""
-        from cognitive_twin.encoder import semantic_store, semantic_recall
+        from harlo.encoder import semantic_store, semantic_recall
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -207,7 +207,7 @@ class TestSemanticRecallPipeline:
 
     def test_recall_depth_normal_vs_deep(self):
         """Deep recall should return more traces than normal."""
-        from cognitive_twin.encoder import semantic_store, semantic_recall
+        from harlo.encoder import semantic_store, semantic_recall
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -223,7 +223,7 @@ class TestSemanticRecallPipeline:
 
     def test_recall_confidence_range(self):
         """Confidence must be between 0.0 and 1.0."""
-        from cognitive_twin.encoder import semantic_store, semantic_recall
+        from harlo.encoder import semantic_store, semantic_recall
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -236,7 +236,7 @@ class TestSemanticRecallPipeline:
 
     def test_store_with_tags_and_domain(self):
         """Tags and domain should be preserved through store/recall."""
-        from cognitive_twin.encoder import semantic_store, semantic_recall
+        from harlo.encoder import semantic_store, semantic_recall
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -252,7 +252,7 @@ class TestSemanticRecallPipeline:
 
     def test_traces_sorted_by_strength(self):
         """Results should be sorted by strength (descending)."""
-        from cognitive_twin.encoder import semantic_store, semantic_recall
+        from harlo.encoder import semantic_store, semantic_recall
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -276,7 +276,7 @@ class TestLexicalBackwardCompatibility:
         try:
             # Re-import to pick up default
             import importlib
-            from cognitive_twin.daemon import config
+            from harlo.daemon import config
             importlib.reload(config)
             assert config.ENCODER_TYPE == "lexical"
         finally:
@@ -289,7 +289,7 @@ class TestLexicalBackwardCompatibility:
         try:
             os.environ["TWIN_ENCODER_TYPE"] = "semantic"
             import importlib
-            from cognitive_twin.daemon import config
+            from harlo.daemon import config
             importlib.reload(config)
             assert config.ENCODER_TYPE == "semantic"
         finally:
@@ -304,12 +304,12 @@ class TestRouterSemanticPath:
 
     def test_router_store_semantic(self):
         """Router should accept encoder='semantic' for store."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
 
         db = tempfile.mktemp(suffix=".db")
         try:
             # Temporarily override DB_PATH
-            from cognitive_twin.daemon import config
+            from harlo.daemon import config
             original_db = config.DB_PATH
             from pathlib import Path
             config.DB_PATH = Path(db)
@@ -328,11 +328,11 @@ class TestRouterSemanticPath:
 
     def test_router_recall_semantic(self):
         """Router should accept encoder='semantic' for recall."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
 
         db = tempfile.mktemp(suffix=".db")
         try:
-            from cognitive_twin.daemon import config
+            from harlo.daemon import config
             original_db = config.DB_PATH
             from pathlib import Path
             config.DB_PATH = Path(db)
@@ -362,20 +362,20 @@ class TestHammingDistance:
 
     def test_identical_bytes_zero(self):
         """Identical bytes should have zero distance."""
-        from cognitive_twin.encoder.semantic_encoder import hamming_distance
+        from harlo.encoder.semantic_encoder import hamming_distance
         a = bytes(256)
         assert hamming_distance(a, a) == 0
 
     def test_all_different_bits(self):
         """All-ones vs all-zeros should have distance 2048."""
-        from cognitive_twin.encoder.semantic_encoder import hamming_distance
+        from harlo.encoder.semantic_encoder import hamming_distance
         a = bytes(256)
         b = bytes([0xFF] * 256)
         assert hamming_distance(a, b) == 2048
 
     def test_single_bit_difference(self):
         """One bit difference should have distance 1."""
-        from cognitive_twin.encoder.semantic_encoder import hamming_distance
+        from harlo.encoder.semantic_encoder import hamming_distance
         a = bytes(256)
         b = bytearray(256)
         b[0] = 1
@@ -383,6 +383,6 @@ class TestHammingDistance:
 
     def test_length_mismatch_raises(self):
         """Mismatched lengths should raise AssertionError."""
-        from cognitive_twin.encoder.semantic_encoder import hamming_distance
+        from harlo.encoder.semantic_encoder import hamming_distance
         with pytest.raises(AssertionError):
             hamming_distance(bytes(10), bytes(20))

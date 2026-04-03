@@ -8,13 +8,13 @@ from __future__ import annotations
 import math
 from datetime import datetime, timezone
 
-from cognitive_twin.usd_lite.prims import (
+from harlo.usd_lite.prims import (
     InquiryPrim,
     MultipliersPrim,
     SessionPrim,
     TracePrim,
 )
-from cognitive_twin.usd_lite.stage import BrainStage, _deep_eq
+from harlo.usd_lite.stage import BrainStage, _deep_eq
 
 
 NOW = datetime(2026, 3, 15, 12, 0, 0, tzinfo=timezone.utc)
@@ -126,7 +126,7 @@ class TestBrainStageEquality:
         assert s1 != s2
 
     def test_multiplier_float_tolerance(self) -> None:
-        from cognitive_twin.usd_lite.prims import CognitiveProfilePrim
+        from harlo.usd_lite.prims import CognitiveProfilePrim
 
         s1 = BrainStage()
         s1.cognitive_profile = CognitiveProfilePrim(
@@ -139,7 +139,7 @@ class TestBrainStageEquality:
         assert s1 == s2
 
     def test_trace_strength_tolerance(self) -> None:
-        from cognitive_twin.usd_lite.prims import AssociationPrim
+        from harlo.usd_lite.prims import AssociationPrim
 
         t1 = TracePrim(
             trace_id="t1",
@@ -160,7 +160,7 @@ class TestBrainStageEquality:
         assert s1 == s2
 
     def test_inquiry_confidence_tolerance(self) -> None:
-        from cognitive_twin.usd_lite.prims import InquiryContainerPrim
+        from harlo.usd_lite.prims import InquiryContainerPrim
 
         s1 = BrainStage(inquiry=InquiryContainerPrim(active=[
             InquiryPrim(hypothesis="test", confidence=0.75)

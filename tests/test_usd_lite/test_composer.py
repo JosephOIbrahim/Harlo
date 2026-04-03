@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from cognitive_twin.usd_lite.arc_types import ArcType
-from cognitive_twin.usd_lite.composer import compose
-from cognitive_twin.usd_lite.prims import CompositionLayerPrim
+from harlo.usd_lite.arc_types import ArcType
+from harlo.usd_lite.composer import compose
+from harlo.usd_lite.prims import CompositionLayerPrim
 
 
 T1 = datetime(2026, 1, 1, tzinfo=timezone.utc)

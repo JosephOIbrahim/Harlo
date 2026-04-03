@@ -1,4 +1,4 @@
-"""Cross-platform daemon launcher for the Cognitive Twin.
+"""Cross-platform daemon launcher for the Harlo.
 
 Usage:
     python scripts/start_daemon.py          # Foreground mode
@@ -19,8 +19,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 def main():
     """Launch the Twin daemon."""
-    from cognitive_twin.daemon.config import PID_FILE, ensure_data_dirs
-    from cognitive_twin.daemon.lifecycle import is_daemon_running, write_pid_file
+    from harlo.daemon.config import PID_FILE, ensure_data_dirs
+    from harlo.daemon.lifecycle import is_daemon_running, write_pid_file
 
     ensure_data_dirs()
 
@@ -40,7 +40,7 @@ def _start_foreground() -> int:
     """Start daemon in foreground (blocks until exit)."""
     print("Starting Twin daemon (foreground)...")
 
-    from cognitive_twin.daemon.main import run_socket_activated
+    from harlo.daemon.main import run_socket_activated
     try:
         run_socket_activated()
     except KeyboardInterrupt:

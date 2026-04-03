@@ -20,7 +20,7 @@ from pathlib import Path
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT / "python"))
 
-from cognitive_twin.hebbian.learning import (
+from harlo.hebbian.learning import (
     SDR_LENGTH,
     HebbianUpdate,
     activation_density,
@@ -28,10 +28,10 @@ from cognitive_twin.hebbian.learning import (
     compute_effective_sdr,
     record_co_activation,
 )
-from cognitive_twin.usd_lite.hex_sdr import sdr_to_hex
-from cognitive_twin.usd_lite.prims import AssociationPrim, TracePrim
-from cognitive_twin.usd_lite.serializer import serialize
-from cognitive_twin.usd_lite.stage import BrainStage
+from harlo.usd_lite.hex_sdr import sdr_to_hex
+from harlo.usd_lite.prims import AssociationPrim, TracePrim
+from harlo.usd_lite.serializer import serialize
+from harlo.usd_lite.stage import BrainStage
 
 DB_PATH = _PROJECT_ROOT / "data" / "twin.db"
 OUTPUT_USDA = _PROJECT_ROOT / "data" / "hebbian_seeded.usda"

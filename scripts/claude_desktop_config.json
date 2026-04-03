@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "cognitive-twin": {
+    "harlo": {
       "command": "python",
-      "args": ["C:\\Users\\User\\Cognitive_Twin\\src\\mcp_server.py"]
+      "args": ["C:\\Users\\User\\Harlo\\src\\mcp_server.py"]
     }
   }
 }

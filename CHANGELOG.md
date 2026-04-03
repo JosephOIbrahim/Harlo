@@ -42,7 +42,7 @@ and production-hardened MCP engine with independent failure isolation.
 
 ### Sprint 4: Real USD Stage
 - CognitiveStage wrapping pxr.Usd.Stage (drop-in for MockUsdStage)
-- .usda files on disk: data/stages/cognitive_twin.usda
+- .usda files on disk: data/stages/harlo.usda
 - Delegate sublayers: data/stages/delegates/{id}.usda
 - Time samples via Usd.TimeCode(exchange_index)
 - stage_factory toggle (USE_REAL_USD env var)
@@ -101,14 +101,14 @@ Complete v7 to v8 rewrite per the Surgical Directives ADR. 7 phases executed via
 
 ### Modules added
 
-- `python/cognitive_twin/hot_store/` — Hot Tier (L1) with FTS5 + promotion pipeline
-- `python/cognitive_twin/observer/` — Background Hot→Warm SDR promotion
-- `python/cognitive_twin/coach/` — Coach Core system prompt projection
-- `python/cognitive_twin/trust/` — Trust Ledger + cognitive recalibration
-- `python/cognitive_twin/elenchus_v8/` — Deferred verification queue
-- `python/cognitive_twin/compaction/` — Temporal compaction engine
-- `python/cognitive_twin/federated_recall.py` — Federated Hot+Warm query
-- `python/cognitive_twin/encoder/onnx_encoder.py` — ONNX Runtime BGE encoder
+- `python/harlo/hot_store/` — Hot Tier (L1) with FTS5 + promotion pipeline
+- `python/harlo/observer/` — Background Hot→Warm SDR promotion
+- `python/harlo/coach/` — Coach Core system prompt projection
+- `python/harlo/trust/` — Trust Ledger + cognitive recalibration
+- `python/harlo/elenchus_v8/` — Deferred verification queue
+- `python/harlo/compaction/` — Temporal compaction engine
+- `python/harlo/federated_recall.py` — Federated Hot+Warm query
+- `python/harlo/encoder/onnx_encoder.py` — ONNX Runtime BGE encoder
 
 ### Dependencies added
 
@@ -164,16 +164,16 @@ Complete v6 to v7 rewrite informed by 2026 frontier research (Titans, Mnemis, SS
 
 ### Modules added
 
-- `python/cognitive_twin/usd_lite/` — USD container format
-- `python/cognitive_twin/brainstem/` — Lossless translation + metacognitive routing
-- `python/cognitive_twin/hebbian/` — Neuroplasticity + reconstruction + training data
-- `python/cognitive_twin/intake/` — Cognitive profile intake system
-- `python/cognitive_twin/skills/` — Competence tracking observer
-- `python/cognitive_twin/migrate_v7.py` — v6 to v7 migration
+- `python/harlo/usd_lite/` — USD container format
+- `python/harlo/brainstem/` — Lossless translation + metacognitive routing
+- `python/harlo/hebbian/` — Neuroplasticity + reconstruction + training data
+- `python/harlo/intake/` — Cognitive profile intake system
+- `python/harlo/skills/` — Competence tracking observer
+- `python/harlo/migrate_v7.py` — v6 to v7 migration
 
 ### Modules removed
 
-- `python/cognitive_twin/bridge/` — Replaced by brainstem
+- `python/harlo/bridge/` — Replaced by brainstem
 
 ### By the numbers
 

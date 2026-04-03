@@ -6,8 +6,8 @@ import sqlite3
 
 import pytest
 
-from cognitive_twin.hot_store import HotStore
-from cognitive_twin.hot_store.schema import ensure_schema
+from harlo.hot_store import HotStore
+from harlo.hot_store.schema import ensure_schema
 
 
 class TestSchemaCreation:

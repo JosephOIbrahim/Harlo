@@ -1,4 +1,4 @@
-"""Tests for the MCP server exposing Cognitive Twin tools.
+"""Tests for the MCP server exposing Harlo tools.
 
 All tests mock the semantic encoder to avoid loading the real BGE model.
 """
@@ -27,15 +27,15 @@ def mock_encoder():
     encoder = MagicMock()
     # Return a deterministic 256-byte SDR blob
     encoder.encode.return_value = b"\xaa" * 256
-    with patch("cognitive_twin.encoder.get_semantic_encoder", return_value=encoder):
-        with patch("cognitive_twin.encoder.SemanticEncoder", return_value=encoder):
+    with patch("harlo.encoder.get_semantic_encoder", return_value=encoder):
+        with patch("harlo.encoder.SemanticEncoder", return_value=encoder):
             yield encoder
 
 
 @pytest.fixture
 def populated_db(tmp_db, mock_encoder):
     """Create a DB with some traces already stored."""
-    from cognitive_twin.encoder import semantic_store
+    from harlo.encoder import semantic_store
 
     semantic_store(tmp_db, "trace_001", "I enjoy solving complex problems", tags=["personal"], domain="reflection")
     semantic_store(tmp_db, "trace_002", "The architecture uses Merkle trees", tags=["technical"], domain="engineering")
@@ -48,7 +48,7 @@ def populated_db(tmp_db, mock_encoder):
 
 def _patch_db(tmp_db):
     """Patch the MCP server's DB_PATH to use a temp database."""
-    return patch("cognitive_twin.mcp_server.DB_PATH", tmp_db)
+    return patch("harlo.mcp_server.DB_PATH", tmp_db)
 
 
 # ── Tests: twin_recall ───────────────────────────────────────────────
@@ -58,7 +58,7 @@ class TestTwinRecall:
     """Tests for the twin_recall tool."""
 
     def test_recall_returns_valid_json(self, populated_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_recall
+        from harlo.mcp_server import twin_recall
 
         with _patch_db(populated_db):
             result = json.loads(twin_recall("complex problems"))
@@ -68,7 +68,7 @@ class TestTwinRecall:
         assert "confidence" in result
 
     def test_recall_empty_db(self, tmp_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_recall
+        from harlo.mcp_server import twin_recall
 
         with _patch_db(tmp_db):
             result = json.loads(twin_recall("anything"))
@@ -78,7 +78,7 @@ class TestTwinRecall:
         assert result["confidence"] == 0.0
 
     def test_recall_deep_returns_more(self, populated_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_recall
+        from harlo.mcp_server import twin_recall
 
         with _patch_db(populated_db):
             normal = json.loads(twin_recall("test", depth="normal"))
@@ -88,7 +88,7 @@ class TestTwinRecall:
         assert deep["trace_count"] >= normal["trace_count"]
 
     def test_recall_has_context_string(self, populated_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_recall
+        from harlo.mcp_server import twin_recall
 
         with _patch_db(populated_db):
             result = json.loads(twin_recall("architecture"))
@@ -104,7 +104,7 @@ class TestTwinStore:
     """Tests for the twin_store tool (v8 Hot Tier path)."""
 
     def test_store_returns_trace_id(self, tmp_path, mock_encoder):
-        import cognitive_twin.mcp_server as srv
+        import harlo.mcp_server as srv
 
         srv._hot_store = None
         with patch.object(srv, "DATA_DIR", tmp_path):
@@ -117,7 +117,7 @@ class TestTwinStore:
         srv._hot_store = None
 
     def test_store_with_tags_and_domain(self, tmp_path, mock_encoder):
-        import cognitive_twin.mcp_server as srv
+        import harlo.mcp_server as srv
 
         srv._hot_store = None
         with patch.object(srv, "DATA_DIR", tmp_path):
@@ -133,7 +133,7 @@ class TestTwinStore:
 
     def test_store_hot_trace_not_in_warm_recall(self, tmp_path, mock_encoder):
         """Hot-tier traces are NOT in warm-tier recall until promoted."""
-        import cognitive_twin.mcp_server as srv
+        import harlo.mcp_server as srv
 
         srv._hot_store = None
         with patch.object(srv, "DATA_DIR", tmp_path), \
@@ -153,7 +153,7 @@ class TestTwinPatterns:
     """Tests for the twin_patterns tool."""
 
     def test_patterns_empty_db(self, tmp_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_patterns
+        from harlo.mcp_server import twin_patterns
 
         with _patch_db(tmp_db):
             result = json.loads(twin_patterns())
@@ -162,7 +162,7 @@ class TestTwinPatterns:
         assert result["count"] == 0
 
     def test_patterns_returns_list(self, populated_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_patterns
+        from harlo.mcp_server import twin_patterns
 
         with _patch_db(populated_db):
             result = json.loads(twin_patterns())
@@ -178,7 +178,7 @@ class TestTwinSessionStatus:
     """Tests for the twin_session_status tool."""
 
     def test_session_status_empty(self, tmp_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_session_status
+        from harlo.mcp_server import twin_session_status
 
         with _patch_db(tmp_db):
             result = json.loads(twin_session_status())
@@ -187,8 +187,8 @@ class TestTwinSessionStatus:
         assert result["count"] == 0
 
     def test_session_status_with_active_session(self, tmp_db, mock_encoder):
-        from cognitive_twin.mcp_server import twin_session_status
-        from cognitive_twin.session.manager import SessionManager
+        from harlo.mcp_server import twin_session_status
+        from harlo.session.manager import SessionManager
 
         mgr = SessionManager(tmp_db)
         mgr.create(domain="testing")
@@ -208,16 +208,16 @@ class TestServerInit:
     """Test the MCP server initializes correctly."""
 
     def test_server_object_exists(self):
-        from cognitive_twin.mcp_server import server
+        from harlo.mcp_server import server
         assert server is not None
-        assert server.name == "cognitive-twin"
+        assert server.name == "harlo"
 
     def test_all_tools_registered(self):
         """All 5 v8 tools should be registered on the server."""
-        from cognitive_twin.mcp_server import server
+        from harlo.mcp_server import server
 
         # FastMCP stores tools internally; check they're callable
-        from cognitive_twin import mcp_server
+        from harlo import mcp_server
         assert callable(mcp_server.twin_recall)
         assert callable(mcp_server.twin_store)
         assert callable(mcp_server.twin_coach)

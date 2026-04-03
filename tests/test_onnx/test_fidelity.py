@@ -14,8 +14,8 @@ import random
 import numpy as np
 import pytest
 
-from cognitive_twin.encoder.semantic_encoder import SemanticEncoder, hamming_distance
-from cognitive_twin.encoder.onnx_encoder import OnnxEncoder
+from harlo.encoder.semantic_encoder import SemanticEncoder, hamming_distance
+from harlo.encoder.onnx_encoder import OnnxEncoder
 
 # Path to ONNX model
 ONNX_MODEL_PATH = "models/bge-small-en-v1.5.onnx"

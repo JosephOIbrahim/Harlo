@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from cognitive_twin.elenchus_v8 import ElenchusQueue
+from harlo.elenchus_v8 import ElenchusQueue
 
 
 @pytest.fixture

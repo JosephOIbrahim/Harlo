@@ -67,7 +67,7 @@ class CognitiveStage:
         else:
             os.makedirs(self._stage_dir, exist_ok=True)
             os.makedirs(os.path.join(self._stage_dir, "delegates"), exist_ok=True)
-            root_path = os.path.join(self._stage_dir, "cognitive_twin.usda")
+            root_path = os.path.join(self._stage_dir, "harlo.usda")
             if os.path.exists(root_path):
                 self._stage = Usd.Stage.Open(root_path)
             else:

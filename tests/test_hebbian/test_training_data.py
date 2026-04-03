@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from cognitive_twin.hebbian.training_data import (
+from harlo.hebbian.training_data import (
     _MAX_ROWS,
     _MAX_ROTATED_FILES,
     _profile_features,
@@ -24,7 +24,7 @@ from cognitive_twin.hebbian.training_data import (
     get_row_count,
     record_verification,
 )
-from cognitive_twin.usd_lite.prims import CognitiveProfilePrim, MultipliersPrim
+from harlo.usd_lite.prims import CognitiveProfilePrim, MultipliersPrim
 
 
 class TestRecordVerification:

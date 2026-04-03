@@ -9,8 +9,8 @@ import time
 
 import pytest
 
-from cognitive_twin.hot_store import HotStore
-from cognitive_twin.coach import project_coach
+from harlo.hot_store import HotStore
+from harlo.coach import project_coach
 
 
 @pytest.fixture

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cognitive_twin.usd_lite.arc_types import ArcType
+from harlo.usd_lite.arc_types import ArcType
 
 
 class TestArcTypeOrdering:

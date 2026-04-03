@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from cognitive_twin.elenchus_v8 import ElenchusQueue
-from cognitive_twin.trust import TrustLedger
+from harlo.elenchus_v8 import ElenchusQueue
+from harlo.trust import TrustLedger
 
 TRUST_DELTA_VERIFIED = 0.02
 TRUST_DELTA_REJECTED = -0.05

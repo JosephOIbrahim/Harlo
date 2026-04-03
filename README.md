@@ -78,7 +78,7 @@ graph TB
 
     subgraph STAGE["USD Stage · .usda on Disk"]
         direction LR
-        ROOT["cognitive_twin.usda\nTime-sampled state\nCanonical prim hierarchy"]:::usd
+        ROOT["harlo.usda\nTime-sampled state\nCanonical prim hierarchy"]:::usd
         CLAUDE_SUB["delegates/claude.usda\nInteractive opinions"]:::usd
         CODE_SUB["delegates/claude_code.usda\nBatch opinions"]:::usd
     end
@@ -349,7 +349,7 @@ src/                               Cognitive State Machine + Production Engine
 ├── bridge.py                      Exchange loop coordinator (simulation)
 └── observation_buffer.py          SQLite priority queue (anchor 20% / organic 80%)
 
-python/cognitive_twin/             Core Twin: MCP server + biologically-architected memory
+python/harlo/             Core Twin: MCP server + biologically-architected memory
 ├── mcp_server.py                  8 MCP tools over stdio
 ├── brainstem/                     Lossless translation (14 adapter files)
 ├── elenchus/                      Verification engine (GVR, trace-excluded)
@@ -371,7 +371,7 @@ python/cognitive_twin/             Core Twin: MCP server + biologically-architec
 crates/hippocampus/                Rust hot path (SDR, XOR search, lazy decay, apoptosis)
 
 data/stages/                       Real .usda files (your cognitive state)
-├── cognitive_twin.usda            Root stage with time-sampled observations
+├── harlo.usda            Root stage with time-sampled observations
 └── delegates/                     Per-delegate sublayers
 ```
 

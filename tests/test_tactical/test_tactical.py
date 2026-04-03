@@ -27,20 +27,20 @@ class TestRouterReflect:
 
     def test_reflect_returns_ok(self):
         """Reflect command should return ok status."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("reflect", {})
         assert result["status"] == "ok"
 
     def test_reflect_has_insights_key(self):
         """Reflect result should have insights and synthesis."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("reflect", {})
         assert "insights" in result["result"]
         assert "synthesis" in result["result"]
 
     def test_reflect_synthesis_is_string(self):
         """Synthesis should be a human-readable string."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("reflect", {})
         assert isinstance(result["result"]["synthesis"], str)
 
@@ -54,21 +54,21 @@ class TestRouterBoundaries:
 
     def test_boundaries_list(self):
         """Boundaries list should return ok."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("boundaries", {"action": "list"})
         assert result["status"] == "ok"
         assert "boundaries" in result["result"]
 
     def test_boundaries_add(self):
         """Adding a boundary should return ok."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("boundaries", {"action": "add", "topic": "test_topic"})
         assert result["status"] == "ok"
         assert result["result"]["action"] == "add"
 
     def test_boundaries_remove(self):
         """Removing a boundary should return ok."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("boundaries", {"action": "remove", "topic": "test_topic"})
         assert result["status"] == "ok"
         assert result["result"]["action"] == "remove"
@@ -83,7 +83,7 @@ class TestRouterExport:
 
     def test_export_creates_file(self):
         """Export should create a JSON file."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
 
         export_path = tempfile.mktemp(suffix=".json")
         try:
@@ -103,13 +103,13 @@ class TestRouterExport:
 
     def test_export_requires_path(self):
         """Export should fail without path."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("export", {})
         assert result["status"] == "error"
 
     def test_export_counts(self):
         """Export result should include counts."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
 
         export_path = tempfile.mktemp(suffix=".json")
         try:
@@ -127,7 +127,7 @@ class TestRouterImport:
 
     def test_import_from_file(self):
         """Import should read and process a JSON file."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
 
         import_path = tempfile.mktemp(suffix=".json")
         try:
@@ -157,19 +157,19 @@ class TestRouterImport:
 
     def test_import_requires_path(self):
         """Import should fail without path."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("import", {})
         assert result["status"] == "error"
 
     def test_import_missing_file(self):
         """Import should fail for non-existent file."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("import", {"path": "/nonexistent/file.json"})
         assert result["status"] == "error"
 
     def test_export_import_roundtrip(self):
         """Export then import should preserve data."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
 
         export_path = tempfile.mktemp(suffix=".json")
         try:
@@ -197,28 +197,28 @@ class TestMotorHandlers:
 
     def test_recall_handler_registered(self):
         """recall handler should be registered."""
-        from cognitive_twin.motor.executor import _HANDLERS
+        from harlo.motor.executor import _HANDLERS
         assert "recall" in _HANDLERS
 
     def test_store_handler_registered(self):
         """store handler should be registered."""
-        from cognitive_twin.motor.executor import _HANDLERS
+        from harlo.motor.executor import _HANDLERS
         assert "store" in _HANDLERS
 
     def test_inquire_handler_registered(self):
         """inquire handler should be registered."""
-        from cognitive_twin.motor.executor import _HANDLERS
+        from harlo.motor.executor import _HANDLERS
         assert "inquire" in _HANDLERS
 
     def test_reflect_handler_registered(self):
         """reflect handler should be registered."""
-        from cognitive_twin.motor.executor import _HANDLERS
+        from harlo.motor.executor import _HANDLERS
         assert "reflect" in _HANDLERS
 
     def test_recall_handler_returns_dict(self):
         """recall handler should return a dict."""
-        from cognitive_twin.motor.executor import _HANDLERS
-        from cognitive_twin.motor.premotor import PlannedAction
+        from harlo.motor.executor import _HANDLERS
+        from harlo.motor.premotor import PlannedAction
 
         action = PlannedAction(
             action_type="recall",
@@ -233,8 +233,8 @@ class TestMotorHandlers:
 
     def test_reflect_handler_returns_dict(self):
         """reflect handler should return a dict."""
-        from cognitive_twin.motor.executor import _HANDLERS
-        from cognitive_twin.motor.premotor import PlannedAction
+        from harlo.motor.executor import _HANDLERS
+        from harlo.motor.premotor import PlannedAction
 
         action = PlannedAction(
             action_type="reflect",
@@ -249,8 +249,8 @@ class TestMotorHandlers:
 
     def test_default_handler_still_works(self):
         """Unknown action types should use default handler."""
-        from cognitive_twin.motor.executor import _default_handler
-        from cognitive_twin.motor.premotor import PlannedAction
+        from harlo.motor.executor import _default_handler
+        from harlo.motor.premotor import PlannedAction
 
         action = PlannedAction(
             action_type="unknown_type",
@@ -274,7 +274,7 @@ class TestConnectionPool:
 
     def test_get_connection_returns_connection(self):
         """get_connection should return a sqlite3 Connection."""
-        from cognitive_twin.daemon.connection_pool import get_connection, close_connection
+        from harlo.daemon.connection_pool import get_connection, close_connection
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -288,7 +288,7 @@ class TestConnectionPool:
 
     def test_same_connection_returned(self):
         """Repeated calls should return the same connection."""
-        from cognitive_twin.daemon.connection_pool import get_connection, close_connection
+        from harlo.daemon.connection_pool import get_connection, close_connection
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -302,7 +302,7 @@ class TestConnectionPool:
 
     def test_different_paths_different_connections(self):
         """Different db paths should get different connections."""
-        from cognitive_twin.daemon.connection_pool import get_connection, close_all
+        from harlo.daemon.connection_pool import get_connection, close_all
 
         db1 = tempfile.mktemp(suffix=".db")
         db2 = tempfile.mktemp(suffix=".db")
@@ -318,7 +318,7 @@ class TestConnectionPool:
 
     def test_close_connection(self):
         """close_connection should close and remove cached connection."""
-        from cognitive_twin.daemon.connection_pool import get_connection, close_connection
+        from harlo.daemon.connection_pool import get_connection, close_connection
 
         db = tempfile.mktemp(suffix=".db")
         try:
@@ -334,7 +334,7 @@ class TestConnectionPool:
 
     def test_close_all(self):
         """close_all should close all connections."""
-        from cognitive_twin.daemon.connection_pool import get_connection, close_all
+        from harlo.daemon.connection_pool import get_connection, close_all
 
         db1 = tempfile.mktemp(suffix=".db")
         db2 = tempfile.mktemp(suffix=".db")
@@ -358,20 +358,20 @@ class TestCompliance:
     def test_no_sleep_in_connection_pool(self):
         """Rule 1: No sleep() in connection pool."""
         import inspect
-        from cognitive_twin.daemon import connection_pool
+        from harlo.daemon import connection_pool
         source = inspect.getsource(connection_pool)
         assert "sleep(" not in source
 
     def test_no_while_true_in_connection_pool(self):
         """Rule 1: No while True in connection pool."""
         import inspect
-        from cognitive_twin.daemon import connection_pool
+        from harlo.daemon import connection_pool
         source = inspect.getsource(connection_pool)
         assert "while True" not in source
 
     def test_no_sleep_in_executor(self):
         """Rule 1: No sleep() in executor."""
         import inspect
-        from cognitive_twin.motor import executor
+        from harlo.motor import executor
         source = inspect.getsource(executor)
         assert "sleep(" not in source

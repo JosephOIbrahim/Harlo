@@ -9,7 +9,7 @@ Tests:
 
 from __future__ import annotations
 
-from cognitive_twin.hebbian.learning import (
+from harlo.hebbian.learning import (
     SDR_LENGTH,
     activation_density,
     compute_effective_sdr,

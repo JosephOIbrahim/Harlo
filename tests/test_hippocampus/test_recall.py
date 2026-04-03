@@ -13,7 +13,7 @@ import os
 import tempfile
 import time
 
-from cognitive_twin import hippocampus
+from harlo import hippocampus
 
 
 def _temp_db():

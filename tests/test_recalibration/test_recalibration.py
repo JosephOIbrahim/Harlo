@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from cognitive_twin.trust import TrustLedger
-from cognitive_twin.trust.recalibration import (
+from harlo.trust import TrustLedger
+from harlo.trust.recalibration import (
     trigger_recalibration,
     is_intake_complete,
     ensure_profile_schema,

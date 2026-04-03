@@ -15,7 +15,7 @@ from __future__ import annotations
 import random
 from datetime import datetime, timezone
 
-from cognitive_twin.hebbian.learning import (
+from harlo.hebbian.learning import (
     SDR_LENGTH,
     HebbianUpdate,
     _TARGET_ACTIVE_HIGH,
@@ -26,7 +26,7 @@ from cognitive_twin.hebbian.learning import (
     record_co_activation,
     record_competition,
 )
-from cognitive_twin.usd_lite.prims import (
+from harlo.usd_lite.prims import (
     CognitiveProfilePrim,
     MultipliersPrim,
     TracePrim,

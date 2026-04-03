@@ -3,7 +3,7 @@ requires = ["maturin>=1.5"]
 build-backend = "maturin"
 
 [project]
-name = "cognitive-twin"
+name = "harlo"
 version = "3.3.1"
 requires-python = ">=3.12"
 dependencies = [
@@ -22,13 +22,13 @@ dependencies = [
 ]
 
 [project.scripts]
-cognitive-twin = "cognitive_twin.mcp_server:main"
+harlo = "harlo.mcp_server:main"
 
 [tool.maturin]
 manifest-path = "crates/hippocampus/Cargo.toml"
 features = ["pyo3/extension-module"]
 python-source = "python"
-module-name = "cognitive_twin.hippocampus"
+module-name = "harlo.hippocampus"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

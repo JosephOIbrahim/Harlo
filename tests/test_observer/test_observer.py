@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cognitive_twin.hot_store import HotStore
+from harlo.hot_store import HotStore
 
 
 @pytest.fixture
@@ -34,16 +34,16 @@ class TestObserverInit:
 
     def test_init_missing_model_raises(self, db_path):
         """FileNotFoundError if model doesn't exist."""
-        from cognitive_twin.observer import Observer
+        from harlo.observer import Observer
 
         with pytest.raises(FileNotFoundError):
             Observer(db_path, "nonexistent.onnx")
 
     def test_init_with_mock_encoder(self, db_path, fake_model):
         """Observer initializes with mocked encoder."""
-        from cognitive_twin.observer import Observer
+        from harlo.observer import Observer
 
-        with patch("cognitive_twin.encoder.onnx_encoder.OnnxEncoder"):
+        with patch("harlo.encoder.onnx_encoder.OnnxEncoder"):
             observer = Observer(db_path, fake_model)
             assert observer.pending_count() == 0
 
@@ -53,20 +53,20 @@ class TestPromotionCycle:
 
     def test_empty_returns_zero(self, db_path, fake_model):
         """No pending traces → 0 promoted."""
-        from cognitive_twin.observer import Observer
+        from harlo.observer import Observer
 
-        with patch("cognitive_twin.encoder.onnx_encoder.OnnxEncoder"):
+        with patch("harlo.encoder.onnx_encoder.OnnxEncoder"):
             observer = Observer(db_path, fake_model)
             assert observer.run_promotion_cycle() == 0
 
     def test_promotes_pending_traces(self, db_path, hot_store, fake_model):
         """Pending traces get promoted."""
-        from cognitive_twin.observer import Observer
+        from harlo.observer import Observer
 
         hot_store.store("test trace 1")
         hot_store.store("test trace 2")
 
-        with patch("cognitive_twin.encoder.onnx_encoder.OnnxEncoder") as mock_cls:
+        with patch("harlo.encoder.onnx_encoder.OnnxEncoder") as mock_cls:
             encoder = MagicMock()
             encoder.encode_batch.return_value = [bytes(256), bytes(256)]
             mock_cls.return_value = encoder
@@ -82,13 +82,13 @@ class TestPromotionCycle:
 
     def test_pending_count_reflects_state(self, db_path, hot_store, fake_model):
         """pending_count decreases after promotion."""
-        from cognitive_twin.observer import Observer
+        from harlo.observer import Observer
 
         hot_store.store("trace a")
         hot_store.store("trace b")
         hot_store.store("trace c")
 
-        with patch("cognitive_twin.encoder.onnx_encoder.OnnxEncoder") as mock_cls:
+        with patch("harlo.encoder.onnx_encoder.OnnxEncoder") as mock_cls:
             encoder = MagicMock()
             encoder.encode_batch.return_value = [bytes(256), bytes(256)]
             mock_cls.return_value = encoder
@@ -107,7 +107,7 @@ class TestObserverNoLLM:
 
     def test_no_anthropic_import(self):
         """Observer module does not import anthropic."""
-        import cognitive_twin.observer as obs
+        import harlo.observer as obs
 
         source = open(obs.__file__).read()
         assert "anthropic" not in source
@@ -115,7 +115,7 @@ class TestObserverNoLLM:
 
     def test_no_provider_import(self):
         """Observer module does not import provider."""
-        import cognitive_twin.observer as obs
+        import harlo.observer as obs
 
         source = open(obs.__file__).read()
         assert "provider" not in source

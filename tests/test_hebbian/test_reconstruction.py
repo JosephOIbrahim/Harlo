@@ -14,14 +14,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from cognitive_twin.hebbian.reconstruction import (
+from harlo.hebbian.reconstruction import (
     ReconstructedEpisode,
     apply_reconsolidation_boost,
     get_reconstruction_threshold,
     needs_reconstruction,
     reconstruct_episode,
 )
-from cognitive_twin.usd_lite.prims import (
+from harlo.usd_lite.prims import (
     CognitiveProfilePrim,
     MultipliersPrim,
     TracePrim,

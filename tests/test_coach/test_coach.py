@@ -7,8 +7,8 @@ import sqlite3
 
 import pytest
 
-from cognitive_twin.coach import project_coach, _format_xml
-from cognitive_twin.hot_store import HotStore
+from harlo.coach import project_coach, _format_xml
+from harlo.hot_store import HotStore
 
 
 @pytest.fixture
@@ -55,13 +55,13 @@ class TestProjectCoach:
     def test_empty_db_returns_xml(self, db_path):
         """Even with empty DB, returns valid XML."""
         result = project_coach(db_path)
-        assert '<cognitive-twin-context version="8.0">' in result
-        assert "</cognitive-twin-context>" in result
+        assert '<harlo-context version="8.0">' in result
+        assert "</harlo-context>" in result
 
     def test_nonexistent_db_returns_xml(self, tmp_path):
         """Non-existent DB returns minimal XML."""
         result = project_coach(str(tmp_path / "nonexistent.db"))
-        assert '<cognitive-twin-context version="8.0">' in result
+        assert '<harlo-context version="8.0">' in result
 
     def test_includes_recent_traces(self, populated_db):
         """Output includes recent hot traces."""
@@ -100,7 +100,7 @@ class TestFormatXml:
     def test_empty_state(self):
         """Empty state produces minimal XML."""
         result = _format_xml([], {}, 0, trust_score=0.0)
-        assert '<cognitive-twin-context version="8.0">' in result
+        assert '<harlo-context version="8.0">' in result
         assert "<trust-level>0.00</trust-level>" in result
         assert "<patterns-detected>0</patterns-detected>" in result
         assert "<session>" not in result
@@ -128,12 +128,12 @@ class TestCoachNoLLM:
 
     def test_no_anthropic_import(self):
         """Coach module does not import anthropic."""
-        import cognitive_twin.coach as coach
+        import harlo.coach as coach
         source = open(coach.__file__).read()
         assert "anthropic" not in source
 
     def test_no_provider_import(self):
         """Coach module does not import provider."""
-        import cognitive_twin.coach as coach
+        import harlo.coach as coach
         source = open(coach.__file__).read()
         assert "provider" not in source

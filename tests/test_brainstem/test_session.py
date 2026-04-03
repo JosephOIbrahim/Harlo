@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from cognitive_twin.brainstem.session_updater import update_session_after_recall
-from cognitive_twin.usd_lite.prims import (
+from harlo.brainstem.session_updater import update_session_after_recall
+from harlo.usd_lite.prims import (
     CognitiveProfilePrim,
     MultipliersPrim,
     RetrievalPath,

@@ -1,4 +1,4 @@
-"""Cross-platform daemon stopper for the Cognitive Twin.
+"""Cross-platform daemon stopper for the Harlo.
 
 Reads the PID file, sends graceful shutdown signal, and waits for exit.
 
@@ -21,7 +21,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 def main():
     """Stop the Twin daemon gracefully."""
-    from cognitive_twin.daemon.lifecycle import read_pid_file, remove_pid_file, is_daemon_running
+    from harlo.daemon.lifecycle import read_pid_file, remove_pid_file, is_daemon_running
 
     pid = read_pid_file()
     if pid is None:

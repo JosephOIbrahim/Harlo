@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import inspect
 
-from cognitive_twin.brainstem.stage_builder import elenchus_stage, full_stage
+from harlo.brainstem.stage_builder import elenchus_stage, full_stage
 
 
 class TestElenchusStageIsolation:

@@ -10,8 +10,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from cognitive_twin.usd_lite.arc_types import ArcType
-from cognitive_twin.usd_lite.prims import (
+from harlo.usd_lite.arc_types import ArcType
+from harlo.usd_lite.prims import (
     ElenchusPrim,
     AssociationPrim,
     CognitiveProfilePrim,
@@ -35,8 +35,8 @@ from cognitive_twin.usd_lite.prims import (
     TracePrim,
     VerificationState,
 )
-from cognitive_twin.usd_lite.serializer import parse, serialize
-from cognitive_twin.usd_lite.stage import BrainStage
+from harlo.usd_lite.serializer import parse, serialize
+from harlo.usd_lite.stage import BrainStage
 
 
 NOW = datetime(2026, 3, 15, 12, 0, 0, tzinfo=timezone.utc)
@@ -270,7 +270,7 @@ def BrainStage "Brain"
 
     def test_fmt_float_integer_value(self) -> None:
         """A float that repr()s without decimal point gets '.0' appended."""
-        from cognitive_twin.usd_lite.serializer import _fmt_float
+        from harlo.usd_lite.serializer import _fmt_float
         # Python's repr(2.0) is '2.0' so this already has a decimal.
         # But repr of a very large/small float might not — hard to trigger.
         # Instead, just verify the function works correctly.
@@ -282,7 +282,7 @@ def BrainStage "Brain"
 
     def test_parse_quoted_unquoted(self) -> None:
         """_parse_quoted returns unquoted input as-is."""
-        from cognitive_twin.usd_lite.serializer import _parse_quoted
+        from harlo.usd_lite.serializer import _parse_quoted
         assert _parse_quoted("bare_value") == "bare_value"
         assert _parse_quoted('"quoted"') == "quoted"
 

@@ -17,6 +17,8 @@ Verifies:
 import os
 import pytest
 
+pxr = pytest.importorskip("pxr", reason="USD pxr bindings not available for this Python version")
+
 from src.cognitive_stage import CognitiveStage
 from src.schemas import (
     CognitiveObservation,
@@ -47,7 +49,7 @@ def mem_stage():
 class TestStageCreation:
     def test_creates_usda_on_disk(self, tmp_path):
         stage = CognitiveStage(stage_dir=str(tmp_path))
-        usda_path = tmp_path / "cognitive_twin.usda"
+        usda_path = tmp_path / "harlo.usda"
         assert usda_path.exists()
 
     def test_reopens_existing_stage(self, tmp_path):

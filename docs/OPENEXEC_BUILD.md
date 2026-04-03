@@ -49,7 +49,7 @@ Per AGENTS.md Circuit Breaker protocol:
 > "OpenExec is 4 days old in the wild (USD v26.03 shipped March 26, 2026).
 > Non-Pixar developers building it from source is uncharted territory."
 
-> "Do not treat a build failure as a project failure. The cognitive twin works
+> "Do not treat a build failure as a project failure. Harlo works
 > today on MockCogExec. OpenExec is the upgrade, not the requirement."
 
 ### What Works

@@ -89,14 +89,14 @@ Add this to the `mcpServers` section:
 ```json
 {
   "mcpServers": {
-    "cognitive-twin": {
-      "command": "C:\\path\\to\\cognitive-twin\\.venv312\\Scripts\\cognitive-twin.exe"
+    "harlo": {
+      "command": "C:\\path\\to\\harlo\\.venv312\\Scripts\\harlo.exe"
     }
   }
 }
 ```
 
-Replace `C:\\path\\to\\cognitive-twin` with the actual path where you cloned the repo.
+Replace `C:\\path\\to\\harlo` with the actual path where you cloned the repo.
 
 ### 7. Configure Claude Code
 
@@ -105,8 +105,8 @@ The repo already includes `.mcp.json`. If Claude Code doesn't pick it up automat
 ```json
 {
   "mcpServers": {
-    "cognitive-twin": {
-      "command": ".venv312/Scripts/cognitive-twin"
+    "harlo": {
+      "command": ".venv312/Scripts/harlo"
     }
   }
 }
@@ -143,7 +143,7 @@ If `stage_type` shows `"mock"` instead of `"real_usd"`, that's fine — it means
 
 ```bash
 # See your state file (if using real USD)
-type data\stages\cognitive_twin.usda
+type data\stages\harlo.usda
 
 # Or run the health check
 python scripts/health_check.py
@@ -185,7 +185,7 @@ This means USD 26 couldn't load. The most common reason is running from the wron
 
 If you work in Houdini, you're already familiar with everything this system uses:
 
-- **Your cognitive state is stored as `.usda`** — the same format as your Houdini scenes. Open `data/stages/cognitive_twin.usda` in any text editor. You can read it.
+- **Your cognitive state is stored as `.usda`** — the same format as your Houdini scenes. Open `data/stages/harlo.usda` in any text editor. You can read it.
 
 - **The composition uses LIVRPS** — the same priority system as your USD layers in Solaris. Local overrides win. Payloads are lazy-loaded. Specializes is weakest.
 
@@ -200,7 +200,7 @@ If you work in Houdini, you're already familiar with everything this system uses
 ## What's in the Box
 
 ```
-data/stages/cognitive_twin.usda    Your cognitive state (real USD)
+data/stages/harlo.usda    Your cognitive state (real USD)
 data/stages/delegates/             Per-delegate opinion sublayers
 data/observations.db               Organic observation buffer
 models/cognitive_predictor_v1.joblib  XGBoost predictor (trained on 10K sessions)

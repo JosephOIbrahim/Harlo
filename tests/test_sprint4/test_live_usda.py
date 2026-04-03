@@ -11,6 +11,8 @@ Verifies:
 import os
 import pytest
 
+pxr = pytest.importorskip("pxr", reason="USD pxr bindings not available for this Python version")
+
 from src.cognitive_stage import CognitiveStage
 from src.cognitive_engine import CognitiveEngine
 from src.mock_cogexec import evaluate_dag
@@ -26,7 +28,7 @@ class TestLiveUSDA:
     def test_usda_file_on_disk(self, tmp_path):
         """Root .usda exists with prim hierarchy."""
         stage = CognitiveStage(stage_dir=str(tmp_path))
-        root_file = tmp_path / "cognitive_twin.usda"
+        root_file = tmp_path / "harlo.usda"
         assert root_file.exists()
         content = root_file.read_text()
         assert "#usda" in content

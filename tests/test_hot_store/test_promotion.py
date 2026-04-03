@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cognitive_twin.hot_store import HotStore
-from cognitive_twin.hot_store.promotion import PromotionPipeline
+from harlo.hot_store import HotStore
+from harlo.hot_store.promotion import PromotionPipeline
 
 
 @pytest.fixture

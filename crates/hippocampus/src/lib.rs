@@ -1,4 +1,4 @@
-//! Hippocampus — Association Engine for the Cognitive Twin.
+//! Hippocampus — Association Engine for the Harlo.
 //!
 //! Rust hot path via PyO3. 1-bit SDR vectors. Bitwise XOR search.
 //! Lazy decay. Physical apoptosis. Compiled reflex cache.

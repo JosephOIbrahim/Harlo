@@ -7,7 +7,7 @@ import math
 
 import pytest
 
-from cognitive_twin.compaction import CompactionEngine, Variant
+from harlo.compaction import CompactionEngine, Variant
 
 
 @pytest.fixture

@@ -17,7 +17,7 @@ from src.cognitive_engine import CognitiveEngine
 
 
 def main():
-    print("=== COGNITIVE TWIN — FIRST SESSION ===\n")
+    print("=== HARLO — FIRST SESSION ===\n")
 
     # Initialize engine (will use mock if USD unavailable)
     engine = CognitiveEngine()
@@ -27,7 +27,7 @@ def main():
     # 10 exchanges simulating a real session
     exchanges = [
         ("twin_coach", {"context": "session_start"}),
-        ("twin_store", {"message": "Working on Cognitive Twin patent filing"}),
+        ("twin_store", {"message": "Working on Harlo patent filing"}),
         ("twin_coach", {"context": "architecture_question"}),
         ("twin_coach", {"context": "deep_work"}),
         ("twin_coach", {"context": "deep_work"}),

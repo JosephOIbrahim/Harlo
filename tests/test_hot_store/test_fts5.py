@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from cognitive_twin.hot_store import HotStore
+from harlo.hot_store import HotStore
 
 
 class TestFTS5Search:

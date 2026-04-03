@@ -7,8 +7,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from cognitive_twin.usd_lite.arc_types import ArcType
-from cognitive_twin.usd_lite.prims import (
+from harlo.usd_lite.arc_types import ArcType
+from harlo.usd_lite.prims import (
     ElenchusPrim,
     AssociationPrim,
     CognitiveProfilePrim,
@@ -32,8 +32,8 @@ from cognitive_twin.usd_lite.prims import (
     TracePrim,
     VerificationState,
 )
-from cognitive_twin.usd_lite.serializer import parse, serialize
-from cognitive_twin.usd_lite.stage import BrainStage
+from harlo.usd_lite.serializer import parse, serialize
+from harlo.usd_lite.stage import BrainStage
 
 
 NOW = datetime(2026, 3, 15, 12, 0, 0, tzinfo=timezone.utc)

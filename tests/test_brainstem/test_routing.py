@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import math
 
-from cognitive_twin.brainstem.routing import (
+from harlo.brainstem.routing import (
     DEFAULT_SURPRISE_THRESHOLD,
     ROLLING_WINDOW,
     compute_surprise,
@@ -21,7 +21,7 @@ from cognitive_twin.brainstem.routing import (
     route_recall,
     update_rolling_stats,
 )
-from cognitive_twin.usd_lite.prims import (
+from harlo.usd_lite.prims import (
     CognitiveProfilePrim,
     MultipliersPrim,
     RetrievalPath,

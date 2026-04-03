@@ -20,7 +20,7 @@ import time
 
 import pytest
 
-from cognitive_twin.modulation.detector import (
+from harlo.modulation.detector import (
     DetectedPattern,
     PatternDetector,
     detect_pattern,
@@ -375,7 +375,7 @@ class TestRouterIntegration:
 
     def test_inquire_returns_patterns(self):
         """Router inquire command should return detected patterns."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
 
         result = route_command("inquire", {"depth": "standard"})
         assert result["status"] == "ok"
@@ -383,7 +383,7 @@ class TestRouterIntegration:
 
     def test_detect_command_exists(self):
         """Router should have a detect command."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
 
         result = route_command("detect", {})
         assert result["status"] == "ok"
@@ -428,13 +428,13 @@ class TestCompliance:
     def test_no_sleep_in_detector(self):
         """Rule 1: No sleep() in detector code."""
         import inspect
-        from cognitive_twin.modulation import detector
+        from harlo.modulation import detector
         source = inspect.getsource(detector)
         assert "sleep(" not in source
 
     def test_no_while_true_in_detector(self):
         """Rule 1: No while True in detector code."""
         import inspect
-        from cognitive_twin.modulation import detector
+        from harlo.modulation import detector
         source = inspect.getsource(detector)
         assert "while True" not in source

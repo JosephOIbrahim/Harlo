@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import math
 
-from cognitive_twin.intake.multipliers import build_cognitive_profile, derive_multipliers
-from cognitive_twin.intake.questionnaire import IntakeSession
+from harlo.intake.multipliers import build_cognitive_profile, derive_multipliers
+from harlo.intake.questionnaire import IntakeSession
 
 
 class TestDeriveMultipliers:

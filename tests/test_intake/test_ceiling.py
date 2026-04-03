@@ -6,7 +6,7 @@ TERSE-safe: short answers do NOT trigger ceiling.
 
 from __future__ import annotations
 
-from cognitive_twin.intake.questionnaire import (
+from harlo.intake.questionnaire import (
     IntakeSession,
     detect_disengagement,
     process_answer,
@@ -55,7 +55,7 @@ class TestSemanticCeiling:
 
     def test_disengaged_session_returns_no_question(self) -> None:
         """Disengaged session stops returning questions."""
-        from cognitive_twin.intake.questionnaire import get_next_question
+        from harlo.intake.questionnaire import get_next_question
         session = IntakeSession(user_disengaged=True)
         assert get_next_question(session) is None
 

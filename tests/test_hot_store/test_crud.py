@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from cognitive_twin.hot_store import HotStore, HotTrace
+from harlo.hot_store import HotStore, HotTrace
 
 
 class TestStore:

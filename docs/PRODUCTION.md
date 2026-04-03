@@ -6,10 +6,10 @@ The MCP server is the entry point. Claude Desktop connects via `.mcp.json`.
 
 ```bash
 # Default: runs with CognitiveEngine active
-cognitive-twin
+harlo
 
 # Or manually:
-python -m cognitive_twin.mcp_server
+python -m harlo.mcp_server
 ```
 
 ## Environment Variables
@@ -28,16 +28,16 @@ Each component can be disabled independently:
 
 ```bash
 # Disable everything (pre-Sprint 3 behavior):
-ENGINE_ENABLED=0 cognitive-twin
+ENGINE_ENABLED=0 harlo
 
 # Disable prediction only:
-PREDICTION_ENABLED=0 cognitive-twin
+PREDICTION_ENABLED=0 harlo
 
 # Disable observations only:
-OBSERVATION_LOGGING=0 cognitive-twin
+OBSERVATION_LOGGING=0 harlo
 
 # Force mock stage (no USD):
-USE_REAL_USD=0 cognitive-twin
+USE_REAL_USD=0 harlo
 ```
 
 ## Data Locations
@@ -45,7 +45,7 @@ USE_REAL_USD=0 cognitive-twin
 ```
 data/
 ├── stages/
-│   ├── cognitive_twin.usda        # Root cognitive state (real USD)
+│   ├── harlo.usda        # Root cognitive state (real USD)
 │   └── delegates/
 │       ├── claude.usda            # Claude delegate sublayer
 │       └── claude_code.usda       # Claude Code delegate sublayer

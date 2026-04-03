@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from cognitive_twin.usd_lite.arc_types import ArcType
-from cognitive_twin.usd_lite.prims import (
+from harlo.usd_lite.arc_types import ArcType
+from harlo.usd_lite.prims import (
     ElenchusPrim,
     AssociationPrim,
     CognitiveProfilePrim,

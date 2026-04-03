@@ -18,7 +18,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from cognitive_twin.daemon.lifecycle import (
+from harlo.daemon.lifecycle import (
     write_pid_file,
     read_pid_file,
     remove_pid_file,
@@ -34,7 +34,7 @@ from cognitive_twin.daemon.lifecycle import (
 def tmp_pid_file(tmp_path):
     """Override PID_FILE to a temp path."""
     pid_path = tmp_path / "test.pid"
-    with patch("cognitive_twin.daemon.lifecycle.PID_FILE", pid_path):
+    with patch("harlo.daemon.lifecycle.PID_FILE", pid_path):
         yield pid_path
 
 
@@ -111,7 +111,7 @@ class TestStartupCleanup:
 
     def test_startup_cleanup_returns_report(self):
         """startup_cleanup() should return a report dict."""
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(tempfile.mktemp(suffix=".db"))):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(tempfile.mktemp(suffix=".db"))):
             report = startup_cleanup()
             assert "expired_sessions" in report
             assert "recovered_dmn" in report
@@ -121,12 +121,12 @@ class TestStartupCleanup:
     def test_startup_expires_stale_sessions(self, db_path):
         """startup_cleanup() should expire old sessions."""
         # Create a stale session
-        from cognitive_twin.session import SessionManager
+        from harlo.session import SessionManager
         mgr = SessionManager(db_path=db_path, timeout_s=60)
         old = mgr.create(now=1000)
 
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(db_path)):
-            with patch("cognitive_twin.daemon.lifecycle.SESSION_TIMEOUT_S", 60):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(db_path)):
+            with patch("harlo.daemon.lifecycle.SESSION_TIMEOUT_S", 60):
                 report = startup_cleanup()
 
         # The old session should have been expired
@@ -134,7 +134,7 @@ class TestStartupCleanup:
 
     def test_startup_cleanup_handles_missing_db(self):
         """startup_cleanup() should not fail on fresh database."""
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path("/nonexistent/path.db")):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path("/nonexistent/path.db")):
             report = startup_cleanup()
             assert report["expired_sessions"] == []
 
@@ -147,8 +147,8 @@ class TestStartupCleanup:
         mock_teardown = MagicMock()
         mock_teardown.recover_temp.return_value = {"partial": True}
 
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(tempfile.mktemp(suffix=".db"))):
-            with patch("cognitive_twin.daemon.dmn_teardown.get_teardown", return_value=mock_teardown):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(tempfile.mktemp(suffix=".db"))):
+            with patch("harlo.daemon.dmn_teardown.get_teardown", return_value=mock_teardown):
                 report = startup_cleanup()
                 assert report["recovered_dmn"] == {"partial": True}
 
@@ -163,20 +163,20 @@ class TestGracefulShutdown:
     def test_graceful_shutdown_returns_report(self, db_path, tmp_pid_file):
         """graceful_shutdown() should return a report dict."""
         write_pid_file()
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(db_path)):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(db_path)):
             report = graceful_shutdown()
             assert "closed_sessions" in report
             assert "dmn_triggered" in report
 
     def test_graceful_shutdown_closes_active_sessions(self, db_path, tmp_pid_file):
         """graceful_shutdown() should close all active sessions."""
-        from cognitive_twin.session import SessionManager
+        from harlo.session import SessionManager
         mgr = SessionManager(db_path=db_path, timeout_s=1800)
         s1 = mgr.create()
         s2 = mgr.create()
 
         write_pid_file()
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(db_path)):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(db_path)):
             report = graceful_shutdown()
 
         assert s1.session_id in report["closed_sessions"]
@@ -193,7 +193,7 @@ class TestGracefulShutdown:
         write_pid_file()
         assert tmp_pid_file.exists()
 
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(db_path)):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(db_path)):
             graceful_shutdown()
 
         assert not tmp_pid_file.exists()
@@ -201,7 +201,7 @@ class TestGracefulShutdown:
     def test_graceful_shutdown_handles_no_sessions(self, db_path, tmp_pid_file):
         """graceful_shutdown() should work fine with no active sessions."""
         write_pid_file()
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(db_path)):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(db_path)):
             report = graceful_shutdown()
             assert report["closed_sessions"] == []
             assert report["dmn_triggered"] == 0
@@ -216,7 +216,7 @@ class TestHealthCheck:
 
     def test_health_returns_status(self):
         """get_health() should return a health dict."""
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(tempfile.mktemp(suffix=".db"))):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(tempfile.mktemp(suffix=".db"))):
             health = get_health()
             assert health["status"] == "healthy"
             assert health["pid"] == os.getpid()
@@ -225,24 +225,24 @@ class TestHealthCheck:
 
     def test_health_reports_db_existence(self, db_path):
         """get_health() should report whether DB exists."""
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(db_path)):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(db_path)):
             health = get_health()
             assert "db_exists" in health
 
     def test_health_reports_pid_file(self, tmp_pid_file):
         """get_health() should report PID file status."""
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(tempfile.mktemp(suffix=".db"))):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(tempfile.mktemp(suffix=".db"))):
             health = get_health()
             assert "pid_file_exists" in health
 
     def test_health_counts_active_sessions(self, db_path):
         """get_health() should count active sessions."""
-        from cognitive_twin.session import SessionManager
+        from harlo.session import SessionManager
         mgr = SessionManager(db_path=db_path, timeout_s=1800)
         mgr.create()
         mgr.create()
 
-        with patch("cognitive_twin.daemon.lifecycle.DB_PATH", Path(db_path)):
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(db_path)):
             health = get_health()
             assert health["active_sessions"] == 2
 
@@ -256,7 +256,7 @@ class TestRouterIntegration:
 
     def test_router_health_command(self):
         """Router should handle health command."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("health", {})
         assert result["status"] == "ok"
         assert result["result"]["status"] == "healthy"
@@ -264,7 +264,7 @@ class TestRouterIntegration:
 
     def test_router_health_has_session_count(self):
         """Health command should include active session count."""
-        from cognitive_twin.daemon.router import route_command
+        from harlo.daemon.router import route_command
         result = route_command("health", {})
         assert "active_sessions" in result["result"]
 
@@ -311,13 +311,13 @@ class TestCompliance:
     def test_no_sleep_in_lifecycle(self):
         """Rule 1: No sleep() in lifecycle code."""
         import inspect
-        from cognitive_twin.daemon import lifecycle
+        from harlo.daemon import lifecycle
         source = inspect.getsource(lifecycle)
         assert "sleep(" not in source
 
     def test_no_while_true_in_lifecycle(self):
         """Rule 1: No while True in lifecycle code."""
         import inspect
-        from cognitive_twin.daemon import lifecycle
+        from harlo.daemon import lifecycle
         source = inspect.getsource(lifecycle)
         assert "while True" not in source

@@ -14,7 +14,7 @@ import pytest
 
 class TestConsentLevels:
     def test_four_levels(self):
-        from cognitive_twin.motor.consent import ConsentLevel
+        from harlo.motor.consent import ConsentLevel
         assert ConsentLevel.AUTONOMOUS == 0
         assert ConsentLevel.SESSION == 1
         assert ConsentLevel.PER_ACTION == 2
@@ -22,7 +22,7 @@ class TestConsentLevels:
 
     def test_level_3_never_opens(self):
         """Rule 25: Level 3 is structural, never opens."""
-        from cognitive_twin.motor.consent import ConsentLevel, ConsentState
+        from harlo.motor.consent import ConsentLevel, ConsentState
         # Level 3 should NEVER return True regardless of inputs
         state = ConsentState()
         state.grant_session()
@@ -36,8 +36,8 @@ class TestBasalGanglia:
 
     def test_default_is_inhibit(self):
         """No checks passed -> INHIBIT."""
-        from cognitive_twin.motor.basal_ganglia import gate, GateDecision
-        from cognitive_twin.motor.premotor import PlannedAction
+        from harlo.motor.basal_ganglia import gate, GateDecision
+        from harlo.motor.premotor import PlannedAction
 
         action = PlannedAction(
             action_type="test",
@@ -53,8 +53,8 @@ class TestBasalGanglia:
 
     def test_level_3_always_locked(self):
         """Rule 25: Level 3 = LOCKED regardless."""
-        from cognitive_twin.motor.basal_ganglia import gate, GateDecision
-        from cognitive_twin.motor.premotor import PlannedAction
+        from harlo.motor.basal_ganglia import gate, GateDecision
+        from harlo.motor.premotor import PlannedAction
 
         action = PlannedAction(
             action_type="financial",
@@ -70,7 +70,7 @@ class TestBasalGanglia:
 
     def test_reversibility_cap(self):
         """Rule 29: Level 1 + irreversible = Level 2."""
-        from cognitive_twin.motor.consent import effective_consent_level, ConsentLevel
+        from harlo.motor.consent import effective_consent_level, ConsentLevel
         # SESSION + irreversible -> PER_ACTION
         assert effective_consent_level(
             ConsentLevel.SESSION, is_irreversible=True
@@ -90,7 +90,7 @@ class TestMotorCerebellum:
 
     def test_single_failure_decompiles(self):
         """Rule 32: Single failure = instant de-compilation."""
-        from cognitive_twin.motor.motor_cerebellum import MotorCerebellum, ActionPattern
+        from harlo.motor.motor_cerebellum import MotorCerebellum, ActionPattern
         cerebellum = MotorCerebellum()
         # Register a pattern first
         pattern = ActionPattern(
@@ -113,7 +113,7 @@ class TestActionPlan:
     """Rule 24 + 31: One action at a time, plan persistence."""
 
     def test_action_plan_creation(self):
-        from cognitive_twin.motor.premotor import create_plan, ActionPlan
+        from harlo.motor.premotor import create_plan, ActionPlan
         plan = create_plan("search the web", [
             {
                 "action_type": "web_search",
@@ -130,7 +130,7 @@ class TestActionPlan:
 
     def test_one_action_at_a_time(self):
         """Rule 24: Plan steps are atomic, one at a time."""
-        from cognitive_twin.motor.premotor import create_plan
+        from harlo.motor.premotor import create_plan
         plan = create_plan("do multiple things", [
             {
                 "action_type": "read",
@@ -156,7 +156,7 @@ class TestActionPlan:
 class TestCompliance:
     def test_no_sleep_in_motor(self):
         import inspect
-        from cognitive_twin.motor import (
+        from harlo.motor import (
             premotor, basal_ganglia, executor,
             motor_cerebellum, consent, scope,
         )
@@ -167,7 +167,7 @@ class TestCompliance:
 
     def test_no_while_true_in_motor(self):
         import inspect
-        from cognitive_twin.motor import (
+        from harlo.motor import (
             premotor, basal_ganglia, executor,
             motor_cerebellum, consent, scope,
         )

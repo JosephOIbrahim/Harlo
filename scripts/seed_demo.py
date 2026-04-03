@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seed the Cognitive Twin demo database with realistic warm-up data.
+"""Seed the Harlo demo database with realistic warm-up data.
 
 Idempotent: all IDs use the 'seed_' prefix and duplicate inserts are
 caught via IntegrityError or INSERT OR IGNORE.
@@ -22,10 +22,10 @@ from pathlib import Path
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT / "python"))
 
-from cognitive_twin.hot_store import HotStore  # noqa: E402
-from cognitive_twin.injection import InjectionStore  # noqa: E402
-from cognitive_twin.elenchus_v8 import ElenchusQueue  # noqa: E402
-from cognitive_twin.trust import TrustLedger  # noqa: E402
+from harlo.hot_store import HotStore  # noqa: E402
+from harlo.injection import InjectionStore  # noqa: E402
+from harlo.elenchus_v8 import ElenchusQueue  # noqa: E402
+from harlo.trust import TrustLedger  # noqa: E402
 
 DB_PATH = str(_PROJECT_ROOT / "data" / "twin.db")
 

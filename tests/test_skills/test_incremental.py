@@ -11,13 +11,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
 
-from cognitive_twin.skills.observer import (
+from harlo.skills.observer import (
     ObserverCursor,
     initial_cursor,
     observe_traces,
     query_skills,
 )
-from cognitive_twin.usd_lite.prims import SkillsContainerPrim, TracePrim
+from harlo.usd_lite.prims import SkillsContainerPrim, TracePrim
 
 
 NOW = datetime(2026, 3, 15, 12, 0, 0, tzinfo=timezone.utc)
@@ -115,7 +115,7 @@ class TestQuerySkills:
     """twin_skills returns valid JSON for all 4 query patterns."""
 
     def _make_skills(self) -> SkillsContainerPrim:
-        from cognitive_twin.usd_lite.prims import SkillPrim
+        from harlo.usd_lite.prims import SkillPrim
         return SkillsContainerPrim(domains={
             "domain_abc1": SkillPrim(
                 domain="domain_abc1",

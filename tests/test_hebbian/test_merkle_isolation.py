@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from cognitive_twin.brainstem.merkle import compute_trace_merkle
-from cognitive_twin.hebbian.learning import compute_effective_sdr
-from cognitive_twin.usd_lite.prims import TracePrim
+from harlo.brainstem.merkle import compute_trace_merkle
+from harlo.hebbian.learning import compute_effective_sdr
+from harlo.usd_lite.prims import TracePrim
 
 NOW = datetime(2026, 3, 15, 12, 0, 0, tzinfo=timezone.utc)
 

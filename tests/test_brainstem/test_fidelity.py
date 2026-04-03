@@ -6,9 +6,12 @@ Hypothesis generates 1000+ examples per adapter pair.
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip("hypothesis", reason="hypothesis not available on this Python version")
 from hypothesis import HealthCheck, given, settings
 
-from cognitive_twin.brainstem.adapters import (
+from harlo.brainstem.adapters import (
     elenchus_to_verification,
     composition_to_layers,
     inquiries_to_prims,

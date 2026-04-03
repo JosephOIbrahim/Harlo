@@ -1,4 +1,4 @@
-# Cognitive Twin v6.0-MOTOR — Claude Code Project Instructions
+# Harlo v6.0-MOTOR — Claude Code Project Instructions
 
 ## What This Is
 
@@ -195,11 +195,11 @@ S8. SINCERITY GATE: User responses classified as sincere/sarcastic/
 ## Compliance Checks
 
 ```bash
-grep -r "sleep(" python/cognitive_twin/              # MUST return 0 results
-grep -r "while True" python/cognitive_twin/          # MUST return 0 results
+grep -r "sleep(" python/harlo/              # MUST return 0 results
+grep -r "while True" python/harlo/          # MUST return 0 results
 grep -r "float32" crates/                            # MUST return 0 results
 grep -r "cosine" crates/                             # MUST return 0 results
-grep -r "DELETE.*audit" python/cognitive_twin/       # MUST return 0 results
-grep -r "reasoning_trace" python/cognitive_twin/elenchus/verifier.py  # Must be None/absent
-grep -r "store_reflex" python/cognitive_twin/        # Must check verification_state
+grep -r "DELETE.*audit" python/harlo/       # MUST return 0 results
+grep -r "reasoning_trace" python/harlo/elenchus/verifier.py  # Must be None/absent
+grep -r "store_reflex" python/harlo/        # Must check verification_state
 ```

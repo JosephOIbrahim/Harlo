@@ -1,4 +1,4 @@
-# update_claude_desktop.ps1 — Update Claude Desktop MCP config to Cognitive Twin v8.0
+# update_claude_desktop.ps1 — Update Claude Desktop MCP config to Harlo v8.0
 # Run: powershell -ExecutionPolicy Bypass -File scripts\update_claude_desktop.ps1
 
 $configPath = "$env:APPDATA\Claude\claude_desktop_config.json"
@@ -14,8 +14,8 @@ if (Test-Path $configPath) {
 
 # Build the new mcpServers block
 $mcpServers = @{
-    "cognitive-twin" = @{
-        command = "C:/Users/User/Cognitive_Twin/.venv/Scripts/cognitive-twin.exe"
+    "harlo" = @{
+        command = "C:/Users/User/Harlo/.venv/Scripts/harlo.exe"
         env = @{
             ANTHROPIC_API_KEY = $env:ANTHROPIC_API_KEY
         }
@@ -40,7 +40,7 @@ $json | Set-Content $configPath -Encoding UTF8
 
 Write-Host "Updated $configPath"
 Write-Host ""
-Write-Host "cognitive-twin -> .venv/Scripts/cognitive-twin.exe (v8.0)"
+Write-Host "harlo -> .venv/Scripts/harlo.exe (v8.0)"
 Write-Host "API key read from env:ANTHROPIC_API_KEY"
 Write-Host ""
 Write-Host "Restart Claude Desktop to pick up the change."

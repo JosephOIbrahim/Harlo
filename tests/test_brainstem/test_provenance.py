@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from cognitive_twin.brainstem.provenance import (
+from harlo.brainstem.provenance import (
     make_event_hash,
     migrate_legacy_provenance,
     stamp_provenance,
 )
-from cognitive_twin.usd_lite.arc_types import ArcType
-from cognitive_twin.usd_lite.prims import (
+from harlo.usd_lite.arc_types import ArcType
+from harlo.usd_lite.prims import (
     CompositionLayerPrim,
     Provenance,
     SourceType,
