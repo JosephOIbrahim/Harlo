@@ -1,6 +1,12 @@
-# Harlo
+<p align="center">
+  <img src="./assets/harlo-logo.jpg" alt="Harlo — Your AI Coach" width="600">
+</p>
 
-**Patent Pending** | [Apache 2.0](LICENSE) | [Patent Details](PATENTS.md)
+<p align="center">
+  <strong>Patent Pending</strong> | <a href="LICENSE">Apache 2.0</a> | <a href="PATENTS.md">Patent Details</a>
+</p>
+
+---
 
 Your AI coach. Watches your patterns, predicts your crashes, backs off during
 flow, and tells you when to stop before you burn out. Built on USD composition
