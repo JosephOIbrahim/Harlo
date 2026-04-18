@@ -1,5 +1,6 @@
 data/
 target/
+target312/
 __pycache__/
 *.pyc
 .venv/
