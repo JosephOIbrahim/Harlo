@@ -57,8 +57,8 @@ flowchart TB
     end
 
     subgraph SYNCLAYER["SYNC LAYER · write-side dispatch"]
-        WT["write_through<br/>SessionPrim · GateStatusPrim<br/>MerkleRootPrim · MotorPrim"]:::utility
-        CP["checkpoint<br/>TracePrim · CompositionLayerPrim<br/>SkillPrim · intake/multipliers"]:::utility
+        WT["write_through<br/>SessionPrim · GateStatusPrim<br/>MerkleRootPrim · MotorPrim"]:::substrate
+        CP["checkpoint<br/>TracePrim · CompositionLayerPrim<br/>SkillPrim · intake/multipliers"]:::substrate
     end
 
     subgraph RUNTIME["RUNTIME LAYER · hot-path reads"]
@@ -66,7 +66,7 @@ flowchart TB
         DC["21 dataclass prim types<br/>Python in-memory"]:::runtime
     end
 
-    MIG["migrate_path_c.py<br/>USD-Lite v1 → real USD<br/>idempotent · CLI"]:::utility
+    MIG["migrate_path_c.py<br/>USD-Lite v1 → real USD<br/>idempotent · CLI"]:::substrate
 
     PERSISTENCE -->|"sync at boundaries"| SYNCLAYER
     SYNCLAYER --> RUNTIME
@@ -74,7 +74,6 @@ flowchart TB
 
     classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
     classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
-    classDef utility fill:#2d3e4f,stroke:#4a90a4,color:#e8eef2
 ```
 
 The persistence layer is the canonical truth. The runtime layer is the
@@ -99,7 +98,7 @@ in a 3-tier IsA hierarchy parallel to containment (D2):
 
 ```mermaid
 flowchart TB
-    Typed["Typed · USD root"]:::utility
+    Typed["Typed · USD root"]:::substrate
 
     HP["HarloPrim · abstract"]:::substrate
     HC["HarloContainer · abstract"]:::substrate
@@ -147,14 +146,13 @@ flowchart TB
     HP --> MuP
     HP --> IHP
 
-    APIB["APISchemaBase · USD"]:::utility
-    PROV["Provenance · applied API"]:::utility
+    APIB["APISchemaBase · USD"]:::substrate
+    PROV["Provenance · applied API"]:::substrate
     APIB --> PROV
     PROV -.->|"attaches to"| CLP
 
     classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
     classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
-    classDef utility fill:#2d3e4f,stroke:#4a90a4,color:#e8eef2
 ```
 
 - **Two abstract bases:** `HarloPrim` (root of every Harlo type) and
@@ -179,8 +177,8 @@ table:
 
 ```mermaid
 flowchart LR
-    START["BrainStage<br/>write"]:::utility
-    DECISION{"Prim type<br/>policy?"}:::utility
+    START["BrainStage<br/>write"]:::substrate
+    DECISION{"Prim type<br/>policy?"}:::substrate
 
     WT["write_through<br/>MotorPrim · GateStatusPrim<br/>MerkleRootPrim · SessionPrim"]:::substrate
     CP["checkpoint<br/>TracePrim · CompositionLayerPrim<br/>SkillPrim · intake/multipliers<br/>InquiryPrim"]:::substrate
@@ -200,7 +198,6 @@ flowchart LR
 
     classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
     classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
-    classDef utility fill:#2d3e4f,stroke:#4a90a4,color:#e8eef2
 ```
 
 - **write_through** — synchronous persistence on every mutation. Used
