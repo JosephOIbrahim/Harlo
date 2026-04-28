@@ -24,6 +24,28 @@ dependencies = [
 [project.scripts]
 harlo = "harlo.mcp_server:main"
 
+[project.optional-dependencies]
+# Path C codeless schema substrate (real OpenUSD via pip-installable usd-core).
+# Activates the persistence-layer code paths (schema/, persistence/, sync/).
+# Core Harlo runs without this extra (Constitution Law 3 — pxr stays optional).
+# Pin rationale: harness/path_c/substrate_pin.md.
+substrate = [
+    "usd-core>=24.05",
+]
+
+# Test-suite dependencies. Required to collect+run the full pytest baseline.
+# Evidence basis (Mile 2 Phase A):
+#   sentence_transformers — python/harlo/encoder/semantic_encoder.py:13
+#   anthropic             — python/harlo/provider/claude.py:11
+#   pytest                — runner; pinned here so the [dev] install is self-contained
+# Excluded from [dev]: openai (provider/openai.py uses lazy/stub-fallback import).
+# Rationale captured in harness/path_c/baseline_resolution.md.
+dev = [
+    "sentence_transformers",
+    "anthropic",
+    "pytest",
+]
+
 [tool.maturin]
 manifest-path = "crates/hippocampus/Cargo.toml"
 features = ["pyo3/extension-module"]
