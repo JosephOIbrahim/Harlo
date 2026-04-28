@@ -1,0 +1,267 @@
+#usda 1.0
+(
+    "WARNING: THIS FILE IS GENERATED. DO NOT EDIT. (Hand-authored from HarloSchema.usda for Mile 2 Phase 2; if usdGenSchema --codeless is later invoked, regenerate and diff.)"
+)
+
+class "HarloPrim" (
+    doc = """Abstract root for every Harlo cognitive-state prim."""
+)
+{
+}
+
+class "HarloContainer" (
+    doc = """Abstract base for composite container prims."""
+)
+{
+}
+
+class AssociationPrim "AssociationPrim" (
+    doc = """Container for memory traces (Association Engine, Hippocampus)."""
+)
+{
+}
+
+class BrainStage "BrainStage" (
+    doc = """Root container for the entire cognitive state."""
+)
+{
+}
+
+class CognitiveProfilePrim "CognitiveProfilePrim" (
+    doc = """Container for personal calibration data (intake-derived)."""
+)
+{
+}
+
+class CompositionPrim "CompositionPrim" (
+    doc = """Container for LIVRPS opinion layers (Composition Engine)."""
+)
+{
+}
+
+class ElenchusPrim "ElenchusPrim" (
+    doc = """Container for verification engine state (Elenchus GVR)."""
+)
+{
+}
+
+class InquiryContainerPrim "InquiryContainerPrim" (
+    doc = """Container for active DMN hypotheses (Inquiry Engine)."""
+)
+{
+}
+
+class MotorContainerPrim "MotorContainerPrim" (
+    doc = """Container for pending motor actions (Motor Cortex)."""
+)
+{
+}
+
+class SkillsContainerPrim "SkillsContainerPrim" (
+    doc = """Container for per-domain skill tracking."""
+)
+{
+}
+
+class CompositionLayerPrim "CompositionLayerPrim" (
+    doc = """A single LIVRPS opinion layer."""
+)
+{
+    token arc_type = "local" (
+        allowedTokens = ["local", "inherit", "variant", "reference", "payload", "sublayer"]
+        doc = "LIVRPS arc type. Lower-case per Cmd 11. Default: local."
+    )
+    string opinion_json = "{}" (
+        doc = "JSON-encoded opinion blob (string sidecar per D8)."
+    )
+    bool permanent = false (
+        doc = "Permanent override flag (Amygdala reflex)."
+    )
+    double timestamp (
+        doc = "Authoring timestamp in Unix seconds (UTC)."
+    )
+}
+
+class GateStatusPrim "GateStatusPrim" (
+    doc = """Elenchus verification gate state."""
+)
+{
+    int cycle_count = 0 (
+        doc = "GVR cycle count. Capped at 3 per Rule 13."
+    )
+    double last_verified (
+        doc = "Last verification timestamp in Unix seconds (UTC)."
+    )
+    token verification_state = "pending" (
+        allowedTokens = ["trusted", "contested", "refuted", "pending"]
+        doc = "Current verification state. Default: pending."
+    )
+}
+
+class InquiryPrim "InquiryPrim" (
+    doc = """A single DMN hypothesis."""
+)
+{
+    double confidence = 0.0 (
+        doc = "Confidence in [0.0, 1.0]."
+    )
+    string hypothesis (
+        doc = "Hypothesis text."
+    )
+}
+
+class IntakeHistoryPrim "IntakeHistoryPrim" (
+    doc = """Intake administration log."""
+)
+{
+    string answer_embeddings_json = "[]" (
+        doc = "JSON-encoded float vector list (string sidecar per D9)."
+    )
+    string intake_version (
+        doc = "Intake form version identifier. Optional."
+    )
+    double last_intake (
+        doc = "Last intake timestamp in Unix seconds (UTC). Optional."
+    )
+}
+
+class MerkleRootPrim "MerkleRootPrim" (
+    doc = """Audit hash over /Brain/Association/Traces subtree."""
+)
+{
+    string root_hash (
+        doc = "Hex-encoded Merkle root hash."
+    )
+    int trace_count = 0 (
+        doc = "Number of traces at hash time."
+    )
+}
+
+class MotorPrim "MotorPrim" (
+    doc = """A pending motor action with basal-ganglia gate status."""
+)
+{
+    string action (
+        doc = "Action descriptor."
+    )
+    token gate_status = "inhibited" (
+        allowedTokens = ["inhibited", "approved", "executing"]
+        doc = "Basal-ganglia gate status. Default: inhibited per Rule 23."
+    )
+}
+
+class MultipliersPrim "MultipliersPrim" (
+    doc = """Personal calibration multipliers (intake-derived)."""
+)
+{
+    double allostatic_threshold = 1.0 (
+        doc = "Allostatic-load threshold for System 2 wake."
+    )
+    double detail_orientation = 0.5 (
+        doc = "Detail-orientation calibration."
+    )
+    double hebbian_alpha = 0.01 (
+        doc = "Hebbian learning rate."
+    )
+    double reconstruction_threshold = 0.3 (
+        doc = "Reconstruction quality threshold."
+    )
+    double surprise_threshold = 2.0 (
+        doc = "Surprise threshold (z-score) for novelty detection."
+    )
+}
+
+class SessionPrim "SessionPrim" (
+    doc = """Session metadata and dual-process routing state."""
+)
+{
+    string current_session_id (
+        doc = "Active session identifier."
+    )
+    int exchange_count = 0 (
+        doc = "Number of exchanges in current session."
+    )
+    double last_query_surprise = 0.0 (
+        doc = "Surprise score of last query."
+    )
+    token last_retrieval_path = "system_1" (
+        allowedTokens = ["system_1", "system_2"]
+        doc = "Dual-process retrieval path. Default: system_1."
+    )
+    double surprise_rolling_mean = 0.0 (
+        doc = "Rolling mean of recent surprise scores."
+    )
+    double surprise_rolling_std = 0.0 (
+        doc = "Rolling stddev of recent surprise scores."
+    )
+}
+
+class SkillPrim "SkillPrim" (
+    doc = """Per-domain skill tracking. Prim name = domain identifier."""
+)
+{
+    double first_seen (
+        doc = "First observation timestamp in Unix seconds (UTC)."
+    )
+    double[] growth_arc = [] (
+        doc = "Per-observation growth scores."
+    )
+    double hebbian_density = 0.0 (
+        doc = "Hebbian-density signal in [0.0, 1.0]."
+    )
+    double last_seen (
+        doc = "Last observation timestamp in Unix seconds (UTC)."
+    )
+    int trace_count = 0 (
+        doc = "Number of traces associated with this domain."
+    )
+}
+
+class TracePrim "TracePrim" (
+    doc = """A single memory trace in the Association Engine."""
+)
+{
+    string co_activations_json = "{}" (
+        doc = "JSON-encoded dict[trace_id, count] (string sidecar per D8)."
+    )
+    string competitions_json = "{}" (
+        doc = "JSON-encoded dict[trace_id, count] (string sidecar per D8)."
+    )
+    string content_hash (
+        doc = "Opaque content hash (16-char hex)."
+    )
+    string hebbian_strengthen_mask_hex (
+        doc = "512-char hex sidecar for 2048-bit boolean mask (D8)."
+    )
+    string hebbian_weaken_mask_hex (
+        doc = "512-char hex sidecar for 2048-bit boolean mask (D8)."
+    )
+    double last_accessed (
+        doc = "Last access timestamp in Unix seconds (UTC)."
+    )
+    string sdr_hex (
+        doc = "512-char hex sidecar for 2048-bit boolean SDR (D8)."
+    )
+    double strength = 0.0 (
+        doc = "Lazy-decay strength."
+    )
+}
+
+class "Provenance" (
+    doc = """Source/origin metadata as a singleApply API schema (D10)."""
+)
+{
+    string event_hash (
+        doc = "Opaque hash of the originating event."
+    )
+    double origin_timestamp (
+        doc = "Origin timestamp in Unix seconds (UTC)."
+    )
+    string session_id (
+        doc = "Session identifier (string FK to SessionPrim.current_session_id)."
+    )
+    token source_type (
+        allowedTokens = ["user_direct", "external_reference", "system_inferred", "hebbian_derived", "intake_calibrated"]
+        doc = "Provenance source classification."
+    )
+}
