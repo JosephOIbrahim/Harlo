@@ -429,11 +429,19 @@ class TracePrim "TracePrim" (
     }
     doc = """A single memory trace in the Association Engine.
 
-    Path: /Brain/Association/Traces/<trace_id>
+    Path: /Brain/Association/Traces/<sanitized_name>
+    The prim's last path component is a TF-identifier-safe sanitized
+    form of the trace_id (USD requires identifier-safe prim names).
+    The canonical trace_id is the `trace_id` attribute below; readers
+    use that for the dataclass dict key, not the prim name.
+
     Codec-blockers per D8/D9: SDR fields are 512-char hex string
     sidecars; co_activations/competitions are JSON-string sidecars."""
 )
 {
+    string trace_id (
+        doc = "Canonical trace identifier (Forge clarification C3 of Phase 1 design — original ID, not the sanitized prim name)."
+    )
     string co_activations_json = "{}" (
         doc = "JSON-encoded dict[trace_id, count] (string sidecar per D8)."
     )

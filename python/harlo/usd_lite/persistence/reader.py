@@ -68,8 +68,12 @@ def _get_attr(prim: "Usd.Prim", name: str, default=None):
 
 
 def _read_trace(prim: "Usd.Prim") -> TracePrim:
+    # Canonical trace_id lives on the `trace_id` attribute (Forge
+    # clarification C3); fall back to the prim name if the attribute
+    # is absent (legacy stages predating C3).
+    trace_id = _get_attr(prim, "trace_id") or prim.GetName()
     return TracePrim(
-        trace_id=prim.GetName(),
+        trace_id=trace_id,
         sdr=hex_to_sdr(_get_attr(prim, "sdr_hex", "0" * 512)),
         content_hash=_get_attr(prim, "content_hash", ""),
         strength=float(_get_attr(prim, "strength", 0.0)),
@@ -223,7 +227,8 @@ def _read_association(stage: "Usd.Stage") -> AssociationPrim:
     traces: dict[str, TracePrim] = {}
     if container.IsValid():
         for child in container.GetChildren():
-            traces[child.GetName()] = _read_trace(child)
+            trace = _read_trace(child)
+            traces[trace.trace_id] = trace
     return AssociationPrim(traces=traces)
 
 

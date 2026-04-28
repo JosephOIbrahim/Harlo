@@ -221,6 +221,9 @@ class TracePrim "TracePrim" (
     doc = """A single memory trace in the Association Engine."""
 )
 {
+    string trace_id (
+        doc = "Canonical trace identifier (C3: original ID, not sanitized prim name)."
+    )
     string co_activations_json = "{}" (
         doc = "JSON-encoded dict[trace_id, count] (string sidecar per D8)."
     )

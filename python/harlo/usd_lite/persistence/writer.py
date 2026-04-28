@@ -97,6 +97,7 @@ def _set_float_array(prim: "Usd.Prim", name: str, value: list[float]) -> None:
 
 def _write_trace(stage: "Usd.Stage", path: str, t: TracePrim) -> None:
     prim = stage.DefinePrim(path, "TracePrim")
+    _set_string(prim, "trace_id", t.trace_id)
     _set_string(prim, "co_activations_json", json.dumps(t.co_activations, sort_keys=True))
     _set_string(prim, "competitions_json", json.dumps(t.competitions, sort_keys=True))
     _set_string(prim, "content_hash", t.content_hash)
@@ -200,10 +201,28 @@ def _write_elenchus(stage: "Usd.Stage", e: ElenchusPrim) -> None:
         _set_int(prim, "trace_count", mr.trace_count)
 
 
+def _sanitize_prim_name(name: str) -> str:
+    """Produce a TF-identifier-safe prim name from an arbitrary string.
+
+    USD requires prim names to match `^[A-Za-z_][A-Za-z0-9_]*$`. We
+    replace every non-identifier char with `_` and prefix with `t_`
+    when the first char is a digit. The result is a presentation-only
+    name; the canonical trace_id lives on the `trace_id` attribute
+    (Forge clarification C3).
+    """
+    if not name:
+        return "t_empty"
+    sanitized = "".join(c if (c.isalnum() or c == "_") else "_" for c in name)
+    if sanitized[0].isdigit():
+        sanitized = "t_" + sanitized
+    return sanitized
+
+
 def _write_association(stage: "Usd.Stage", a: AssociationPrim) -> None:
     stage.DefinePrim("/Brain/Association", "AssociationPrim")
     for trace_id in sorted(a.traces):
-        _write_trace(stage, f"/Brain/Association/Traces/{trace_id}", a.traces[trace_id])
+        sanitized = _sanitize_prim_name(trace_id)
+        _write_trace(stage, f"/Brain/Association/Traces/{sanitized}", a.traces[trace_id])
 
 
 def _write_composition(stage: "Usd.Stage", c: CompositionPrim) -> None:
