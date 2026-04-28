@@ -1,0 +1,16 @@
+{
+  "benchmark": "usd_lite.parse(data/hebbian_seeded.usda)",
+  "samples_count": 200,
+  "warmup": 20,
+  "traces_in_stage": 16,
+  "units": "microseconds",
+  "p50_us": 4347.1,
+  "p95_us": 4785.4,
+  "p99_us": 6296.9,
+  "mean_us": 4402.47,
+  "min_us": 4001.6,
+  "max_us": 6597.9,
+  "captured_at": "2026-04-28",
+  "phase": "Phase 0 baseline",
+  "note": "Phase 3 regression guard compares against this. Phase 0 makes no runtime-tier changes; expected unchanged at end of session."
+}

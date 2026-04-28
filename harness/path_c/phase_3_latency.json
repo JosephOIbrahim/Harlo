@@ -1,0 +1,12 @@
+{
+  "phase": "Phase 3 post-sync-layer",
+  "p50_us": 4136.7,
+  "p95_us": 4615.6,
+  "p99_us": 6078.1,
+  "mean_us": 4228.66,
+  "baseline_p50_us": 4347.1,
+  "baseline_p95_us": 4785.4,
+  "delta_p50_pct": -4.84,
+  "delta_p95_pct": -3.55,
+  "gate_pass": true
+}

@@ -1,0 +1,25 @@
+FAILED tests/test_provider/test_provider.py::TestGenerateWithBarrier::test_barrier_rejects_invalid_json
+FAILED tests/test_provider/test_provider.py::TestGenerateWithBarrier::test_barrier_not_applied_by_default
+FAILED tests/test_provider/test_provider.py::TestGenerateGVR::test_gvr_runs_on_output
+FAILED tests/test_provider/test_provider.py::TestGenerateGVR::test_gvr_uses_provider_for_revision
+FAILED tests/test_provider/test_provider.py::TestGenerateFactory::test_get_provider_claude
+FAILED tests/test_provider/test_provider.py::TestGenerateFactory::test_get_provider_claude_default
+FAILED tests/test_tactical/test_tactical.py::TestRouterImport::test_import_from_file
+ERROR tests/test_onnx/test_fidelity.py
+ERROR tests/test_encoder/test_semantic.py::TestSemanticSimilarity::test_paraphrases_closer_than_unrelated
+ERROR tests/test_encoder/test_semantic.py::TestSemanticSimilarity::test_rain_paraphrase
+ERROR tests/test_encoder/test_semantic.py::TestSemanticSimilarity::test_speed_paraphrase
+ERROR tests/test_encoder/test_semantic.py::TestSemanticSimilarity::test_identical_text_zero_distance
+ERROR tests/test_encoder/test_semantic.py::TestSemanticSimilarity::test_batch_encode_matches_single
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinRecall::test_recall_returns_valid_json
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinRecall::test_recall_empty_db
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinRecall::test_recall_deep_returns_more
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinRecall::test_recall_has_context_string
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinStore::test_store_returns_trace_id
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinStore::test_store_with_tags_and_domain
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinStore::test_store_hot_trace_not_in_warm_recall
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinPatterns::test_patterns_empty_db
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinPatterns::test_patterns_returns_list
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinSessionStatus::test_session_status_empty
+ERROR tests/test_mcp/test_mcp_server.py::TestTwinSessionStatus::test_session_status_with_active_session
+48 failed, 1065 passed, 1 skipped, 17 errors in 13.96s

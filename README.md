@@ -20,10 +20,11 @@ layers — no cloud dependency, no data mining, no rented access to your own min
 ## Status
 
 ```
-PRODUCTION LIVE — Harlo v3.3.1
-250 sprint tests · 890 core tests · 41 Rust tests · All passing
-458 organic observations collected
-5 sprints shipped · Real .usda on disk · Predictions flowing
+PRODUCTION LIVE — Harlo v3.4.0-path-c
+1,172 tests passing · Real OpenUSD canonical persistence · USD-Lite runtime tier
+8/8 phase gates passed · 19 D-block decisions clean (D1-D19)
+Substrate-unified with sister project Moneta · P1 CIP defensible
+458 organic observations collected · 5 sprints shipped · Path C closed (Step 3)
 ```
 
 | Sprint | Tests | What Shipped |
@@ -33,6 +34,186 @@ PRODUCTION LIVE — Harlo v3.3.1
 | **S3** Hydra Delegates | 85 | HdCognitiveDelegate ABC, DelegateRegistry (capability matching), HdClaude + HdClaudeCode, compute_routing (requirements not names), OOB consent tokens (HMAC-signed, TTL), sublayer-per-delegate concurrency, CognitiveEngine singleton, 20-exchange e2e |
 | **S4** Real USD | 59 | CognitiveStage wrapping `pxr.Usd.Stage`, stage_factory toggle, `.usda` files on disk with time-sampled CognitiveObservation, delegate sublayer `.usda` files, backend parity verified (mock = real USD) |
 | **S5** Production | 22 | Graceful degradation (independent failure isolation), health check endpoint, kill switches (`ENGINE_ENABLED`, `USE_REAL_USD`, `OBSERVATION_LOGGING`, `PREDICTION_ENABLED`), first session verified, production docs |
+| **Path C** Step 3 v3.4.0 | +39 | Real OpenUSD as canonical persistence (codeless schema, 21 prim types under `harlo` plugin separate from Moneta); USD-Lite engine preserved as fast in-memory runtime tier (Fabric pattern); sync layer per D4 policy table; migration script for USD-Lite v1 → real USD; substrate-unified with sister project Moneta. P1 CIP framing now defensible. |
+
+---
+
+## Architecture · Path C (Fabric Pattern)
+
+v3.4.0-path-c introduced **codeless OpenUSD schemas** as canonical
+persistence while preserving the existing USD-Lite engine as a fast
+in-memory runtime tier. Path C — the **Fabric pattern** — separates
+the two tiers so each can win at what it's good at: real OpenUSD owns
+durability and patent claims; USD-Lite owns hot-path latency.
+
+### Fabric pattern
+
+```mermaid
+flowchart TB
+    subgraph PERSISTENCE["PERSISTENCE LAYER · canonical truth"]
+        SCHEMA["HarloSchema.usda<br/>21 prim types · codeless"]:::substrate
+        PLUG["plugInfo.json<br/>harlo namespace"]:::substrate
+        DISK[".usda files on disk<br/>via pxr.Usd.Stage"]:::substrate
+    end
+
+    subgraph SYNCLAYER["SYNC LAYER · write-side dispatch"]
+        WT["write_through<br/>SessionPrim · GateStatusPrim<br/>MerkleRootPrim · MotorPrim"]:::substrate
+        CP["checkpoint<br/>TracePrim · CompositionLayerPrim<br/>SkillPrim · intake/multipliers"]:::substrate
+    end
+
+    subgraph RUNTIME["RUNTIME LAYER · hot-path reads"]
+        ENGINE["USD-Lite engine<br/>regex parser · sub-ms reads"]:::runtime
+        DC["21 dataclass prim types<br/>Python in-memory"]:::runtime
+    end
+
+    MIG["migrate_path_c.py<br/>USD-Lite v1 → real USD<br/>idempotent · CLI"]:::substrate
+
+    PERSISTENCE -->|"sync at boundaries"| SYNCLAYER
+    SYNCLAYER --> RUNTIME
+    MIG -.->|"upgrade path"| PERSISTENCE
+
+    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
+    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+```
+
+The persistence layer is the canonical truth. The runtime layer is the
+fast tier that tests and live sessions exercise. The sync layer routes
+mutations between them based on a per-prim policy table. Reads always
+hit the runtime tier; persistence is touched only at sync boundaries
+(Constitution Law 4).
+
+The `[substrate]` extra activates the persistence layer:
+
+```bash
+pip install -e .[substrate]   # Pulls usd-core 26.5; activates persistence/
+```
+
+Core Harlo runs without `[substrate]` — `pxr` stays optional per
+Constitution Law 3.
+
+### Schema · IsA hierarchy
+
+The codeless schema in `schema/HarloSchema.usda` declares 21 prim types
+in a 3-tier IsA hierarchy parallel to containment (D2):
+
+```mermaid
+flowchart TB
+    Typed["Typed · USD root"]:::substrate
+
+    HP["HarloPrim · abstract"]:::substrate
+    HC["HarloContainer · abstract"]:::substrate
+
+    Typed --> HP
+    HP --> HC
+
+    BS["BrainStage"]:::substrate
+    AP["AssociationPrim"]:::substrate
+    CP["CompositionPrim"]:::substrate
+    EP["ElenchusPrim"]:::substrate
+    ICP["InquiryContainerPrim"]:::substrate
+    MCP["MotorContainerPrim"]:::substrate
+    SCP["SkillsContainerPrim"]:::substrate
+    CPP["CognitiveProfilePrim"]:::substrate
+
+    HC --> BS
+    HC --> AP
+    HC --> CP
+    HC --> EP
+    HC --> ICP
+    HC --> MCP
+    HC --> SCP
+    HC --> CPP
+
+    TP["TracePrim"]:::runtime
+    CLP["CompositionLayerPrim"]:::runtime
+    GSP["GateStatusPrim"]:::runtime
+    MRP["MerkleRootPrim"]:::runtime
+    SP["SessionPrim"]:::runtime
+    IP["InquiryPrim"]:::runtime
+    MP["MotorPrim"]:::runtime
+    SkP["SkillPrim"]:::runtime
+    MuP["MultipliersPrim"]:::runtime
+    IHP["IntakeHistoryPrim"]:::runtime
+
+    HP --> TP
+    HP --> CLP
+    HP --> GSP
+    HP --> MRP
+    HP --> SP
+    HP --> IP
+    HP --> MP
+    HP --> SkP
+    HP --> MuP
+    HP --> IHP
+
+    APIB["APISchemaBase · USD"]:::substrate
+    PROV["Provenance · applied API"]:::substrate
+    APIB --> PROV
+    PROV -.->|"attaches to"| CLP
+
+    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
+    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+```
+
+- **Two abstract bases:** `HarloPrim` (root of every Harlo type) and
+  `HarloContainer` (parent of structural composites).
+- **Eight concrete container types:** `BrainStage` plus seven subsystem
+  containers (Association, Composition, Elenchus, Inquiry, Motor,
+  Skills, CognitiveProfile).
+- **Ten concrete leaf types** holding the actual cognitive-state
+  attributes.
+- **One singleApply API schema** (`Provenance`, per D10) that attaches
+  origin metadata to host prims without cluttering the IsA tree.
+
+Five enum types use lower-case `allowedTokens` per Constitution Cmd 11:
+`SourceType`, `VerificationState`, `RetrievalPath`, `MotorGateStatus`,
+`ArcType`. Cross-plugin: zero collisions with sister project Moneta's
+`MonetaMemory` typeName (D3 verified).
+
+### Sync layer · per-prim policy
+
+The sync layer at `python/harlo/sync/` routes writes per the D4 policy
+table:
+
+```mermaid
+flowchart LR
+    START["BrainStage<br/>write"]:::substrate
+    DECISION{"Prim type<br/>policy?"}:::substrate
+
+    WT["write_through<br/>MotorPrim · GateStatusPrim<br/>MerkleRootPrim · SessionPrim"]:::substrate
+    CP["checkpoint<br/>TracePrim · CompositionLayerPrim<br/>SkillPrim · intake/multipliers<br/>InquiryPrim"]:::substrate
+    INMEM["InjectionPrim<br/>D5 · session-scoped"]:::runtime
+
+    OUT_WT["immediate<br/>sync to disk"]:::substrate
+    OUT_CP["deferred sync<br/>at checkpoint"]:::substrate
+    OUT_INMEM["no persistence"]:::runtime
+
+    START --> DECISION
+    DECISION -->|"write-through"| WT
+    DECISION -->|"checkpoint"| CP
+    DECISION -.->|"in-memory-only"| INMEM
+    WT --> OUT_WT
+    CP --> OUT_CP
+    INMEM -.-> OUT_INMEM
+
+    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
+    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+```
+
+- **write_through** — synchronous persistence on every mutation. Used
+  for consistency-critical prims (`SessionPrim`, `GateStatusPrim`,
+  `MerkleRootPrim`) and the safety-critical `MotorPrim` (D4 ruling).
+- **checkpoint** — deferred persistence; callers mark prim paths dirty
+  during the session and flush explicitly. Used for high-write-rate
+  prims to keep per-mutation persistence cost bounded.
+- **In-memory only** — `InjectionPrim` is session-scoped per D5
+  (evicted from disk; runtime dataclass retained for `/inject` command
+  flows).
+
+Containers inherit policy from their dominant child type. The migration
+script (`python/harlo/migrate_path_c.py`) converts existing USD-Lite
+text-format captures to real-USD format; read-tolerant on input,
+idempotent on already-migrated files.
 
 ---
 
@@ -351,6 +532,7 @@ src/                               Cognitive State Machine + Production Engine
 
 python/harlo/             Core Twin: MCP server + biologically-architected memory
 ├── mcp_server.py                  8 MCP tools over stdio
+├── migrate_path_c.py              Path C migration script (USD-Lite v1 → real USD)
 ├── brainstem/                     Lossless translation (14 adapter files)
 ├── elenchus/                      Verification engine (GVR, trace-excluded)
 ├── elenchus_v8/                   Deferred verification (Actor-side)
@@ -366,13 +548,36 @@ python/harlo/             Core Twin: MCP server + biologically-architected memor
 ├── intake/                        Neuropsych-informed cognitive profile
 ├── skills/                        Incremental competence tracking
 ├── session/                       Session lifecycle management
-└── usd_lite/                      17 prim dataclasses, .usda serialization
+├── sync/                          Path C sync layer (write-side dispatch)
+│   ├── policy.py                  Per-prim policy table (D4)
+│   ├── write_through.py           Synchronous persist strategy
+│   └── checkpoint.py              Deferred-flush strategy
+└── usd_lite/                      21 prim dataclasses, .usda serialization
+    └── persistence/               Path C real-USD writer/reader
+        ├── writer.py              BrainStage → real-USD .usda via pxr
+        └── reader.py              real-USD .usda → BrainStage
+
+schema/                            Path C codeless schema artifacts
+├── HarloSchema.usda               21 prim types, IsA hierarchy, allowedTokens
+├── plugInfo.json                  harlo namespace plugin registration
+└── generatedSchema.usda           Compiled form (hand-authored)
 
 crates/hippocampus/                Rust hot path (SDR, XOR search, lazy decay, apoptosis)
 
 data/stages/                       Real .usda files (your cognitive state)
-├── harlo.usda            Root stage with time-sampled observations
+├── brain.usda                     Path C root stage (real-USD via pxr)
+├── harlo.usda                     Sprint 4 root stage (vendored USD path)
 └── delegates/                     Per-delegate sublayers
+
+harness/path_c/                    Path C surgery harness (Mile 1 → Mile 3)
+├── 01_KICKOFF.md, 02_CONSTITUTION.md, 03_HANDOFF.md, 04_DEEP_THINK_BRIEF.md
+├── 05_DECISIONS.md (D1-D5), 06_DECISIONS_PHASE_1.md (D6-D14),
+│   07_DECISIONS_PHASE_4.md (D15-D19)
+├── blocker_decisions.md           Codec-blocker resolution log
+├── memory_hypothesis.md, substrate_pin.md, baseline_resolution.md
+├── tracking_issues.md             TI-001 (closed-on-arrival)
+└── baseline_tests.txt, baseline_latency.json, phase_3_latency.json,
+    phase_6_latency.json
 ```
 
 ---
@@ -381,15 +586,34 @@ data/stages/                       Real .usda files (your cognitive state)
 
 ```bash
 git clone <repo-url> && cd harlo
-python -m venv .venv && source .venv/bin/activate
+python3.12 -m venv .venv312 && source .venv312/bin/activate
+
+# Core install (no real-USD persistence)
 pip install -e .
-pip install pydantic networkx xgboost scikit-learn joblib
+
+# Path C real-USD persistence (optional, requires Python 3.12)
+pip install -e .[substrate]      # Pulls usd-core 26.5
+
+# Test-suite dev dependencies (sentence_transformers, anthropic, pytest)
+pip install -e .[dev]
 
 # Health check
 python scripts/health_check.py
 
 # First session (10-exchange simulation)
 python scripts/first_session.py
+
+# Migrate an existing USD-Lite stage to real-USD format (Path C)
+python -m harlo.migrate_path_c data/stages/your_stage.usda --output data/stages/brain.usda
+```
+
+On Windows, if `pip install -e .[substrate]` fails on a `.pyd` file lock
+during the maturin rebuild (D13 documented quirk), close any process
+holding `python/harlo/hippocampus.cp312-win_amd64.pyd` open, or install
+the substrate dep directly:
+
+```bash
+pip install "usd-core>=24.05"   # Same end state; bypasses editable rebuild
 ```
 
 Environment variables:
@@ -404,7 +628,7 @@ PREDICTION_ENABLED=1     # XGBoost predictions
 
 ## The 33 Rules
 
-The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), motor safety (inhibition default, one action at a time, RED kills everything), and Hebbian constraints (Merkle isolation, dual masks not XOR, homeostatic plasticity). These aren't guidelines — they're structural constraints enforced by 1,140+ tests. See `CLAUDE.md` for the full specification.
+The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), motor safety (inhibition default, one action at a time, RED kills everything), and Hebbian constraints (Merkle isolation, dual masks not XOR, homeostatic plasticity). These aren't guidelines — they're structural constraints enforced by **1,172 tests** (Path C v3.4.0; +39 since Mile 1 baseline). See `CLAUDE.md` for the full specification and `harness/path_c/` for the Path C surgery harness (D1–D19 decisions log, phase gate audits).
 
 ---
 

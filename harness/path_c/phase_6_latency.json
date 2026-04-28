@@ -1,0 +1,9 @@
+{
+  "phase": "Phase 6 final",
+  "p50_us": 4097.8,
+  "p95_us": 4591.6,
+  "baseline_p50_us": 4347.1,
+  "baseline_p95_us": 4785.4,
+  "delta_p50_pct": -5.73,
+  "delta_p95_pct": -4.05
+}
