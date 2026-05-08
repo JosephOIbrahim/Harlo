@@ -418,20 +418,22 @@ def twin_patterns() -> str:
     within 24h windows), and allostatic load escalation across sessions.
     """
     _ensure_data_dir()
+    enrichment = _enrich("twin_patterns", {})
 
     try:
-        from modulation.detector import PatternDetector
-    except ImportError:
-        from harlo.modulation.detector import PatternDetector
-
-    try:
+        try:
+            from modulation.detector import PatternDetector
+        except ImportError:
+            from harlo.modulation.detector import PatternDetector
         detector = PatternDetector(DB_PATH)
         patterns = detector.detect_all()
-        return json.dumps({
+        response = {
             "status": "ok",
             "patterns": [p.to_dict() for p in patterns],
             "count": len(patterns),
-        }, default=str)
+        }
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 
@@ -479,6 +481,7 @@ def resolve_verifications(verdicts: list[dict]) -> str:
         verdicts: List of {"claim_id": str, "verdict": bool} dicts.
     """
     _ensure_data_dir()
+    enrichment = _enrich("resolve_verifications", {"count": len(verdicts)})
 
     try:
         from harlo.elenchus_v8 import ElenchusQueue
@@ -499,12 +502,14 @@ def resolve_verifications(verdicts: list[dict]) -> str:
                 "status": claim.status if claim else "not_found",
                 "trust_delta": delta,
             })
-        return json.dumps({
+        response = {
             "status": "ok",
             "resolved": results,
             "remaining_pending": queue.pending_count(),
             "trust_score": ledger.get_score(),
-        })
+        }
+        response.update(_v9_block(enrichment))
+        return json.dumps(response)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 
