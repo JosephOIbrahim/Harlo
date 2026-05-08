@@ -276,7 +276,6 @@ def generate_session(
             session_id=session_id,
             observation_index=i,
             exchange_index=i,
-            wall_clock_delta=rng.uniform(5.0, 120.0),
             state=StateBlock(
                 exercise_recency_days=profile.exercise_recency,
                 sleep_quality=profile.sleep_quality,

@@ -183,7 +183,6 @@ class CognitiveObservation(BaseModel):
     session_id: str = ""
     observation_index: int = Field(default=0, ge=0)
     exchange_index: int = Field(default=0, ge=0)
-    wall_clock_delta: float = Field(default=0.0, ge=0.0)
 
     state: StateBlock = Field(default_factory=StateBlock)
     action: ActionBlock = Field(default_factory=ActionBlock)
