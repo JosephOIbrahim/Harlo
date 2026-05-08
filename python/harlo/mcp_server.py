@@ -206,28 +206,31 @@ def twin_recall(query: str, depth: str = "normal") -> str:
 
     Uses semantic SDR encoding (BGE + LSH) to find relevant stored traces
     via hamming distance. Returns context string, matching traces, and
-    confidence score.
+    confidence score. The recall runs through the v9 engine so the
+    exchange_index advances and schedule state stays current.
 
     Args:
         query: The search query text.
         depth: "normal" (top 5) or "deep" (top 15) recall depth.
     """
     _ensure_data_dir()
+    enrichment = _enrich("twin_recall", {"query": query, "depth": depth})
 
     try:
-        from encoder import semantic_recall
-    except ImportError:
-        from harlo.encoder import semantic_recall
-
-    try:
+        try:
+            from encoder import semantic_recall
+        except ImportError:
+            from harlo.encoder import semantic_recall
         result = semantic_recall(DB_PATH, query, depth=depth)
-        return json.dumps({
+        response = {
             "status": "ok",
             "context": result.get("context", ""),
             "traces": result.get("traces", []),
             "confidence": result.get("confidence", 0.0),
             "trace_count": len(result.get("traces", [])),
-        }, default=str)
+        }
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 
@@ -245,12 +248,13 @@ def query_past_experience(query: str, limit: int = 10) -> str:
         limit: Maximum results to return (default 10).
     """
     _ensure_data_dir()
+    enrichment = _enrich("query_past_experience", {"query": query, "limit": limit})
 
     try:
         from harlo.federated_recall import query_past_experience as qpe
 
         results = qpe(str(DATA_DIR / "twin.db"), query, limit=limit)
-        return json.dumps({
+        response = {
             "status": "ok",
             "results": [
                 {
@@ -264,7 +268,9 @@ def query_past_experience(query: str, limit: int = 10) -> str:
                 for r in results
             ],
             "count": len(results),
-        }, default=str)
+        }
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 
@@ -300,9 +306,11 @@ def twin_store(
 ) -> str:
     """Store a memory trace. Zero-encoding hot path (<2ms).
 
-    Writes to the Hot Tier (L1) immediately with no model loading or SDR
-    encoding. Traces are promoted to Warm Tier (L2) asynchronously by the
-    Observer process.
+    Writes to the v8 Hot Tier (L1) immediately with no model loading or SDR
+    encoding (traces promoted to Warm Tier asynchronously by the Observer).
+    The same call also drives a v9 process_exchange so the cognitive engine
+    records a CognitiveObservation for this exchange — different stores,
+    different concepts (v8 = the user-facing memory, v9 = engine telemetry).
 
     Optionally stores an injection state transition alongside the trace.
 
@@ -315,6 +323,10 @@ def twin_store(
             exchange_count (int), transition (str), session_id (str).
     """
     _ensure_data_dir()
+    enrichment = _enrich(
+        "twin_store",
+        {"message": message, "tags": tags or [], "domain": domain or "general"},
+    )
 
     try:
         hot = _get_hot_store()
@@ -344,6 +356,7 @@ def twin_store(
             )
             result["injection_trace_id"] = inj_trace_id
 
+        result.update(_v9_block(enrichment))
         return json.dumps(result, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
