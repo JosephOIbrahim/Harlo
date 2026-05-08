@@ -113,6 +113,76 @@ def _v9_block(enrichment) -> dict:
         }
     }
 
+
+def _v9_status_block(enrichment) -> dict:
+    """Rich v9 view used by twin_session_status: engine health + last
+    observation state + schedule + routing.
+
+    Falls back to the slim _v9_block shape if anything in the rich view
+    fails (defensive — status calls shouldn't crash on enrichment errors).
+    """
+    if enrichment is None:
+        return {}
+
+    eng = _get_engine()
+    if eng is None:
+        return _v9_block(enrichment)
+
+    try:
+        health = eng.get_health()
+    except Exception:
+        health = {}
+
+    last_obs = None
+    try:
+        if eng._observations:
+            last_obs = eng._observations[-1]
+    except Exception:
+        last_obs = None
+
+    block = {
+        "exchange_index": enrichment.get("exchange_index"),
+        "engine": {
+            "stage_type": health.get("stage_type"),
+            "predictor": health.get("predictor"),
+            "observations_logged": health.get("observations_logged"),
+            "delegates_registered": health.get("delegates_registered"),
+            "memory_queue_size": health.get("memory_queue_size"),
+            "pending_save": health.get("pending_save"),
+        },
+        "routing": {
+            "delegate_id": enrichment.get("delegate_id"),
+            "expert": enrichment.get("expert"),
+        },
+        "prediction": enrichment.get("prediction"),
+    }
+
+    if last_obs is not None:
+        try:
+            block["state"] = {
+                "momentum": last_obs.state.momentum.name,
+                "burnout": last_obs.state.burnout.name,
+                "energy": last_obs.state.energy.name,
+                "altitude": last_obs.state.altitude.name,
+            }
+            block["dynamics"] = {
+                "burst_phase": last_obs.dynamics.burst_phase.name,
+                "session_exchange_count": last_obs.dynamics.session_exchange_count,
+                "exchanges_without_break": last_obs.dynamics.exchanges_without_break,
+            }
+            block["schedule"] = {
+                "kind": last_obs.schedule.kind.name,
+                "override_reason": last_obs.schedule.override_reason,
+            }
+            block["allostasis"] = {
+                "load": round(float(last_obs.allostasis.load), 4),
+                "trend": last_obs.allostasis.trend.name,
+            }
+        except Exception:
+            pass
+
+    return {"v9": block}
+
 # Create server
 server = FastMCP(
     name="harlo",
@@ -337,10 +407,14 @@ def twin_patterns() -> str:
 def twin_session_status() -> str:
     """Get current session information from the Harlo.
 
-    Returns all active (non-closed, non-expired) sessions with their
-    exchange count, allostatic token load, active domain, and timing.
+    Returns v8 active session list (exchange count, allostatic load, domain,
+    timing) plus a v9 block carrying the cognitive engine's full live state:
+    momentum, burnout, energy, burst phase, schedule, allostatic load, and
+    the active routing decision. Schedule reflects the current wall-clock
+    against the authored /schedule/ on the cognitive twin stage.
     """
     _ensure_data_dir()
+    enrichment = _enrich("twin_session_status", {})
 
     try:
         from session.manager import SessionManager
@@ -350,11 +424,13 @@ def twin_session_status() -> str:
     try:
         mgr = SessionManager(DB_PATH)
         active = mgr.list_active()
-        return json.dumps({
+        response = {
             "status": "ok",
             "active_sessions": [s.to_dict() for s in active],
             "count": len(active),
-        }, default=str)
+        }
+        response.update(_v9_status_block(enrichment))
+        return json.dumps(response, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 
