@@ -3,11 +3,19 @@
 Wraps the Twin's core functions (recall, store, coach, patterns, session)
 as MCP tools over stdio transport. v8.0: No LLM client code — the Actor
 (Claude) reasons, the Twin (Observer) stores and projects.
+
+Bridges into the v9 cognitive_engine (src/) via a lazy singleton: every
+tool call runs through process_exchange to keep exchange_index monotonic
+and the schedule state up to date. Engine failures degrade gracefully
+to v8-only behavior — every tool body still works without the engine.
 """
 
 from __future__ import annotations
 
+import atexit
 import json
+import logging
+import threading
 import time
 import uuid
 
@@ -21,6 +29,89 @@ DATA_DIR = PROJECT_ROOT / "data"
 DB_PATH = str(DATA_DIR / "twin.db")
 TRUST_DELTA_VERIFIED = 0.02
 TRUST_DELTA_REJECTED = -0.05
+
+# ─── v9 cognitive engine bridge ─────────────────────────────────────────
+# Lazy singleton; first tool call initializes. Init failure → False
+# sentinel, callers fall back to v8-only. Two locks: _engine_lock
+# guards init (FastMCP can dispatch concurrent calls), _exchange_lock
+# serializes process_exchange (pxr.Usd.Stage writes are not thread-safe;
+# exchange_index must be monotonic).
+
+_engine = None
+_engine_lock = threading.Lock()
+_exchange_lock = threading.Lock()
+
+
+def _get_engine():
+    """Lazy-initialize the v9 cognitive engine. Returns None on failure.
+
+    Once init fails, the sentinel sticks for the process lifetime — callers
+    stay in v8-only mode rather than retrying every call.
+    """
+    global _engine
+    if _engine is not None:
+        return _engine if _engine else None
+    with _engine_lock:
+        if _engine is None:
+            try:
+                # src/ is not pip-installed; ensure it's importable
+                import sys as _sys
+                _root = str(PROJECT_ROOT)
+                if _root not in _sys.path:
+                    _sys.path.insert(0, _root)
+                from src.cognitive_engine import CognitiveEngine
+                _engine = CognitiveEngine(
+                    stage_dir=str(DATA_DIR / "stages"),
+                )
+                atexit.register(_engine.close)
+                logging.getLogger(__name__).info(
+                    "v9 cognitive engine initialized (stage_type=%s)",
+                    _engine.stage_type,
+                )
+            except Exception as e:
+                logging.getLogger(__name__).warning(
+                    "v9 engine init failed, falling back to v8-only: %s", e,
+                )
+                _engine = False  # sentinel — don't retry on subsequent calls
+    return _engine if _engine else None
+
+
+def _enrich(tool_name: str, tool_input: dict, session_id: str = "live"):
+    """Run a v9 exchange and return the engine response dict, or None.
+
+    Serializes exchanges with _exchange_lock so concurrent MCP tools don't
+    race on USD writes or exchange_index increments. Engine errors are
+    logged and swallowed; callers continue with their v8 path.
+    """
+    eng = _get_engine()
+    if eng is None:
+        return None
+    try:
+        from harlo.clock import now_iso
+        with _exchange_lock:
+            return eng.process_exchange(
+                tool_name, tool_input, session_id,
+                current_time_iso=now_iso(),
+            )
+    except Exception as e:
+        logging.getLogger(__name__).warning(
+            "v9 process_exchange failed for %s: %s", tool_name, e,
+        )
+        return None
+
+
+def _v9_block(enrichment) -> dict:
+    """Project an _enrich() result into a stable shape for tool responses."""
+    if enrichment is None:
+        return {}
+    return {
+        "v9": {
+            "exchange_index": enrichment.get("exchange_index"),
+            "delegate_id": enrichment.get("delegate_id"),
+            "expert": enrichment.get("expert"),
+            "prediction": enrichment.get("prediction"),
+        }
+    }
 
 # Create server
 server = FastMCP(
@@ -318,10 +409,13 @@ def trigger_cognitive_recalibration() -> str:
     Re-triggerable: can be called multiple times.
     """
     _ensure_data_dir()
+    enrichment = _enrich("trigger_cognitive_recalibration", {})
 
     try:
         from harlo.trust.recalibration import trigger_recalibration
         result = trigger_recalibration(str(DATA_DIR / "twin.db"))
+        if isinstance(result, dict):
+            result.update(_v9_block(enrichment))
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
