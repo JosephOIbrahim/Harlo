@@ -77,6 +77,14 @@ class CognitiveEngine:
         # --- Predictor ---
         self._predictor = self._init_predictor(model_path)
 
+        # --- External-write detection baseline ---
+        # Track the on-disk mtime so the next exchange can absorb out-of-band
+        # edits to /schedule/ (or any other prim) before they get clobbered
+        # by stage.save(). See reload_if_disk_changed() for the full contract.
+        self._stage_disk_path: Optional[str] = None
+        self._last_disk_mtime: float = 0.0
+        self._refresh_disk_mtime_baseline()
+
         logger.info(
             f"CognitiveEngine initialized: stage={self.stage_type}, "
             f"predictor={'yes' if self._predictor else 'no'}, "
@@ -181,6 +189,13 @@ class CognitiveEngine:
         if not engine_config.ENGINE_ENABLED:
             return None
 
+        # 0. Absorb external /schedule/ edits before authoring. Save() at the
+        # end of this exchange would otherwise clobber any out-of-band write.
+        try:
+            self.reload_if_disk_changed()
+        except Exception as e:
+            logger.warning(f"reload_if_disk_changed at exchange entry: {e}")
+
         self.exchange_index += 1
         idx = self.exchange_index
 
@@ -255,6 +270,7 @@ class CognitiveEngine:
         try:
             if hasattr(self.stage, 'save'):
                 self.stage.save()
+                self._refresh_disk_mtime_baseline()
             self._pending_save = False
         except Exception as e:
             logger.warning(f"Stage save failed (file locked?): {e}")
@@ -340,6 +356,64 @@ class CognitiveEngine:
                 self._memory_queue.popleft()
             except Exception:
                 break
+
+    # ─── External-write detection ─────────────────────────────────
+
+    def _refresh_disk_mtime_baseline(self) -> None:
+        """Capture current on-disk mtime as the daemon's known-fresh baseline.
+
+        Called after engine init and after every successful stage.save() so the
+        baseline always reflects "the disk content the daemon currently has in
+        memory." A subsequent mtime that exceeds this baseline means an
+        out-of-band writer has modified the file since.
+        """
+        try:
+            usd_stage = getattr(self.stage, "usd_stage", None)
+            if usd_stage is None:
+                return
+            layer = usd_stage.GetRootLayer()
+            path = getattr(layer, "realPath", "") or ""
+            if not path or not os.path.exists(path):
+                return
+            self._stage_disk_path = path
+            self._last_disk_mtime = os.path.getmtime(path)
+        except Exception as e:
+            logger.debug(f"_refresh_disk_mtime_baseline: {e}")
+
+    def reload_if_disk_changed(self, force: bool = False) -> dict:
+        """Detect and absorb external writes to the stage file.
+
+        Returns {"reloaded": bool, "reason": str}. Safe to call any time.
+        No-op for in-memory stages, missing files, or disk that hasn't
+        advanced past the baseline (unless force=True).
+
+        Race window: an external writer that modifies disk DURING an
+        in-flight exchange (between author and save) will be clobbered by
+        that exchange's save and not detectable on the next call (daemon's
+        save updates mtime, masking the loss). The stage_reload MCP tool
+        with force=True is the explicit recovery for that case.
+        """
+        path = self._stage_disk_path
+        if path is None or not os.path.exists(path):
+            return {"reloaded": False, "reason": "no on-disk stage"}
+        try:
+            current_mtime = os.path.getmtime(path)
+        except OSError as e:
+            return {"reloaded": False, "reason": f"stat failed: {e}"}
+        if not force and current_mtime <= self._last_disk_mtime:
+            return {"reloaded": False, "reason": "disk unchanged"}
+        usd_stage = getattr(self.stage, "usd_stage", None)
+        if usd_stage is None:
+            return {"reloaded": False, "reason": "no usd stage"}
+        try:
+            layer = usd_stage.GetRootLayer()
+            ok = layer.Reload(force=False)
+        except Exception as e:
+            return {"reloaded": False, "reason": f"reload failed: {e}"}
+        if not ok:
+            return {"reloaded": False, "reason": "layer dirty (in-flight write?)"}
+        self._last_disk_mtime = current_mtime
+        return {"reloaded": True, "reason": "absorbed external change"}
 
     def _evaluate_schedule(self, current_time_iso: str) -> ScheduleBlock:
         """Load /schedule/ from the underlying USD stage and evaluate.

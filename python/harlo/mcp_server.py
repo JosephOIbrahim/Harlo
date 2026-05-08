@@ -567,6 +567,33 @@ def trigger_cognitive_recalibration() -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
+@server.tool()
+def stage_reload(force: bool = False) -> str:
+    """Reload the cognitive twin stage from disk.
+
+    Use after editing /schedule/ on disk via an external script (or any
+    out-of-band stage write) when you want the daemon to absorb the change
+    immediately, instead of waiting for the auto-detect that runs at the
+    start of every process_exchange.
+
+    The auto-detect is mtime-based — this explicit tool also supports a
+    force=True mode for cases where mtime didn't advance but content did
+    (e.g., file replaced atomically with the same mtime, clock skew, or
+    you've just observed a clobber and want a guaranteed barrier).
+
+    Returns JSON: {"status": "ok", "reloaded": bool, "reason": str}.
+    """
+    eng = _get_engine()
+    if eng is None:
+        return json.dumps({"status": "engine unavailable"})
+    try:
+        with _exchange_lock:
+            result = eng.reload_if_disk_changed(force=force)
+        return json.dumps({"status": "ok", **result})
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
 def _print_version() -> None:
     """Print the colored HARLO banner + version on stdout. CLI --version path."""
     import sys as _sys
