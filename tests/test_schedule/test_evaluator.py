@@ -38,14 +38,14 @@ def schedule() -> Schedule:
     return Schedule(
         timezone="America/New_York",
         work_hours={
-            "monday":    DayWindow(start=datetime.time(9, 0),  end=datetime.time(18, 0)),
-            "tuesday":   DayWindow(start=datetime.time(9, 0),  end=datetime.time(18, 0)),
-            "friday":    DayWindow(start=datetime.time(9, 0),  end=datetime.time(15, 0)),
+            "monday":    [DayWindow(start=datetime.time(9, 0),  end=datetime.time(18, 0))],
+            "tuesday":   [DayWindow(start=datetime.time(9, 0),  end=datetime.time(18, 0))],
+            "friday":    [DayWindow(start=datetime.time(9, 0),  end=datetime.time(15, 0))],
         },
         family_hours={
-            "monday":    DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0)),
-            "saturday":  DayWindow(all_day=True),
-            "sunday":    DayWindow(all_day=True),
+            "monday":    [DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0))],
+            "saturday":  [DayWindow(all_day=True)],
+            "sunday":    [DayWindow(all_day=True)],
         },
         overrides=(
             Override(
@@ -168,6 +168,52 @@ class TestDST:
         late = evaluate_schedule(schedule, _ny_to_utc_iso(2026, 11, 1, 3, 0))
         assert early.kind == ScheduleKind.FAMILY
         assert late.kind == ScheduleKind.FAMILY
+
+
+class TestMultipleWindowsPerDay:
+    """Per-weekday list[DayWindow] — supports cross-midnight FAMILY via two windows."""
+
+    @pytest.fixture
+    def split_family_schedule(self) -> Schedule:
+        # FAMILY 17:00 → next-day 09:00 encoded as morning + evening windows per day
+        morning = DayWindow(start=datetime.time(0, 0), end=datetime.time(9, 0))
+        evening = DayWindow(start=datetime.time(17, 0), end=datetime.time(23, 59, 59))
+        return Schedule(
+            timezone="America/New_York",
+            work_hours={
+                "monday":    [DayWindow(start=datetime.time(9, 0), end=datetime.time(17, 0))],
+                "tuesday":   [DayWindow(start=datetime.time(9, 0), end=datetime.time(17, 0))],
+            },
+            family_hours={
+                "monday":    [morning, evening],
+                "tuesday":   [morning, evening],
+            },
+        )
+
+    def test_morning_window_matches(self, split_family_schedule):
+        # Mon 06:00 — inside the morning rollover window
+        result = evaluate_schedule(split_family_schedule, _ny_to_utc_iso(2026, 5, 11, 6, 0))
+        assert result.kind == ScheduleKind.FAMILY
+
+    def test_evening_window_matches(self, split_family_schedule):
+        # Mon 19:30 — inside the evening window
+        result = evaluate_schedule(split_family_schedule, _ny_to_utc_iso(2026, 5, 11, 19, 30))
+        assert result.kind == ScheduleKind.FAMILY
+
+    def test_between_windows_falls_through_to_work(self, split_family_schedule):
+        # Mon 12:00 — between morning (ends 09:00) and evening (starts 17:00); WORK matches
+        result = evaluate_schedule(split_family_schedule, _ny_to_utc_iso(2026, 5, 11, 12, 0))
+        assert result.kind == ScheduleKind.WORK
+
+    def test_morning_end_boundary_yields_work(self, split_family_schedule):
+        # 09:00 — morning FAMILY ends (exclusive), WORK starts (inclusive)
+        result = evaluate_schedule(split_family_schedule, _ny_to_utc_iso(2026, 5, 11, 9, 0))
+        assert result.kind == ScheduleKind.WORK
+
+    def test_evening_start_boundary_yields_family(self, split_family_schedule):
+        # 17:00 — WORK ends (exclusive), evening FAMILY starts (inclusive)
+        result = evaluate_schedule(split_family_schedule, _ny_to_utc_iso(2026, 5, 11, 17, 0))
+        assert result.kind == ScheduleKind.FAMILY
 
 
 class TestPrecedenceOrder:

@@ -69,26 +69,39 @@ class Override:
 
 @dataclass(frozen=True)
 class Schedule:
-    """Loaded schedule. Empty timezone signals 'not configured' → evaluator returns WORK."""
+    """Loaded schedule. Empty timezone signals 'not configured' → evaluator returns WORK.
+
+    Each weekday maps to an ordered list of DayWindow — supports two disjoint
+    windows for cross-midnight FAMILY (morning rollover + evening).
+    """
     timezone: str = ""
-    work_hours: dict[str, DayWindow] = field(default_factory=dict)
-    family_hours: dict[str, DayWindow] = field(default_factory=dict)
+    work_hours: dict[str, list[DayWindow]] = field(default_factory=dict)
+    family_hours: dict[str, list[DayWindow]] = field(default_factory=dict)
     overrides: tuple[Override, ...] = ()
 
 
 # ─── Parsing helpers ─────────────────────────────────────────────────────
 
 def _parse_hhmm(s) -> Optional[datetime.time]:
+    """Parse HH:MM or HH:MM:SS into datetime.time."""
     if not isinstance(s, str) or not s:
         return None
     try:
-        h, m = s.split(":")
-        return datetime.time(int(h), int(m))
+        parts = s.split(":")
+        if len(parts) == 2:
+            h, m = parts
+            return datetime.time(int(h), int(m))
+        if len(parts) == 3:
+            h, m, sec = parts
+            return datetime.time(int(h), int(m), int(sec))
+        return None
     except (ValueError, AttributeError):
         return None
 
 
 def _format_hhmm(t: datetime.time) -> str:
+    if t.second:
+        return f"{t.hour:02d}:{t.minute:02d}:{t.second:02d}"
     return f"{t.hour:02d}:{t.minute:02d}"
 
 
@@ -142,12 +155,13 @@ def evaluate_schedule(
             return ScheduleBlock(kind=ov.state, override_reason=ov.kind)
 
     weekday = WEEKDAYS[local_dt.weekday()]
-    fam = schedule.family_hours.get(weekday)
-    if fam is not None and fam.contains(local_dt.time()):
+    local_t = local_dt.time()
+    fams = schedule.family_hours.get(weekday, [])
+    if any(w.contains(local_t) for w in fams):
         return ScheduleBlock(kind=ScheduleKind.FAMILY)
 
-    work = schedule.work_hours.get(weekday)
-    if work is not None and work.contains(local_dt.time()):
+    works = schedule.work_hours.get(weekday, [])
+    if any(w.contains(local_t) for w in works):
         return ScheduleBlock(kind=ScheduleKind.WORK)
 
     return ScheduleBlock(kind=ScheduleKind.OFF_HOURS)
@@ -191,8 +205,8 @@ def load_schedule_from_stage(stage) -> Schedule:
     )
 
 
-def _read_day_table(stage, root_path: str) -> dict[str, DayWindow]:
-    out: dict[str, DayWindow] = {}
+def _read_day_table(stage, root_path: str) -> dict[str, list[DayWindow]]:
+    out: dict[str, list[DayWindow]] = {}
     root = stage.GetPrimAtPath(root_path)
     if not root or not root.IsValid():
         return out
@@ -200,8 +214,25 @@ def _read_day_table(stage, root_path: str) -> dict[str, DayWindow]:
         day = child.GetName().lower()
         if day not in WEEKDAYS:
             continue
-        out[day] = _read_day_window(child)
+        windows = _read_day_windows(child)
+        if windows:
+            out[day] = windows
     return out
+
+
+def _read_day_windows(day_prim) -> list[DayWindow]:
+    """Enumerate window children under a weekday prim.
+
+    Falls back to legacy single-window format (start/end/all_day attrs on the
+    weekday prim itself) when no window children are present.
+    """
+    children = list(day_prim.GetChildren())
+    if children:
+        return [_read_day_window(c) for c in children]
+    legacy = _read_day_window(day_prim)
+    if legacy.all_day or legacy.start is not None or legacy.end is not None:
+        return [legacy]
+    return []
 
 
 def _read_day_window(prim) -> DayWindow:
@@ -305,15 +336,30 @@ def author_schedule_to_stage(stage, schedule: Schedule) -> None:
         stage.DefinePrim("/schedule/inferred")
 
 
-def _replace_day_table(stage, root_path: str, table: dict[str, DayWindow]) -> None:
+def _replace_day_table(stage, root_path: str, table: dict[str, list[DayWindow]]) -> None:
     root = stage.GetPrimAtPath(root_path)
     if root and root.IsValid():
         for child in list(root.GetChildren()):
             stage.RemovePrim(child.GetPath())
     else:
         stage.DefinePrim(root_path)
-    for day, window in table.items():
-        _author_day_window(stage, f"{root_path}/{day}", window)
+    for day, windows in table.items():
+        day_path = f"{root_path}/{day}"
+        stage.DefinePrim(day_path)
+        for idx, window in enumerate(windows):
+            name = _window_name(window, idx, len(windows))
+            _author_day_window(stage, f"{day_path}/{name}", window)
+
+
+def _window_name(window: DayWindow, idx: int, total: int) -> str:
+    """Stable, sortable, human-readable USD prim name for a window."""
+    if window.all_day:
+        return "all_day"
+    if total == 1:
+        return "window"
+    if window.start is None:
+        return f"w{idx}"
+    return f"w{window.start.hour:02d}{window.start.minute:02d}"
 
 
 def _author_day_window(stage, path: str, window: DayWindow) -> None:

@@ -51,20 +51,20 @@ def joe_schedule() -> Schedule:
     return Schedule(
         timezone="America/New_York",
         work_hours={
-            "monday":    DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0)),
-            "tuesday":   DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0)),
-            "wednesday": DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0)),
-            "thursday":  DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0)),
-            "friday":    DayWindow(start=datetime.time(9, 0), end=datetime.time(15, 0)),
+            "monday":    [DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0))],
+            "tuesday":   [DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0))],
+            "wednesday": [DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0))],
+            "thursday":  [DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0))],
+            "friday":    [DayWindow(start=datetime.time(9, 0), end=datetime.time(15, 0))],
         },
         family_hours={
-            "monday":    DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0)),
-            "tuesday":   DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0)),
-            "wednesday": DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0)),
-            "thursday":  DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0)),
-            "friday":    DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0)),
-            "saturday":  DayWindow(all_day=True),
-            "sunday":    DayWindow(all_day=True),
+            "monday":    [DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0))],
+            "tuesday":   [DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0))],
+            "wednesday": [DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0))],
+            "thursday":  [DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0))],
+            "friday":    [DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0))],
+            "saturday":  [DayWindow(all_day=True)],
+            "sunday":    [DayWindow(all_day=True)],
         },
         overrides=(),
     )
@@ -202,12 +202,13 @@ class TestBridgeWiring:
         import harlo.mcp_server as mcp
         monkeypatch.setattr(mcp, "_engine", None, raising=False)
 
-        # Land in OFF_HOURS — Friday 16:00 NY
-        monkeypatch.setattr("harlo.clock.now_iso", lambda: _ny(2026, 5, 15, 16, 0))
+        # Land in WORK — Monday 12:00 NY. Stable across schedule edits because
+        # the production /schedule/ keeps Mon-Fri work_hours covering noon.
+        monkeypatch.setattr("harlo.clock.now_iso", lambda: _ny(2026, 5, 11, 12, 0))
         eng = mcp._get_engine()
         enrichment = mcp._enrich("twin_coach", {})
         block = mcp._v9_status_block(enrichment)
-        assert block["v9"]["schedule"]["kind"] == "OFF_HOURS"
+        assert block["v9"]["schedule"]["kind"] == "WORK"
 
     def test_engine_failure_falls_back_to_v8_only(self, monkeypatch):
         monkeypatch.syspath_prepend(str(PROJECT_ROOT))

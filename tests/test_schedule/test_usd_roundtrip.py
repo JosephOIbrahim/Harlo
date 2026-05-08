@@ -32,12 +32,12 @@ def populated_schedule() -> Schedule:
     return Schedule(
         timezone="America/New_York",
         work_hours={
-            "monday": DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0)),
-            "friday": DayWindow(start=datetime.time(9, 0), end=datetime.time(15, 0)),
+            "monday": [DayWindow(start=datetime.time(9, 0), end=datetime.time(18, 0))],
+            "friday": [DayWindow(start=datetime.time(9, 0), end=datetime.time(15, 0))],
         },
         family_hours={
-            "monday":   DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0)),
-            "saturday": DayWindow(all_day=True),
+            "monday":   [DayWindow(start=datetime.time(18, 0), end=datetime.time(21, 0))],
+            "saturday": [DayWindow(all_day=True)],
         },
         overrides=(
             Override(
@@ -90,10 +90,10 @@ class TestRoundTrip:
         loaded = load_schedule_from_stage(in_memory_stage)
 
         assert loaded.timezone == "America/New_York"
-        assert loaded.work_hours["monday"].start == datetime.time(9, 0)
-        assert loaded.work_hours["monday"].end == datetime.time(18, 0)
-        assert loaded.work_hours["friday"].end == datetime.time(15, 0)
-        assert loaded.family_hours["saturday"].all_day is True
+        assert loaded.work_hours["monday"][0].start == datetime.time(9, 0)
+        assert loaded.work_hours["monday"][0].end == datetime.time(18, 0)
+        assert loaded.work_hours["friday"][0].end == datetime.time(15, 0)
+        assert loaded.family_hours["saturday"][0].all_day is True
         assert len(loaded.overrides) == 1
 
         ov = loaded.overrides[0]
@@ -113,7 +113,7 @@ class TestRoundTrip:
         reopened = Usd.Stage.Open(path)
         loaded = load_schedule_from_stage(reopened)
         assert loaded.timezone == "America/New_York"
-        assert loaded.family_hours["saturday"].all_day is True
+        assert loaded.family_hours["saturday"][0].all_day is True
 
     def test_replace_clears_existing_children(self, in_memory_stage, populated_schedule):
         author_schedule_to_stage(in_memory_stage, populated_schedule)
@@ -122,7 +122,7 @@ class TestRoundTrip:
         smaller = Schedule(
             timezone="America/New_York",
             work_hours={
-                "tuesday": DayWindow(start=datetime.time(10, 0), end=datetime.time(16, 0)),
+                "tuesday": [DayWindow(start=datetime.time(10, 0), end=datetime.time(16, 0))],
             },
             family_hours={},
             overrides=(),
@@ -135,6 +135,30 @@ class TestRoundTrip:
         assert "friday" not in loaded.work_hours
         assert loaded.family_hours == {}
         assert loaded.overrides == ()
+
+
+class TestMultiWindowRoundTrip:
+    """USD round-trip preserves multiple windows per weekday."""
+
+    def test_two_windows_round_trip(self, in_memory_stage):
+        sched = Schedule(
+            timezone="America/New_York",
+            work_hours={},
+            family_hours={
+                "monday": [
+                    DayWindow(start=datetime.time(0, 0), end=datetime.time(9, 0)),
+                    DayWindow(start=datetime.time(17, 0), end=datetime.time(23, 59, 59)),
+                ],
+            },
+        )
+        author_schedule_to_stage(in_memory_stage, sched)
+        loaded = load_schedule_from_stage(in_memory_stage)
+
+        windows = loaded.family_hours["monday"]
+        assert len(windows) == 2
+        starts = {w.start for w in windows}
+        assert datetime.time(0, 0) in starts
+        assert datetime.time(17, 0) in starts
 
 
 class TestRawUsdaIsReadable:
