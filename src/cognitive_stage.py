@@ -77,6 +77,11 @@ class CognitiveStage:
 
         self._init_hierarchy()
 
+        # /schedule/ skeleton — declarative work-hours config (idempotent).
+        # Empty timezone = not configured → evaluator falls back to WORK 24/7.
+        from .schedule import author_empty_skeleton
+        author_empty_skeleton(self._stage)
+
     def _init_hierarchy(self) -> None:
         """Create canonical prim structure."""
         for path in [

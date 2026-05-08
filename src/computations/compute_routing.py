@@ -12,6 +12,7 @@ from src.schemas import (
     CognitiveObservation,
     Energy,
     Momentum,
+    ScheduleKind,
     StateBlock,
 )
 
@@ -84,8 +85,21 @@ def compute_routing(
         supported_tasks = ["coaching"]
         requires_coding = False
 
+    # Schedule overrides (Commandment 6: schedule is OOB, mirrors RED pattern).
+    # Authored externally per docs/temporal-models.md — pure read here.
+    schedule = authored.schedule
+    if schedule.kind == ScheduleKind.FAMILY:
+        expert = "restorer"
+        supported_tasks = ["coaching"]
+        requires_coding = False
+        context_budget = "light"
+    elif schedule.kind == ScheduleKind.OFF_HOURS:
+        context_budget = "light"
+
     return {
         "expert": expert,
+        "schedule_state": schedule.kind.name,
+        "schedule_override_reason": schedule.override_reason,
         "requirements": {
             "requires_coding": requires_coding,
             "latency_max": latency_max,

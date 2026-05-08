@@ -16,6 +16,7 @@ from collections import deque
 from typing import Any, Optional
 
 from . import engine_config
+from .schemas import ScheduleBlock, ScheduleKind
 
 logger = logging.getLogger(__name__)
 
@@ -166,8 +167,14 @@ class CognitiveEngine:
         tool_name: str,
         tool_input: dict,
         session_id: str = "live",
+        current_time_iso: Optional[str] = None,
     ) -> Optional[dict]:
         """Process a single exchange. Returns enriched context or None.
+
+        current_time_iso is T3 (UTC ISO 8601 µs, Z suffix) per
+        docs/temporal-models.md. When provided, /schedule/ is evaluated and
+        attached to the observation, modulating routing and predictor.
+        When None, schedule defaults to WORK (current behavior).
 
         Every step fails independently. MCP server continues regardless.
         """
@@ -183,6 +190,15 @@ class CognitiveEngine:
             obs = self._build_authored_observation(tool_name, tool_input, session_id, idx)
             from .mock_cogexec import evaluate_dag
             resolved = evaluate_dag(self.stage, obs, idx)
+
+            # Schedule evaluation (post-DAG so the field survives).
+            # Engine remains clock-free: current_time_iso is INPUT, not a clock read.
+            if current_time_iso is not None:
+                try:
+                    resolved.schedule = self._evaluate_schedule(current_time_iso)
+                except Exception as e:
+                    logger.warning(f"Schedule evaluation failed: {e}")
+
             self._observations.append(resolved)
         except Exception as e:
             logger.error(f"DAG evaluation failed at exchange {idx}: {e}")
@@ -218,9 +234,16 @@ class CognitiveEngine:
                     self._memory_queue.append(resolved)
                     logger.warning("Observation queued in memory")
 
-        # 4. Prediction
+        # 4. Prediction (skipped during OFF_HOURS per schedule rule)
         prediction = None
-        if self._predictor and len(self._observations) >= 3:
+        schedule_kind = (
+            resolved.schedule.kind if resolved is not None else ScheduleKind.WORK
+        )
+        if (
+            self._predictor
+            and len(self._observations) >= 3
+            and schedule_kind != ScheduleKind.OFF_HOURS
+        ):
             try:
                 window = self._observations[-3:]
                 prediction = self._predictor.predict(window)
@@ -317,6 +340,18 @@ class CognitiveEngine:
                 self._memory_queue.popleft()
             except Exception:
                 break
+
+    def _evaluate_schedule(self, current_time_iso: str) -> ScheduleBlock:
+        """Load /schedule/ from the underlying USD stage and evaluate.
+
+        Returns ScheduleBlock(kind=WORK) if the stage doesn't expose a real
+        USD stage (mock fallback) or if /schedule/ is unconfigured.
+        """
+        usd_stage = getattr(self.stage, "usd_stage", None)
+        if usd_stage is None:
+            return ScheduleBlock()
+        from .schedule import evaluate_schedule, load_schedule_from_stage
+        return evaluate_schedule(load_schedule_from_stage(usd_stage), current_time_iso)
 
     # ─── Health + Status ──────────────────────────────────────────
 

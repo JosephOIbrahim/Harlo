@@ -113,6 +113,13 @@ class ContextLevel(IntEnum):
     REFERENCE = 1
 
 
+class ScheduleKind(IntEnum):
+    """Schedule state. Computed externally from /schedule/ prims + current_time_iso."""
+    WORK = 0
+    OFF_HOURS = 1
+    FAMILY = 2
+
+
 # -------------------------------------------------------------------
 # CognitiveObservation — the canonical observation schema
 # -------------------------------------------------------------------
@@ -172,6 +179,17 @@ class AllostasisBlock(BaseModel):
     override_ratio_7d: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
+class ScheduleBlock(BaseModel):
+    """Authored schedule state at this exchange.
+
+    Computed externally (mcp_server: clock + load schedule + evaluate),
+    then authored onto the observation. Pure-function consumers
+    (compute_routing) read this without ever touching a clock.
+    """
+    kind: ScheduleKind = ScheduleKind.WORK
+    override_reason: str = ""
+
+
 class CognitiveObservation(BaseModel):
     """Full cognitive observation at a single exchange.
 
@@ -190,6 +208,7 @@ class CognitiveObservation(BaseModel):
     injection: InjectionBlock = Field(default_factory=InjectionBlock)
     delegate: DelegateBlock = Field(default_factory=DelegateBlock)
     allostasis: AllostasisBlock = Field(default_factory=AllostasisBlock)
+    schedule: ScheduleBlock = Field(default_factory=ScheduleBlock)
 
 
 # -------------------------------------------------------------------
@@ -224,8 +243,14 @@ BASELINE_INJECTION = InjectionBlock(
     phase=InjectionPhase.BASELINE,
 )
 
+BASELINE_SCHEDULE = ScheduleBlock(
+    kind=ScheduleKind.WORK,
+    override_reason="",
+)
+
 BASELINE_OBSERVATION = CognitiveObservation(
     state=BASELINE_STATE,
     dynamics=BASELINE_DYNAMICS,
     injection=BASELINE_INJECTION,
+    schedule=BASELINE_SCHEDULE,
 )
