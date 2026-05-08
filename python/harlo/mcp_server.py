@@ -41,6 +41,31 @@ _engine = None
 _engine_lock = threading.Lock()
 _exchange_lock = threading.Lock()
 
+# First-call-per-process banner gate. Daemon respawn resets the flag.
+_banner_shown = False
+_banner_lock = threading.Lock()
+
+
+def _consume_banner() -> str:
+    """Return HARLO_BANNER once per process; empty string thereafter."""
+    global _banner_shown
+    if _banner_shown:
+        return ""
+    with _banner_lock:
+        if _banner_shown:
+            return ""
+        try:
+            import sys as _sys
+            _root = str(PROJECT_ROOT)
+            if _root not in _sys.path:
+                _sys.path.insert(0, _root)
+            from src.branding import HARLO_BANNER
+            _banner_shown = True
+            return HARLO_BANNER
+        except Exception:
+            _banner_shown = True
+            return ""
+
 
 def _get_engine():
     """Lazy-initialize the v9 cognitive engine. Returns None on failure.
@@ -447,6 +472,11 @@ def twin_session_status() -> str:
     momentum, burnout, energy, burst phase, schedule, allostatic load, and
     the active routing decision. Schedule reflects the current wall-clock
     against the authored /schedule/ on the cognitive twin stage.
+
+    On the first call after daemon spawn, the response carries a `banner`
+    field with the HARLO ASCII boot banner. Render it verbatim, monospaced,
+    above the rest of the response. Subsequent calls in the same daemon
+    lifetime omit the field.
     """
     _ensure_data_dir()
     enrichment = _enrich("twin_session_status", {})
@@ -459,11 +489,13 @@ def twin_session_status() -> str:
     try:
         mgr = SessionManager(DB_PATH)
         active = mgr.list_active()
-        response = {
-            "status": "ok",
-            "active_sessions": [s.to_dict() for s in active],
-            "count": len(active),
-        }
+        response: dict = {}
+        banner = _consume_banner()
+        if banner:
+            response["banner"] = banner
+        response["status"] = "ok"
+        response["active_sessions"] = [s.to_dict() for s in active]
+        response["count"] = len(active)
         response.update(_v9_status_block(enrichment))
         return json.dumps(response, default=str)
     except Exception as e:
@@ -535,8 +567,35 @@ def trigger_cognitive_recalibration() -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
+def _print_version() -> None:
+    """Print the colored HARLO banner + version on stdout. CLI --version path."""
+    import sys as _sys
+    try:
+        _root = str(PROJECT_ROOT)
+        if _root not in _sys.path:
+            _sys.path.insert(0, _root)
+        from src.branding import HARLO_BANNER
+    except Exception:
+        HARLO_BANNER = "HARLO"
+    try:
+        from importlib.metadata import version as _v
+        ver = _v("harlo")
+    except Exception:
+        ver = "unknown"
+    # ANSI true-color (\033[38;2;R;G;Bm) — #FFB300
+    if _sys.stdout.isatty():
+        _sys.stdout.write(f"\033[38;2;255;179;0m{HARLO_BANNER}\033[0m\n")
+    else:
+        _sys.stdout.write(f"{HARLO_BANNER}\n")
+    _sys.stdout.write(f"  harlo v{ver}\n")
+
+
 def main():
     """Entry point for the harlo console script."""
+    import sys as _sys
+    if len(_sys.argv) > 1 and _sys.argv[1] in ("--version", "-V"):
+        _print_version()
+        return
     server.run(transport="stdio")
 
 
