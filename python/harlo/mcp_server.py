@@ -353,14 +353,28 @@ def twin_store(
 def twin_coach(session_id: str | None = None) -> str:
     """Get coaching context for the current session.
 
-    Returns a structured system prompt block built from the Twin's current
-    state: recent traces, session info, trust level, and pending patterns.
-    The Actor (Claude) uses this to inform its reasoning.
+    Drives the full v9 cognitive exchange (author → DAG → route → delegate
+    → observe → predict → save) and returns:
+      - coach_block (v8): structured system prompt from twin.db with recent
+        traces, trust level, and pending patterns
+      - cognitive_context (v9): delegate-derived advisory string when the
+        routed expert produces one
+      - v9: live engine state — momentum/burnout/energy/burst, schedule
+        kind (with override_reason), allostatic load, active routing
+        (delegate_id, expert), and latest prediction. Schedule reflects
+        the wall-clock against the authored /schedule/ on the stage —
+        FAMILY hours route to restorer regardless of consent (mirrors
+        the burnout RED safety pattern); OFF_HOURS reduces context budget.
 
     Args:
         session_id: Optional session ID for session-specific context.
     """
     _ensure_data_dir()
+    enrichment = _enrich(
+        "twin_coach",
+        {"session_id": session_id} if session_id else {},
+        session_id=session_id or "live",
+    )
 
     try:
         from harlo.coach import project_coach
@@ -368,10 +382,16 @@ def twin_coach(session_id: str | None = None) -> str:
             db_path=str(DATA_DIR / "twin.db"),
             session_id=session_id,
         )
-        return json.dumps({
+        response = {
             "status": "ok",
             "coach_block": result,
-        })
+        }
+        if enrichment is not None:
+            ctx = enrichment.get("cognitive_context") or ""
+            if ctx:
+                response["cognitive_context"] = ctx
+        response.update(_v9_status_block(enrichment))
+        return json.dumps(response, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 
