@@ -1,8 +1,4 @@
 <p align="center">
-  <img src="./assets/harlo_banner_color.png" alt="HARLO" width="600">
-</p>
-
-<p align="center">
   <img src="./assets/harlo-logo.jpg" alt="Harlo — Your AI Coach" width="600">
 </p>
 
