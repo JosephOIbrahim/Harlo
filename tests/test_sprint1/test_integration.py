@@ -147,6 +147,7 @@ class TestBridgeIntegration:
 
         bridge.close()
 
+    @pytest.mark.requires_predictor_model
     def test_session_with_predictor(self):
         """Integration with trained predictor."""
         bridge = Bridge(

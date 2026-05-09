@@ -42,6 +42,7 @@ class TestCognitiveEngine:
         assert stats["organic"] == 0
         engine.close()
 
+    @pytest.mark.requires_predictor_model
     def test_prediction_with_model(self):
         engine = CognitiveEngine(
             model_path="models/cognitive_predictor_v1.joblib",

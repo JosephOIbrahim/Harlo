@@ -38,6 +38,7 @@ class TestEngineWiring:
         assert stats["organic"] >= 1
         engine.close()
 
+    @pytest.mark.requires_predictor_model
     def test_prediction_authored(self):
         """Prediction authored to stage after window fills."""
         engine = CognitiveEngine(

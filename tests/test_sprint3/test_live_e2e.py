@@ -19,6 +19,7 @@ from src.schemas import Burnout, Momentum
 
 
 class TestLiveE2E:
+    @pytest.mark.requires_predictor_model
     def test_20_exchange_sequence(self):
         """Full 20-exchange session with all systems."""
         engine = CognitiveEngine(
@@ -147,6 +148,7 @@ class TestLiveE2E:
 
         engine.close()
 
+    @pytest.mark.requires_predictor_model
     def test_prediction_audit_on_stage(self):
         """Predictions are authored to stage."""
         engine = CognitiveEngine(

@@ -133,6 +133,36 @@ If `stage_type` shows `"mock"` instead of `"real_usd"`, that's fine — it means
 
 ---
 
+## Run the Test Suite
+
+If you want to develop on Harlo or verify the install end-to-end, install the
+optional `[dev]` extra. This adds the test-only dependencies (`sentence_transformers`,
+`anthropic`, `pytest`) that several test modules import transitively through
+`python/harlo/encoder/` and `python/harlo/provider/`.
+
+```bash
+pip install -e ".[dev]"
+```
+
+Then run the suite from the repo root with `PYTHONPATH=.` so the in-tree
+`src/` and `python/` packages resolve:
+
+```bash
+PYTHONPATH=. pytest tests/ -q
+```
+
+Expected outcome on a fresh clone (no `models/cognitive_predictor_v1.joblib`):
+
+```
+1229 passed, 9 skipped
+```
+
+The 9 skips include 5 tests gated by the `requires_predictor_model` marker —
+they re-enable automatically once the XGBoost predictor artifact is present.
+See `tests/conftest.py` for full triage rationale.
+
+---
+
 ## First Run
 
 1. **Restart Claude Desktop** (it needs to pick up the new MCP config)
