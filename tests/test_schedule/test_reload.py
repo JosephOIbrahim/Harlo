@@ -113,23 +113,45 @@ class TestReloadHelper:
 # ════════════════════════════════════════════════════════════════════════
 
 class TestExternalWriteSurvivesDaemonSave:
-    """The fix: daemon's next exchange auto-reloads + save preserves the edit."""
+    """Sublayer parking: daemon never authors to schedule.usda, so external
+    edits land directly on it and are not racing against root saves."""
 
-    def test_clobber_prevented(self, disk_engine, tmp_path):
+    def test_external_schedule_edit_lands_on_schedule_layer(self, disk_engine, tmp_path):
         # Settle the daemon's mtime baseline against an authored file
         disk_engine.process_exchange(
             "warmup", {}, current_time_iso=_ny_iso(2026, 5, 8, 14, 0),
         )
 
-        target = str(tmp_path / "harlo.usda")
-        ext_sched = Schedule(
-            timezone="America/New_York",
-            family_hours={"saturday": [DayWindow(all_day=True)]},
+        root_path = str(tmp_path / "harlo.usda")
+        sched_path = str(tmp_path / "schedule.usda")
+        assert os.path.exists(sched_path), (
+            "bootstrap should have created schedule.usda sublayer"
         )
-        _external_overwrite(target, ext_sched, tmp_path)
 
-        # Daemon's next exchange — auto-reload should absorb the external
-        # /schedule/ write before authoring + save.
+        # Capture mtimes BEFORE the next per-exchange save.
+        sched_mtime_before = os.path.getmtime(sched_path)
+        root_mtime_before = os.path.getmtime(root_path)
+
+        # External write to schedule.usda directly (the supported edit surface).
+        from pxr import Usd
+        ext_stage = Usd.Stage.CreateNew(str(tmp_path / "_ext_sched.usda"))
+        author_schedule_to_stage(
+            ext_stage,
+            Schedule(
+                timezone="America/New_York",
+                family_hours={"saturday": [DayWindow(all_day=True)]},
+            ),
+        )
+        ext_stage.GetRootLayer().Save()
+        del ext_stage
+        shutil.copy(str(tmp_path / "_ext_sched.usda"), sched_path)
+        future = os.path.getmtime(sched_path) + 1.0
+        os.utime(sched_path, (future, future))
+
+        # Force the daemon to absorb the external schedule.usda edit, then
+        # run an exchange — the per-exchange save should advance harlo.usda
+        # but NOT schedule.usda.
+        disk_engine.reload_schedule(force=True)
         disk_engine.process_exchange(
             "post_external_write", {},
             current_time_iso=_ny_iso(2026, 5, 9, 11, 0),  # Saturday 11:00 NY
@@ -138,16 +160,29 @@ class TestExternalWriteSurvivesDaemonSave:
         # In-memory observation reflects the absorbed schedule.
         last = disk_engine._observations[-1]
         assert last.schedule.kind == ScheduleKind.FAMILY, (
-            "auto-reload didn't pick up external schedule write"
+            "schedule.usda reload didn't pick up external schedule edit"
         )
 
-        # Disk: external write must have survived the daemon's save.
-        # Bypass Sdf.Layer interning by reading raw bytes — the live daemon
-        # layer would otherwise dominate any in-process Stage.Open.
-        with open(target, "r") as f:
-            usda_text = f.read()
-        assert "all_day = 1" in usda_text, (
-            "external /schedule/ write was clobbered by daemon save"
+        # schedule.usda mtime must NOT have advanced past the external write.
+        # The daemon never authors to it. Save() must skip it entirely.
+        sched_mtime_after = os.path.getmtime(sched_path)
+        assert sched_mtime_after == future, (
+            f"daemon save advanced schedule.usda mtime "
+            f"({sched_mtime_after} != {future}) — sublayer parking violated"
+        )
+
+        # harlo.usda must NOT carry any /schedule/ opinion.
+        with open(root_path, "r") as f:
+            root_text = f.read()
+        assert 'def "schedule"' not in root_text, (
+            "/schedule/ opinion leaked back to harlo.usda — sublayer parking violated"
+        )
+
+        # schedule.usda must still carry the external edit.
+        with open(sched_path, "r") as f:
+            sched_text = f.read()
+        assert "all_day = 1" in sched_text, (
+            "schedule.usda lost the external edit"
         )
 
 

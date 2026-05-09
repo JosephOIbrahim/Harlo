@@ -588,8 +588,20 @@ def stage_reload(force: bool = False) -> str:
         return json.dumps({"status": "engine unavailable"})
     try:
         with _exchange_lock:
-            result = eng.reload_if_disk_changed(force=force)
-        return json.dumps({"status": "ok", **result})
+            sched_result = eng.reload_schedule(force=force)
+            root_result = eng.reload_if_disk_changed(force=force)
+        reloaded = bool(sched_result.get("reloaded") or root_result.get("reloaded"))
+        reasons = []
+        if sched_result.get("reloaded"):
+            reasons.append(f"schedule: {sched_result.get('reason', '')}")
+        if root_result.get("reloaded"):
+            reasons.append(f"root: {root_result.get('reason', '')}")
+        if not reloaded:
+            # Surface whichever reason is most informative; default to schedule's.
+            reason = sched_result.get("reason") or root_result.get("reason") or "no change"
+        else:
+            reason = "; ".join(reasons) if reasons else "absorbed external change"
+        return json.dumps({"status": "ok", "reloaded": reloaded, "reason": reason})
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
 

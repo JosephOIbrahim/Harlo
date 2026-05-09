@@ -79,8 +79,15 @@ class CognitiveStage:
 
         # /schedule/ skeleton — declarative work-hours config (idempotent).
         # Empty timezone = not configured → evaluator falls back to WORK 24/7.
-        from .schedule import author_empty_skeleton
-        author_empty_skeleton(self._stage)
+        if self._in_memory:
+            # In-memory stage: no race possible, no migration needed.
+            from .schedule import author_empty_skeleton
+            author_empty_skeleton(self._stage)
+        else:
+            # On-disk stage: park /schedule/ on schedule.usda sublayer so the
+            # daemon's per-exchange root save never clobbers external edits.
+            from .schedule_migrate import migrate_inline
+            migrate_inline(self._stage_dir, self._stage.GetRootLayer())
 
     def _init_hierarchy(self) -> None:
         """Create canonical prim structure."""

@@ -415,6 +415,37 @@ class CognitiveEngine:
         self._last_disk_mtime = current_mtime
         return {"reloaded": True, "reason": "absorbed external change"}
 
+    def reload_schedule(self, force: bool = False) -> dict:
+        """Reload schedule.usda sublayer from disk.
+
+        /schedule/ now lives on a dedicated sublayer the daemon never authors
+        to (see src/schedule_migrate.py). External edits land directly on
+        schedule.usda and are absorbed via Sdf.Layer.Reload — no race against
+        the daemon's per-exchange root save.
+
+        Returns {"reloaded": bool, "reason": str}.
+        """
+        try:
+            usd_stage = getattr(self.stage, "usd_stage", None)
+            if usd_stage is None:
+                return {"reloaded": False, "reason": "no usd stage"}
+            stage_dir = getattr(self.stage, "_stage_dir", None)
+            if stage_dir is None:
+                return {"reloaded": False, "reason": "no stage_dir"}
+            sched_path = os.path.join(stage_dir, "schedule.usda")
+            if not os.path.exists(sched_path):
+                return {"reloaded": False, "reason": "no schedule.usda"}
+            from pxr import Sdf
+            sched_layer = Sdf.Layer.FindOrOpen(sched_path)
+            if sched_layer is None:
+                return {"reloaded": False, "reason": "could not open schedule.usda"}
+            ok = sched_layer.Reload(force=force)
+        except Exception as e:
+            return {"reloaded": False, "reason": f"reload failed: {e}"}
+        if not ok:
+            return {"reloaded": False, "reason": "layer dirty or unchanged"}
+        return {"reloaded": True, "reason": "absorbed external change"}
+
     def _evaluate_schedule(self, current_time_iso: str) -> ScheduleBlock:
         """Load /schedule/ from the underlying USD stage and evaluate.
 

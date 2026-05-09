@@ -161,6 +161,43 @@ class TestMultiWindowRoundTrip:
         assert datetime.time(17, 0) in starts
 
 
+class TestSublayerPersistence:
+    """schedule.usda sublayer composes through root stage reads."""
+
+    def test_authored_schedule_on_sublayer_resolves_via_composition(
+        self, populated_schedule, tmp_path,
+    ):
+        import os
+
+        from pxr import Sdf
+
+        from src.cognitive_stage import CognitiveStage
+
+        cog = CognitiveStage(stage_dir=str(tmp_path))
+        sched_path = str(tmp_path / "schedule.usda")
+        assert os.path.exists(sched_path), "bootstrap should create schedule.usda"
+
+        root_layer = cog.usd_stage.GetRootLayer()
+        assert any(
+            os.path.normpath(p) == os.path.normpath(sched_path)
+            for p in root_layer.subLayerPaths
+        ), "schedule.usda must be wired as a sublayer of harlo.usda"
+
+        # Author a populated schedule directly to schedule.usda.
+        sched_layer = Sdf.Layer.FindOrOpen(sched_path)
+        sched_stage = Usd.Stage.Open(sched_layer)
+        author_schedule_to_stage(sched_stage, populated_schedule)
+        sched_layer.Save()
+
+        # Reopen the root stage. Composition must resolve /schedule/ from sublayer.
+        reopened = Usd.Stage.Open(str(tmp_path / "harlo.usda"))
+        loaded = load_schedule_from_stage(reopened)
+        assert loaded.timezone == "America/New_York"
+        assert "monday" in loaded.work_hours
+        assert loaded.family_hours["saturday"][0].all_day is True
+        assert len(loaded.overrides) == 1
+
+
 class TestRawUsdaIsReadable:
     """Sanity check the raw .usda is human-readable per the INSTALL.md ethos."""
 
