@@ -19,7 +19,10 @@ which terminates with `server.run(transport="stdio")` at
 `python/harlo/mcp_server.py:626`. The MCP server has **no listening
 socket, no launchd plist, and no socket activation** in the path used by
 Claude Code; the unrelated `python/harlo/daemon/main.py:48` socket-activation
-code path is the legacy v3 daemon and is not invoked by the MCP entry point.
+code path is the v3 IPC daemon — still live for CLI use via
+`python/harlo/cli/ipc.py:59` (`_direct_execute` → `run_direct`) — and is a
+separate process from the MCP entry point. Smoke-test authors should not
+conflate the two: this doc covers the MCP server only.
 
 Verified config (`~/.claude.json`):
 
