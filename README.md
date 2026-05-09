@@ -19,6 +19,7 @@ layers — no cloud dependency, no data mining, no rented access to your own min
 
 ## Status
 
+[![SafeSkill 50/100](https://img.shields.io/badge/SafeSkill-50%2F100_Use%20with%20Caution-orange)](https://safeskill.dev/scan/josephoibrahim-harlo)
 ```
 PRODUCTION LIVE — Harlo v3.4.0-path-c
 1,172 tests passing · Real OpenUSD canonical persistence · USD-Lite runtime tier
