@@ -24,11 +24,11 @@ layers — no cloud dependency, no data mining, no rented access to your own min
 ## Status
 
 ```
-PRODUCTION LIVE — Harlo v3.4.0-path-c
-1,172 tests passing · Real OpenUSD canonical persistence · USD-Lite runtime tier
-8/8 phase gates passed · 19 D-block decisions clean (D1-D19)
+PRODUCTION LIVE — Harlo v6.0-MOTOR
+Biological constraints (v3) · Elenchus GVR (v4) · Inquiry safeguards (v5) · Motor Cortex (v6)
+33 inviolable rules · Real OpenUSD canonical persistence · USD-Lite runtime tier
 Substrate-unified with sister project Moneta · P1 CIP defensible
-458 organic observations collected · 5 sprints shipped · Path C closed (Step 3)
+8/8 phase gates passed · 19 D-block decisions clean (D1-D19) · Path C closed
 ```
 
 | Sprint | Tests | What Shipped |
@@ -39,6 +39,9 @@ Substrate-unified with sister project Moneta · P1 CIP defensible
 | **S4** Real USD | 59 | CognitiveStage wrapping `pxr.Usd.Stage`, stage_factory toggle, `.usda` files on disk with time-sampled CognitiveObservation, delegate sublayer `.usda` files, backend parity verified (mock = real USD) |
 | **S5** Production | 22 | Graceful degradation (independent failure isolation), health check endpoint, kill switches (`ENGINE_ENABLED`, `USE_REAL_USD`, `OBSERVATION_LOGGING`, `PREDICTION_ENABLED`), first session verified, production docs |
 | **Path C** Step 3 v3.4.0 | +39 | Real OpenUSD as canonical persistence (codeless schema, 21 prim types under `harlo` plugin separate from Moneta); USD-Lite engine preserved as fast in-memory runtime tier (Fabric pattern); sync layer per D4 policy table; migration script for USD-Lite v1 → real USD; substrate-unified with sister project Moneta. P1 CIP framing now defensible. |
+| **v4.0** Elenchus | +18 | Trace-excluded `verify()` (Rule 11), 3-cycle GVR loop with FIXABLE→UNPROVABLE promotion (Rule 13), spec-gaming detection (Rule 15), intent preservation (Rule 14), VERIFIED-only consolidation (Rule 12). UNPROVABLE is dignified — first-class state with metadata (Rule 16). |
+| **v5.0** Inquiry / DMN | +24 | Apophenia guard with depth-tiered evidence threshold (S1), epistemological bypass (S2), rupture & repair on rejection (S3), utility-mode DMN muting (S4), inquiry apoptosis (S5), DMN async teardown window (S6), trace crystallization (S7), sincerity gate (S8). |
+| **v6.0** Motor Cortex | +14 | Inhibition-default Basal Ganglia gate (Rule 23) — five checks, INHIBIT-default. ONE atomic action at a time (Rule 24). Level 3 LOCKED never opens (Rule 25). RED kills motor (Rule 28). Reversibility cap (Rule 29). Single failure = instant de-compilation with `success_count=0` reset (Rule 32). Preemption uses `/dev/shm/`, never SQLite (Rule 30). |
 
 ---
 
@@ -76,8 +79,8 @@ flowchart TB
     SYNCLAYER --> RUNTIME
     MIG -.->|"upgrade path"| PERSISTENCE
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
 ```
 
 The persistence layer is the canonical truth. The runtime layer is the
@@ -155,8 +158,8 @@ flowchart TB
     APIB --> PROV
     PROV -.->|"attaches to"| CLP
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
 ```
 
 - **Two abstract bases:** `HarloPrim` (root of every Harlo type) and
@@ -200,8 +203,8 @@ flowchart LR
     CP --> OUT_CP
     INMEM -.-> OUT_INMEM
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
 ```
 
 - **write_through** — synchronous persistence on every mutation. Used
@@ -233,51 +236,187 @@ idempotent on already-migrated files.
 
 ---
 
+## Architecture · Motor Cortex (v6.0-MOTOR)
+
+The Motor Cortex executes ONE atomic action at a time through an
+inhibition-default Basal Ganglia gate. The gate defaults to INHIBIT;
+all five checks must pass, and Level 3 (LOCKED) never opens.
+
+```mermaid
+flowchart TB
+    PLAN["ActionPlan<br/>premotor builds"]:::substrate
+    EXEC["execute_one"]:::substrate
+    SNAP["Snapshot session_state<br/>closes TOCTOU window"]:::substrate
+    RED{"cognitive_state<br/>RED?"}:::runtime
+    HALT["HALTED · Rule 28"]:::runtime
+    BG{"Basal Ganglia<br/>5-check gate · Rule 23"}:::substrate
+    INHIBIT["INHIBIT default · Rule 23"]:::runtime
+    LOCKED["LOCKED · Rule 25<br/>Level 3 NEVER opens"]:::runtime
+    HANDLER["Handler · ONE atomic action<br/>Rule 24"]:::substrate
+    CB_S["Cerebellum<br/>record_success"]:::runtime
+    CB_F["Cerebellum<br/>record_failure"]:::runtime
+    DC["Decompile · Rule 32<br/>compiled=False<br/>success_count=0"]:::substrate
+    HOOK["on_decompile listener<br/>fire-and-forget audit"]:::runtime
+
+    PLAN --> EXEC --> SNAP --> RED
+    RED -->|"yes"| HALT
+    RED -->|"no"| BG
+    BG -->|"all 5 pass"| HANDLER
+    BG -->|"any check fails"| INHIBIT
+    BG -->|"consent locked"| LOCKED
+    HANDLER -->|"success"| CB_S
+    HANDLER -->|"failure"| CB_F --> DC --> HOOK
+
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
+```
+
+The five checks are **anchor**, **consent**, **elenchus state**,
+**reversibility**, and **scope** — every action requires every check
+to pass; one failure inhibits. Reflexes skip planning but never skip
+the gate (Rule 26). Single failure de-compiles instantly and resets
+`success_count` to 0; the prior count is captured by the
+`on_decompile` listener payload (audit trail), never by leaving stale
+counters on the pattern itself. Preemption during DMN teardown writes
+to `/dev/shm/`, never to SQLite (Rule 30).
+
+---
+
+## Architecture · Elenchus GVR (v4.0-ELENCHUS)
+
+Elenchus is the verification engine. The verifier is **trace-excluded**
+by build-time contract: `verify(reasoning_trace=None)` raises
+`ValueError` immediately if the trace argument is anything other than
+`None` (Rule 11). The loop is bounded at 3 cycles; FIXABLE outputs
+that fail to revise within the budget become **UNPROVABLE** — a
+dignified, first-class terminal state with metadata, not a failure.
+
+```mermaid
+flowchart TB
+    OUT["LLM output + intent"]:::substrate
+    V["verify · Rule 11<br/>reasoning_trace=None enforced"]:::substrate
+    SG{"spec-gaming?<br/>Rule 15"}:::substrate
+    SPEC["SPEC_GAMED<br/>parked · never consolidated"]:::runtime
+    INT{"intent aligned?<br/>Rule 14"}:::substrate
+    FX["FIXABLE"]:::runtime
+    OK["VERIFIED"]:::substrate
+    CYCLE{"cycle &lt; 3?<br/>Rule 13"}:::substrate
+    REVISE["reviser"]:::runtime
+    UN["UNPROVABLE · Rule 16<br/>parked + metadata"]:::runtime
+    CONS["consolidate to reflex<br/>Rule 12 · VERIFIED-only"]:::substrate
+
+    OUT --> V --> SG
+    SG -->|"drift / deflection"| SPEC
+    SG -->|"no"| INT
+    INT -->|"no"| FX
+    INT -->|"yes + coherent + complete"| OK
+    FX --> CYCLE
+    CYCLE -->|"yes"| REVISE --> V
+    CYCLE -->|"no · cycle 3 reached"| UN
+    OK --> CONS
+
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
+```
+
+Only **VERIFIED** resolutions become reflexes (Rule 12). FIXABLE,
+SPEC_GAMED, and UNPROVABLE never consolidate — the build fails if an
+unverified resolution leaks to the reflex cache. The Bridge checks
+that the output answers the original intent (Rule 14), not a reframed
+easier question — spec-gaming detection (Rule 15) catches the
+correct-answer-to-wrong-question failure mode that dominates this
+class of bug.
+
+---
+
+## Architecture · Inquiry / DMN (v5.0-INQUIRY)
+
+The Default Mode Network synthesises patterns *between* sessions
+during the daemon teardown window. Inquiry safeguards prevent the
+classic LLM-as-pattern-detector failure modes: false positives
+(apophenia), insincere agreement, and unbounded inquisitiveness after
+rejection.
+
+```mermaid
+flowchart TB
+    DMN["DMN · async teardown<br/>S6 · 30s window"]:::substrate
+    EVID{"evidence count<br/>vs depth threshold"}:::substrate
+    QUEUE["queue with TTL<br/>S5 · e^(-3t/ttl) decay"]:::runtime
+    ALT["alternative hypothesis<br/>S1 · apophenia guard<br/>5 / 8 / 15 / 25 evidence"]:::substrate
+    SINC{"sincerity gate<br/>S8"}:::substrate
+    RUP["rupture trace<br/>S3 · weight 2.0 · non-decaying"]:::runtime
+    BID["inquiry bid<br/>confidence disclosure mandatory"]:::substrate
+    CRYST["crystallize<br/>S7 · lambda/10 · max 50 traces"]:::substrate
+    STOP["offer to stop<br/>S3 · after 3 rejections"]:::runtime
+
+    DMN --> EVID
+    EVID -->|"&lt; threshold"| QUEUE
+    EVID -->|">= threshold"| ALT --> SINC
+    SINC -->|"sarcastic"| RUP
+    SINC -->|"sincere"| BID
+    BID -->|"user accepts"| CRYST
+    BID -->|"user rejects"| RUP
+    RUP -->|"3+ rejections"| STOP
+
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
+```
+
+Self-reported traces consumed by Inquiry bypass Elenchus (S2 —
+Inquiry verifies tone + boundaries, not objective truth);
+Composition-bound consumers still get standard verification.
+Crystallization (S7) protects emerging patterns below the apophenia
+threshold by reducing their decay rate to `λ/10`. When Elenchus
+falsifies a self-reported claim, a `perception_gap` trace is emitted
+(Rule 20); if the user rejects the inquiry, the claim is tagged
+`blind_spot_accepted` (Rule 33) — claim-specific, not categorical.
+
+---
+
 ## Architecture
 
 ### System Layers
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
 graph TB
-    USER["You · Claude Desktop / Claude Code"]:::user
+    USER["You · Claude Desktop / Claude Code"]:::substrate
 
     subgraph MCP["MCP Server · 8 Tools · stdio"]
         direction LR
-        COACH["twin_coach"]:::tool
-        STORE["twin_store"]:::tool
-        RECALL["twin_recall"]:::tool
-        QPE["query_past_experience"]:::tool
-        PATTERNS["twin_patterns"]:::tool
-        SESSION["twin_session_status"]:::tool
-        RESOLVE["resolve_verifications"]:::tool
-        RECAL["trigger_recalibration"]:::tool
+        COACH["twin_coach"]:::runtime
+        STORE["twin_store"]:::runtime
+        RECALL["twin_recall"]:::runtime
+        QPE["query_past_experience"]:::runtime
+        PATTERNS["twin_patterns"]:::runtime
+        SESSION["twin_session_status"]:::runtime
+        RESOLVE["resolve_verifications"]:::runtime
+        RECAL["trigger_recalibration"]:::runtime
     end
 
     subgraph ENGINE["CognitiveEngine · Production Singleton"]
         direction TB
-        DAG["MockCogExec · networkx DAG\nburst → energy → momentum\n→ burnout → allostasis\n+ injection_gain · context_budget · routing"]:::engine
-        DELEGATES["Hydra Delegates\nHdClaude · HdClaudeCode\ncapability-matched routing"]:::engine
-        PREDICT["XGBoost Predictor\n3-step window · 111 features\n→ momentum · burnout · energy · burst"]:::engine
+        DAG["MockCogExec · networkx DAG<br/>burst → energy → momentum<br/>→ burnout → allostasis<br/>+ injection_gain · context_budget · routing"]:::substrate
+        DELEGATES["Hydra Delegates<br/>HdClaude · HdClaudeCode<br/>capability-matched routing"]:::substrate
+        PREDICT["XGBoost Predictor<br/>3-step window · 111 features<br/>→ momentum · burnout · energy · burst"]:::substrate
     end
 
     subgraph STAGE["USD Stage · .usda on Disk"]
         direction LR
-        ROOT["harlo.usda\nTime-sampled state\nCanonical prim hierarchy"]:::usd
-        CLAUDE_SUB["delegates/claude.usda\nInteractive opinions"]:::usd
-        CODE_SUB["delegates/claude_code.usda\nBatch opinions"]:::usd
+        ROOT["harlo.usda<br/>Time-sampled state<br/>Canonical prim hierarchy"]:::substrate
+        CLAUDE_SUB["delegates/claude.usda<br/>Interactive opinions"]:::substrate
+        CODE_SUB["delegates/claude_code.usda<br/>Batch opinions"]:::substrate
     end
 
     subgraph MEMORY["Core Twin · Biologically-Architected Memory"]
         direction TB
-        HOT["Hot Tier · FTS5\n< 0.2ms store"]:::memory
-        WARM["Warm Tier · SDR Hamming\nRust PyO3 · < 2ms recall"]:::memory
-        ELENCHUS["Elenchus · GVR\ntrace-excluded verify"]:::memory
-        HEBBIAN["Hebbian · dual-mask\nSDR evolution"]:::memory
-        COMPOSITION["Composition · Merkle\nLIVRPS resolution"]:::memory
+        HOT["Hot Tier · FTS5<br/>&lt; 0.2ms store"]:::runtime
+        WARM["Warm Tier · SDR Hamming<br/>Rust PyO3 · &lt; 2ms recall"]:::runtime
+        ELENCHUS["Elenchus · GVR<br/>trace-excluded verify"]:::runtime
+        HEBBIAN["Hebbian · dual-mask<br/>SDR evolution"]:::runtime
+        COMPOSITION["Composition · Merkle<br/>LIVRPS resolution"]:::runtime
     end
 
-    BUFFER["Observation Buffer\nanchor 20% · organic 80%\n458 observations"]:::buffer
+    BUFFER["Observation Buffer<br/>anchor 20% · organic 80%"]:::runtime
 
     USER --> MCP
     MCP --> ENGINE
@@ -288,12 +427,8 @@ graph TB
     MEMORY --> MCP
     ENGINE -->|"enriched context"| USER
 
-    classDef user fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
-    classDef tool fill:#0f3460,stroke:#3b82f6,color:#93c5fd
-    classDef engine fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe,font-weight:bold
-    classDef usd fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold,stroke-width:3px
-    classDef memory fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
-    classDef buffer fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
 ```
 
 ### Exchange Loop
@@ -301,29 +436,27 @@ graph TB
 Every MCP tool call flows through this 7-step pipeline:
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
 graph LR
-    CALL["MCP Tool Call"]:::input
+    CALL["MCP Tool Call"]:::runtime
 
     subgraph PIPELINE["CognitiveEngine · Per-Exchange Pipeline"]
         direction LR
-        S1["1 · Author\nBuild observation\nfrom tool context"]:::step
-        S2["2 · Evaluate\nDAG: burst → energy\n→ momentum → burnout\n→ allostasis"]:::step
-        S3["3 · Route\ncompute_routing →\ncapability requirements"]:::step
-        S4["4 · Delegate\nSync → Execute\n→ CommitResources\nto sublayer"]:::step
-        S5["5 · Observe\nEmit to buffer\nanchor/organic split"]:::step
-        S6["6 · Predict\nXGBoost forecast\nauthor to /prediction"]:::step
-        S7["7 · Save\n.usda to disk\ngraceful on failure"]:::step
+        S1["1 · Author<br/>Build observation<br/>from tool context"]:::substrate
+        S2["2 · Evaluate<br/>DAG: burst → energy<br/>→ momentum → burnout<br/>→ allostasis"]:::substrate
+        S3["3 · Route<br/>compute_routing →<br/>capability requirements"]:::substrate
+        S4["4 · Delegate<br/>Sync → Execute<br/>→ CommitResources<br/>to sublayer"]:::substrate
+        S5["5 · Observe<br/>Emit to buffer<br/>anchor/organic split"]:::substrate
+        S6["6 · Predict<br/>XGBoost forecast<br/>author to /prediction"]:::substrate
+        S7["7 · Save<br/>.usda to disk<br/>graceful on failure"]:::substrate
         S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
     end
 
-    RESPONSE["Enriched Response\ncognitive_context\ndelegate_id · expert\nprediction"]:::output
+    RESPONSE["Enriched Response<br/>cognitive_context<br/>delegate_id · expert<br/>prediction"]:::runtime
 
     CALL --> PIPELINE --> RESPONSE
 
-    classDef input fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
-    classDef step fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
-    classDef output fill:#22c55e,stroke:#4ade80,color:#fff,font-weight:bold
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
 ```
 
 ### Cognitive State Machines
@@ -331,7 +464,7 @@ graph LR
 Five state machines evaluated via topologically-sorted DAG on every exchange:
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
+%%{init: {'themeVariables': {'primaryColor': '#CC4400', 'primaryTextColor': '#FFF4E6', 'primaryBorderColor': '#7A2900', 'lineColor': '#7A2900', 'secondaryColor': '#FF7733', 'tertiaryColor': '#FFB870'}}}%%
 stateDiagram-v2
     direction LR
 
@@ -379,41 +512,40 @@ stateDiagram-v2
 The DAG outputs what's needed. The registry selects who fulfills it. The DAG never names a specific LLM.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
 graph TB
-    ROUTING["compute_routing\nOutputs: requirements\nNOT delegate names"]:::route
+    ROUTING["compute_routing<br/>Outputs: requirements<br/>NOT delegate names"]:::substrate
 
     subgraph REQUIREMENTS["Capability Requirements"]
         direction LR
-        REQ_TASKS["supported_tasks\nreasoning · coaching\ncode_generation"]:::req
-        REQ_LATENCY["latency_max\nrealtime · interactive\nbatch"]:::req
-        REQ_CODING["requires_coding\ntrue / false"]:::req
-        REQ_CTX["context_budget\nlight · medium · heavy"]:::req
+        REQ_TASKS["supported_tasks<br/>reasoning · coaching<br/>code_generation"]:::substrate
+        REQ_LATENCY["latency_max<br/>realtime · interactive<br/>batch"]:::substrate
+        REQ_CODING["requires_coding<br/>true / false"]:::substrate
+        REQ_CTX["context_budget<br/>light · medium · heavy"]:::substrate
     end
 
     subgraph SAFETY["Safety Overrides"]
         direction LR
-        RED["RED burnout\n-> force restorer\nconsent ignored"]:::red
-        ORANGE["ORANGE + no consent\n-> force restorer"]:::orange
-        CONSENT["OOB Consent\nHMAC-signed\nTTL · revocable"]:::consent
+        RED["RED burnout<br/>→ force restorer<br/>consent ignored"]:::runtime
+        ORANGE["ORANGE + no consent<br/>→ force restorer"]:::runtime
+        CONSENT["OOB Consent<br/>HMAC-signed<br/>TTL · revocable"]:::runtime
     end
 
     subgraph REGISTRY["DelegateRegistry · Capability Match"]
         direction TB
-        MATCH["Filter → Sort → Select\nprefer lower latency\nthen higher context"]:::registry
+        MATCH["Filter → Sort → Select<br/>prefer lower latency<br/>then higher context"]:::substrate
 
         subgraph DELEGATES["Registered Delegates"]
             direction LR
-            CLAUDE["HdClaude\nreasoning · coaching\nanalysis · exploration\ninteractive · 200K"]:::claude
-            CODE["HdClaudeCode\nimplementation · debugging\ncode_generation · testing\nbatch · 200K"]:::code
-            FUTURE["Your Delegate\nimplement interface\nregister · done"]:::future
+            CLAUDE["HdClaude<br/>reasoning · coaching<br/>analysis · exploration<br/>interactive · 200K"]:::runtime
+            CODE["HdClaudeCode<br/>implementation · debugging<br/>code_generation · testing<br/>batch · 200K"]:::runtime
+            FUTURE["Your Delegate<br/>implement interface<br/>register · done"]:::runtime
         end
     end
 
     subgraph SUBLAYERS["Per-Delegate .usda Sublayers"]
         direction LR
-        SUB_C["claude.usda\nSTRONGEST"]:::sub
-        SUB_CC["claude_code.usda"]:::sub
+        SUB_C["claude.usda<br/>STRONGEST"]:::substrate
+        SUB_CC["claude_code.usda"]:::substrate
     end
 
     ROUTING --> REQUIREMENTS
@@ -423,16 +555,8 @@ graph TB
     MATCH --> DELEGATES
     DELEGATES -->|"Sync/Execute/Commit"| SUBLAYERS
 
-    classDef route fill:#0f3460,stroke:#3b82f6,color:#93c5fd,font-weight:bold
-    classDef req fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
-    classDef red fill:#7f1d1d,stroke:#ef4444,color:#fff,font-weight:bold
-    classDef orange fill:#5c1a1a,stroke:#ef4444,color:#fca5a5
-    classDef consent fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
-    classDef registry fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
-    classDef claude fill:#0f3460,stroke:#3b82f6,color:#93c5fd,font-weight:bold
-    classDef code fill:#1a3a4a,stroke:#06b6d4,color:#a5f3fc,font-weight:bold
-    classDef future fill:#1a1a2e,stroke:#6b7280,color:#9ca3af,stroke-dasharray: 5 5
-    classDef sub fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,stroke-width:2px
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
 ```
 
 ### Prediction Pipeline
@@ -440,34 +564,33 @@ graph TB
 From synthetic autoresearch to live organic observations:
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1a1a2e', 'primaryTextColor': '#e0e0e0', 'primaryBorderColor': '#7c3aed', 'lineColor': '#7c3aed'}}}%%
 graph TB
     subgraph SYNTHETIC["Autoresearch · Sprint 1"]
         direction TB
-        GEN["Trajectory Generator\n7 profiles · Markov Biasing\nnormal 40% · deep_work 15%\nstruggling 15% · recovery 10%\ninjection 10% · crisis 5% · mobile 5%"]:::gen
-        TRAJ["10,000 sessions\n278,577 exchanges\n0 invariant violations"]:::gen
+        GEN["Trajectory Generator<br/>7 profiles · Markov Biasing<br/>normal 40% · deep_work 15%<br/>struggling 15% · recovery 10%<br/>injection 10% · crisis 5% · mobile 5%"]:::runtime
+        TRAJ["10,000 sessions<br/>278,577 exchanges<br/>0 invariant violations"]:::runtime
         GEN --> TRAJ
     end
 
     subgraph BUFFER["Observation Buffer · SQLite"]
         direction LR
-        ANCHOR["Anchor Partition\n20% · locked synthetic\nbaseline coverage"]:::anchor
-        ORGANIC["Organic Partition\n80% · surprise-weighted\nlive session data"]:::organic
+        ANCHOR["Anchor Partition<br/>20% · locked synthetic<br/>baseline coverage"]:::substrate
+        ORGANIC["Organic Partition<br/>80% · surprise-weighted<br/>live session data"]:::runtime
     end
 
     subgraph TRAINING["XGBoost Training"]
         direction TB
-        WINDOW["3-step sliding window\n111 features per sample"]:::train
-        ENCODE["Ordinal: momentum, burnout, energy\nOne-Hot: action_type, injection_profile\nDrop: exchange_index, session_id"]:::train
-        MODEL["MultiOutputRegressor\nXGBRegressor(reg:squarederror)\nRound + clamp to valid range"]:::train
+        WINDOW["3-step sliding window<br/>111 features per sample"]:::substrate
+        ENCODE["Ordinal: momentum, burnout, energy<br/>One-Hot: action_type, injection_profile<br/>Drop: exchange_index, session_id"]:::substrate
+        MODEL["MultiOutputRegressor<br/>XGBRegressor(reg:squarederror)<br/>Round + clamp to valid range"]:::substrate
         WINDOW --> ENCODE --> MODEL
     end
 
     subgraph LIVE["Live Prediction · Per Exchange"]
         direction TB
-        OBS_WIN["Last 3 observations\nfrom current session"]:::live
-        PRED["Predict: momentum\nburnout · energy · burst"]:::live
-        AUTHOR["Author to\n/prediction/forecast\non USD stage"]:::live
+        OBS_WIN["Last 3 observations<br/>from current session"]:::runtime
+        PRED["Predict: momentum<br/>burnout · energy · burst"]:::runtime
+        AUTHOR["Author to<br/>/prediction/forecast<br/>on USD stage"]:::runtime
         OBS_WIN --> PRED --> AUTHOR
     end
 
@@ -476,11 +599,8 @@ graph TB
     ORGANIC -->|"retrain"| TRAINING
     MODEL --> LIVE
 
-    classDef gen fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
-    classDef anchor fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,stroke-width:3px
-    classDef organic fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
-    classDef train fill:#0f3460,stroke:#3b82f6,color:#93c5fd
-    classDef live fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold
+    classDef substrate fill:#CC4400,stroke:#7A2900,color:#FFF4E6,font-weight:bold
+    classDef runtime fill:#FF7733,stroke:#CC4400,color:#2D1500
 ```
 
 ---
@@ -632,7 +752,34 @@ PREDICTION_ENABLED=1     # XGBoost predictions
 
 ## The 33 Rules
 
-The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), motor safety (inhibition default, one action at a time, RED kills everything), and Hebbian constraints (Merkle isolation, dual masks not XOR, homeostatic plasticity). These aren't guidelines — they're structural constraints enforced by **1,172 tests** (Path C v3.4.0; +39 since Mile 1 baseline). See `CLAUDE.md` for the full specification and `harness/path_c/` for the Path C surgery harness (D1–D19 decisions log, phase gate audits).
+The architecture is constrained by 33 inviolable rules organised into four
+constitutional layers:
+
+- **Biological constraints (v3.0, rules 1–10)** — 0W idle (socket activation,
+  no polling), 1-bit SDR vectors with bitwise XOR / Hamming search, lazy
+  decay (timestamp math at retrieval only), apoptosis (physical DELETE +
+  VACUUM), Merkle composition, anchor immunity, JSON-schema barrier, and
+  the allostatic-load formula.
+- **Elenchus constraints (v4.0, rules 11–18)** — trace-excluded `verify()`
+  (build fails if `reasoning_trace` leaks), VERIFIED-only consolidation,
+  max 3 GVR cycles with FIXABLE → UNPROVABLE promotion, intent
+  preservation, spec-gaming detection, dignified UNPROVABLE state, burst
+  defers / RED overrides everything.
+- **Inquiry safeguards (v5.0, rules S1–S8)** — apophenia guard with
+  depth-tiered evidence thresholds, epistemological bypass, rupture &
+  repair, utility-mode DMN muting, inquiry apoptosis, DMN async
+  teardown window, trace crystallization, sincerity gate.
+- **Motor Cortex constraints (v6.0, rules 19–33)** — teardown preemption,
+  perception-gap traces, inhibition-default Basal Ganglia, ONE atomic
+  action at a time, Level 3 LOCKED never opens, motor reflexes ALWAYS
+  gated, RED kills motor, reversibility cap, preemption to `/dev/shm/`
+  (never SQLite), action-plan persistence, motor-reflex zero-tolerance
+  (`success_count=0` on decompile), blind-spot acceptance.
+
+These aren't guidelines — they're structural constraints with
+build-time and test-time enforcement. See `CLAUDE.md` for the full
+specification and `harness/path_c/` for the Path C surgery harness
+(D1–D19 decisions log, phase gate audits).
 
 ---
 
