@@ -136,6 +136,23 @@ class TestMotorCerebellum:
         cerebellum.record_failure("p", reason="transient downstream error")
         assert observed == [("p", "transient downstream error")]
 
+    def test_decompile_listener_sees_prior_success_count(self):
+        """on_decompile fires BEFORE the Rule 32 reset so audit captures prior."""
+        from harlo.motor.motor_cerebellum import MotorCerebellum, ActionPattern
+        seen: list[int] = []
+        cerebellum = MotorCerebellum(
+            on_decompile=lambda p, r: seen.append(p.success_count)
+        )
+        cerebellum.register_pattern(ActionPattern(
+            pattern_id="p", action_type="t", target_pattern="*",
+            success_count=42,
+        ))
+        cerebellum.record_failure("p", reason="boom")
+        # Listener observed the pre-reset count (Rule 32 audit trail).
+        assert seen == [42]
+        # External readers see the reset (Rule 32 literal).
+        assert cerebellum.get_pattern("p").success_count == 0
+
     def test_decompile_isolates_listener_errors(self):
         """A raising on_decompile listener must NOT abort record_failure."""
         from harlo.motor.motor_cerebellum import MotorCerebellum, ActionPattern

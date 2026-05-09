@@ -251,8 +251,13 @@ pub fn microglia_apoptosis(
 
     // Batched DELETE: chunk into IN-lists below SQLite's 999-parameter ceiling.
     // Replaces 2N single-row DELETEs with ⌈N/CHUNK⌉ statements; one mutex
-    // acquisition per chunk instead of per row.
+    // acquisition per chunk instead of per row.  Wrapped in a single
+    // transaction so the trace-DELETE and edge-DELETE for any given chunk
+    // commit atomically — a mid-loop failure cannot leave traces deleted but
+    // their graph_edges still pointing at orphan ids.  VACUUM runs after the
+    // commit (it cannot execute inside an open transaction).
     const APOPTOSIS_CHUNK: usize = 900;
+    let tx = conn.unchecked_transaction()?;
     for chunk in to_delete.chunks(APOPTOSIS_CHUNK) {
         let placeholders: String = std::iter::repeat("?")
             .take(chunk.len())
@@ -260,17 +265,18 @@ pub fn microglia_apoptosis(
             .join(",");
 
         let trace_sql = format!("DELETE FROM traces WHERE id IN ({})", placeholders);
-        conn.execute(&trace_sql, rusqlite::params_from_iter(chunk.iter()))?;
+        tx.execute(&trace_sql, rusqlite::params_from_iter(chunk.iter()))?;
 
         let edge_sql = format!(
             "DELETE FROM graph_edges WHERE source_id IN ({0}) OR target_id IN ({0})",
             placeholders
         );
-        conn.execute(
+        tx.execute(
             &edge_sql,
             rusqlite::params_from_iter(chunk.iter().chain(chunk.iter())),
         )?;
     }
+    tx.commit()?;
 
     // VACUUM to reclaim space. Rule 5.
     conn.execute_batch("VACUUM")?;
