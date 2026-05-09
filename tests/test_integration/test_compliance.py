@@ -471,7 +471,10 @@ class TestRule32_MotorZeroTolerance:
         p = cb.get_pattern("p1")
         assert p is not None
         assert p.compiled is False, "Single failure must decompile"
-        assert p.success_count == 100, "success_count preserved for audit"
+        # Rule 32 literal (CLAUDE.md:186): "compiled=False, success_count=0".
+        # Audit of the prior count is captured via the on_decompile listener
+        # payload, not by leaving the field populated on the pattern itself.
+        assert p.success_count == 0, "Rule 32: success_count reset to 0 on de-compilation"
         assert p.decompile_reason == "test failure"
 
     def test_decompiled_not_findable(self):

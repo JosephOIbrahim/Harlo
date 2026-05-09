@@ -139,8 +139,20 @@ def execute_one(
     Returns:
         ExecutionResult with status and output.
     """
+    # Read-once snapshot of session_state.  Closes the TOCTOU window between
+    # the RED check, the Basal Ganglia gate, and the handler invocation —
+    # without introducing a synchronisation primitive (preserves 0W-idle).
+    #
+    # Shallow copy is intentional.  Every Basal Ganglia check reads top-level
+    # scalars (cognitive_state, consent_level, ...); the snapshot fully
+    # protects those.  Nested mutable values intentionally remain shared with
+    # the live dict — deepcopy would add hot-path latency and a panic surface
+    # (non-deepcopiable objects in session_state) to defend a threat model
+    # that no current gate check exercises.
+    state = dict(session_state)
+
     # Rule 28: RED kills motor
-    if session_state.get("cognitive_state") == "RED":
+    if state.get("cognitive_state") == "RED":
         return ExecutionResult(
             status=ExecutionStatus.HALTED,
             action=action,
@@ -148,7 +160,7 @@ def execute_one(
         )
 
     # Rule 26: ALWAYS gate, even reflexes
-    gate_result = gate(action, session_state, consent_state)
+    gate_result = gate(action, state, consent_state)
 
     if gate_result.decision != GateDecision.DISINHIBIT:
         return ExecutionResult(
@@ -158,10 +170,10 @@ def execute_one(
             error=gate_result.failure_reason,
         )
 
-    # Execute the action
+    # Execute the action against the same snapshot the gate decided on.
     handler = _HANDLERS.get(action.action_type, _default_handler)
     try:
-        output = handler(action, session_state)
+        output = handler(action, state)
         return ExecutionResult(
             status=ExecutionStatus.SUCCESS,
             action=action,

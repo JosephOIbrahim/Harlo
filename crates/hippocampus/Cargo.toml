@@ -5,7 +5,9 @@ edition = "2021"
 
 [lib]
 name = "hippocampus"
-crate-type = ["cdylib"]
+# `rlib` lets benches and integration tests link against the crate.
+# `cdylib` remains the artifact PyO3 loads from Python.
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 pyo3 = { version = "0.28", features = ["extension-module"] }
@@ -13,3 +15,10 @@ bitvec = "1"
 rusqlite = { version = "0.32", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+[dev-dependencies]
+criterion = { version = "0.5", default-features = false, features = ["cargo_bench_support"] }
+
+[[bench]]
+name = "recall"
+harness = false

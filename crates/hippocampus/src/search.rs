@@ -4,6 +4,7 @@
 //! Target: <0.5ms on 100K traces.
 
 use bitvec::prelude::*;
+use std::collections::BinaryHeap;
 
 /// Result of a trace search.
 #[derive(Debug, Clone)]
@@ -18,34 +19,46 @@ pub struct TraceResult {
 
 /// Perform kNN search using XOR + popcount over SDR vectors.
 ///
-/// Returns the k nearest traces sorted by Hamming distance.
-/// All operations are bitwise. No floating point similarity.
+/// Returns the k nearest traces sorted ascending by Hamming distance.
+/// Uses a bounded max-heap so the working set is O(k) and trace ids are
+/// cloned only for the k survivors — not for every candidate.
 pub fn xor_search(
     query: &BitVec<u8, Lsb0>,
     candidates: &[(String, Vec<u8>)],
     k: usize,
 ) -> Vec<TraceResult> {
+    if k == 0 || candidates.is_empty() {
+        return Vec::new();
+    }
     let query_bytes = query.as_raw_slice();
 
-    let mut results: Vec<TraceResult> = candidates
-        .iter()
-        .map(|(id, sdr_bytes)| {
-            let distance = xor_popcount(query_bytes, sdr_bytes);
-            TraceResult {
-                trace_id: id.clone(),
-                distance,
-                strength: 0.0, // Filled by caller after decay computation
+    // Max-heap keyed by (distance, idx): peek = worst kept candidate.
+    // Tuple ordering preserves stable-sort semantics on ties (smaller idx wins).
+    // Cap capacity at the available candidates — k may legitimately exceed N
+    // (caller asks for top-1000 but only 50 traces exist) and the
+    // pop-before-push loop never grows the heap beyond `cap` anyway.
+    let cap = k.min(candidates.len());
+    let mut heap: BinaryHeap<(u32, usize)> = BinaryHeap::with_capacity(cap);
+    for (idx, (_, sdr_bytes)) in candidates.iter().enumerate() {
+        let distance = xor_popcount(query_bytes, sdr_bytes);
+        if heap.len() < k {
+            heap.push((distance, idx));
+        } else if let Some(&(worst, _)) = heap.peek() {
+            if distance < worst {
+                heap.pop();
+                heap.push((distance, idx));
             }
+        }
+    }
+
+    heap.into_sorted_vec()
+        .into_iter()
+        .map(|(distance, idx)| TraceResult {
+            trace_id: candidates[idx].0.clone(),
+            distance,
+            strength: 0.0, // Filled by caller after decay computation
         })
-        .collect();
-
-    // Sort by Hamming distance (ascending)
-    results.sort_by_key(|r| r.distance);
-
-    // Take top k
-    results.truncate(k);
-
-    results
+        .collect()
 }
 
 /// Compute Hamming distance between two byte slices via XOR + popcount.
@@ -62,8 +75,12 @@ fn xor_popcount(a: &[u8], b: &[u8]) -> u32 {
     let mut total: u32 = chunks_a
         .zip(chunks_b)
         .map(|(ca, cb)| {
-            let va = u64::from_le_bytes(ca.try_into().unwrap());
-            let vb = u64::from_le_bytes(cb.try_into().unwrap());
+            let va = u64::from_le_bytes(
+                ca.try_into().expect("chunks_exact(8) yields exactly 8 bytes"),
+            );
+            let vb = u64::from_le_bytes(
+                cb.try_into().expect("chunks_exact(8) yields exactly 8 bytes"),
+            );
             (va ^ vb).count_ones()
         })
         .sum();

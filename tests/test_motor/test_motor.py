@@ -108,6 +108,109 @@ class TestMotorCerebellum:
         assert reflex is not None
         assert reflex.compiled is False
 
+    def test_decompile_resets_success_count(self):
+        """Rule 32 literal: de-compilation MUST set success_count=0."""
+        from harlo.motor.motor_cerebellum import MotorCerebellum, ActionPattern
+        cerebellum = MotorCerebellum()
+        cerebellum.register_pattern(ActionPattern(
+            pattern_id="p", action_type="t", target_pattern="*",
+        ))
+        for _ in range(5):
+            cerebellum.record_success("p")
+        assert cerebellum.get_pattern("p").success_count == 5
+        cerebellum.record_failure("p", reason="boom")
+        reflex = cerebellum.get_pattern("p")
+        assert reflex.compiled is False
+        assert reflex.success_count == 0
+
+    def test_decompile_fires_observer_hook(self):
+        """Decompile events must be observable to higher layers."""
+        from harlo.motor.motor_cerebellum import MotorCerebellum, ActionPattern
+        observed: list[tuple[str, str]] = []
+        cerebellum = MotorCerebellum(
+            on_decompile=lambda p, r: observed.append((p.pattern_id, r))
+        )
+        cerebellum.register_pattern(ActionPattern(
+            pattern_id="p", action_type="t", target_pattern="*",
+        ))
+        cerebellum.record_failure("p", reason="transient downstream error")
+        assert observed == [("p", "transient downstream error")]
+
+    def test_decompile_isolates_listener_errors(self):
+        """A raising on_decompile listener must NOT abort record_failure."""
+        from harlo.motor.motor_cerebellum import MotorCerebellum, ActionPattern
+
+        def boom(_pattern, _reason):
+            raise RuntimeError("listener exploded")
+
+        cerebellum = MotorCerebellum(on_decompile=boom)
+        cerebellum.register_pattern(ActionPattern(
+            pattern_id="p", action_type="t", target_pattern="*",
+        ))
+        # Must not raise: listener errors are fire-and-forget.
+        cerebellum.record_failure("p", reason="downstream")
+        reflex = cerebellum.get_pattern("p")
+        # Decompilation bookkeeping completed despite the listener exception.
+        assert reflex.compiled is False
+        assert reflex.success_count == 0
+        assert reflex.decompile_reason == "downstream"
+
+
+class TestExecutorSnapshot:
+    """TOCTOU defence: gate decision and handler must see the same state."""
+
+    @pytest.fixture(autouse=True)
+    def _isolate(self, monkeypatch):
+        # Stub the gate to a pass-through so this test exercises ONLY snapshot
+        # semantics, not the live Basal Ganglia policy.  The gate has 5 checks
+        # and adding a 6th in the future would silently break a test that
+        # actually intends to verify snapshot isolation.
+        from harlo.motor import executor as _exec
+        from harlo.motor.basal_ganglia import GateDecision, GateResult
+
+        monkeypatch.setattr(
+            _exec, "gate",
+            lambda action, state, consent=None: GateResult(
+                decision=GateDecision.DISINHIBIT,
+            ),
+        )
+        yield
+        # Clean up the module-level _HANDLERS dict to avoid cross-test leakage.
+        _exec._HANDLERS.pop("snapshot_test", None)
+
+    def test_session_state_snapshot_isolation(self):
+        """Mutations to session_state during handler must not race the gate."""
+        from harlo.motor.executor import (
+            execute_one, register_handler, ExecutionStatus,
+        )
+        from harlo.motor.premotor import PlannedAction
+
+        live_state = {"cognitive_state": "GREEN", "consent_level": 0}
+        seen: dict = {}
+
+        def recording_handler(action, session_state):
+            # Capture what the handler observes; then mutate the *original*
+            # dict to simulate a concurrent flip.  The snapshot must keep the
+            # handler's view stable.
+            seen["handler_state"] = dict(session_state)
+            live_state["cognitive_state"] = "RED"
+            return {"ok": True}
+
+        register_handler("snapshot_test", recording_handler)
+        action = PlannedAction(
+            action_type="snapshot_test",
+            description="snapshot probe",
+            target="probe",
+            payload={},
+            consent_level=0,   # AUTONOMOUS
+            reversible=True,
+            side_effects=[],
+        )
+        result = execute_one(action, live_state)
+        assert result.status == ExecutionStatus.SUCCESS
+        # The handler's view was the snapshot, not the post-mutation state.
+        assert seen["handler_state"]["cognitive_state"] == "GREEN"
+
 
 class TestActionPlan:
     """Rule 24 + 31: One action at a time, plan persistence."""
