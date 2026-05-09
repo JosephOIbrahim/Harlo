@@ -213,9 +213,10 @@ server = FastMCP(
     name="harlo",
     instructions=(
         "Harlo v8.0 — biologically-architected AI memory. "
-        "Use twin_recall to search memory, twin_store to save traces, "
-        "twin_coach for coaching context, twin_patterns for pattern "
-        "detection, twin_session_status for session info."
+        "Use recall to search memory, store to save traces, "
+        "coach for coaching context, patterns for pattern "
+        "detection, status for session info. "
+        "In user-facing prose, refer to 'Harlo' — never the tool names."
     ),
 )
 
@@ -225,7 +226,7 @@ def _ensure_data_dir():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
-@server.tool()
+@server.tool(name="recall")
 def twin_recall(query: str, depth: str = "normal") -> str:
     """Search the Harlo's memory for traces matching a query.
 
@@ -322,7 +323,7 @@ def _get_injection_store():
     return _injection_store
 
 
-@server.tool()
+@server.tool(name="store")
 def twin_store(
     message: str,
     tags: list[str] | None = None,
@@ -387,7 +388,7 @@ def twin_store(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@server.tool()
+@server.tool(name="coach")
 def twin_coach(session_id: str | None = None) -> str:
     """Get coaching context for the current session.
 
@@ -434,7 +435,7 @@ def twin_coach(session_id: str | None = None) -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@server.tool()
+@server.tool(name="patterns")
 def twin_patterns() -> str:
     """Detect patterns in the Harlo's stored traces.
 
@@ -463,7 +464,7 @@ def twin_patterns() -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@server.tool()
+@server.tool(name="status")
 def twin_session_status() -> str:
     """Get current session information from the Harlo.
 

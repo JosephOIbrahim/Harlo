@@ -240,12 +240,12 @@ graph TB
 
     subgraph MCP["MCP Server · 8 Tools · stdio"]
         direction LR
-        COACH["twin_coach"]:::tool
-        STORE["twin_store"]:::tool
-        RECALL["twin_recall"]:::tool
+        COACH["coach"]:::tool
+        STORE["store"]:::tool
+        RECALL["recall"]:::tool
         QPE["query_past_experience"]:::tool
-        PATTERNS["twin_patterns"]:::tool
-        SESSION["twin_session_status"]:::tool
+        PATTERNS["patterns"]:::tool
+        SESSION["status"]:::tool
         RESOLVE["resolve_verifications"]:::tool
         RECAL["trigger_recalibration"]:::tool
     end

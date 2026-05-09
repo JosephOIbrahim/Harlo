@@ -63,7 +63,7 @@ it on the next MCP tool call after a disconnect notice (verified below).
               session start | next MCP tool call after disconnect
                           v
                      +---------+      banner returned on first
-                     | RUNNING |---,  twin_session_status of this
+                     | RUNNING |---,  status of this
                      +----+----+   |  process lifetime
                           |        |  (mcp_server.py:46-67, 493-495)
         SIGKILL / crash   |        |
@@ -116,7 +116,7 @@ State semantics:
 
 | Trigger | Next-tool-call result | Cited evidence |
 | --- | --- | --- |
-| `kill -9 <pid>` then immediate `mcp__harlo__twin_session_status` | Success. Response carries `banner` field (per `mcp_server.py:493-495`, `_consume_banner` returns the banner exactly once per process), `exchange_index: 1` (fresh `_engine`), and elevated `observations_logged` (state survived via disk). | Experiment T=1778347958.8: killed PID 2294. T=1778347970.7: pgrep showed PID 2347 (parent 1447 = Claude Code). MCP call returned banner + `observations_logged: 134`. |
+| `kill -9 <pid>` then immediate `mcp__harlo__status` | Success. Response carries `banner` field (per `mcp_server.py:493-495`, `_consume_banner` returns the banner exactly once per process), `exchange_index: 1` (fresh `_engine`), and elevated `observations_logged` (state survived via disk). | Experiment T=1778347958.8: killed PID 2294. T=1778347970.7: pgrep showed PID 2347 (parent 1447 = Claude Code). MCP call returned banner + `observations_logged: 134`. |
 | `kill -9` followed by 10 s of bash-only activity (no MCP calls) | Daemon stays dead. `pgrep -f harlo$` returns empty across 10 one-second polls. | Experiment T0=1778348015.66 through T0+10.68: empty `pgrep` at every sample. |
 | `kill -9` followed by next MCP call after the 10 s silence | Success. Banner returned again, sessions_count grew to 9 (each respawn instantiates new SessionManager rows). | Experiment T=1778348035.7: killed PID 2545. T=1778348036.x: MCP call returned banner + `observations_logged: 143`. |
 
@@ -148,10 +148,10 @@ pgrep -af harlo
 
 To verify MCP reachability from inside a Claude Code session, call any
 `mcp__harlo__*` tool and check `status: "ok"`. The cheapest is
-`twin_session_status` (no DB writes):
+`status` (no DB writes):
 
 ```
-mcp__harlo__twin_session_status()
+mcp__harlo__status()
 ```
 
 To force a within-session reconnect for chaos testing:
@@ -167,7 +167,7 @@ To time a recovery cycle:
 
 ```bash
 T0=$(date +%s.%N); kill -9 $(pgrep -f "harlo$" | head -1)
-# Issue mcp__harlo__twin_session_status from the conversation
+# Issue mcp__harlo__status from the conversation
 T1=$(date +%s.%N); echo "scale=3; $T1 - $T0" | bc
 ```
 

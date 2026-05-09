@@ -169,7 +169,7 @@ See `tests/conftest.py` for full triage rationale.
 
 1. **Restart Claude Desktop** (it needs to pick up the new MCP config)
 2. Open a new conversation
-3. The `twin_coach` tool should appear in Claude's tool list
+3. The `coach` tool should appear in Claude's tool list (alongside `recall`, `store`, `patterns`, `status`)
 4. Ask Claude anything — the twin evaluates your cognitive state in the background
 5. After a few exchanges, check your cognitive state:
 
@@ -196,7 +196,7 @@ You're running with the wrong Python version. Make sure you activated the `.venv
 ### "No module named pxr"
 The USD Python path isn't set. This is expected on Python 3.13/3.14. The system falls back to its built-in mock stage. To use real USD, run from the `.venv312` environment.
 
-### "twin_coach not found in Claude Desktop"
+### "coach not found in Claude Desktop"
 Restart Claude Desktop after changing the config file. The MCP tools only load on startup.
 
 ### "xgboost not found" or "scikit-learn not found"
