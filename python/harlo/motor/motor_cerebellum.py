@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Callable, Optional
 
 
 @dataclass
@@ -65,8 +65,15 @@ class MotorCerebellum:
     Rule 32: Single failure = instant de-compilation.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        on_decompile: Optional[Callable[[ActionPattern, str], None]] = None,
+    ) -> None:
         self._patterns: dict[str, ActionPattern] = {}
+        # Optional listener fired whenever a pattern is de-compiled.  Lets the
+        # daemon route Rule 32 events to Premotor / audit without coupling
+        # this module to either.
+        self._on_decompile = on_decompile
 
     # ------------------------------------------------------------------
     # Pattern management
@@ -124,12 +131,17 @@ class MotorCerebellum:
     def _decompile(self, pattern: ActionPattern, reason: str) -> None:
         """De-compile a pattern — remove from active reflexes.
 
-        Rule 32: Zero-tolerance. Once decompiled, requires full GVR
+        Rule 32: Zero-tolerance.  Mandates ``compiled=False`` AND
+        ``success_count=0``; once decompiled, requires full GVR
         re-verification before re-compilation.
         """
         pattern.compiled = False
         pattern.decompiled_at = time.time()
         pattern.decompile_reason = reason
+        # Rule 32 literal: success_count=0 on de-compilation.
+        pattern.success_count = 0
+        if self._on_decompile is not None:
+            self._on_decompile(pattern, reason)
 
     # ------------------------------------------------------------------
     # Queries

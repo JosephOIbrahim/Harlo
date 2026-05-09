@@ -249,12 +249,26 @@ pub fn microglia_apoptosis(
             .query_row("PRAGMA page_size", [], |r| r.get::<_, i64>(0))
             .unwrap_or(4096) as u64;
 
-    for id in &to_delete {
-        conn.execute("DELETE FROM traces WHERE id = ?1", params![id])?;
-        // Also clean up graph edges
+    // Batched DELETE: chunk into IN-lists below SQLite's 999-parameter ceiling.
+    // Replaces 2N single-row DELETEs with ⌈N/CHUNK⌉ statements; one mutex
+    // acquisition per chunk instead of per row.
+    const APOPTOSIS_CHUNK: usize = 900;
+    for chunk in to_delete.chunks(APOPTOSIS_CHUNK) {
+        let placeholders: String = std::iter::repeat("?")
+            .take(chunk.len())
+            .collect::<Vec<_>>()
+            .join(",");
+
+        let trace_sql = format!("DELETE FROM traces WHERE id IN ({})", placeholders);
+        conn.execute(&trace_sql, rusqlite::params_from_iter(chunk.iter()))?;
+
+        let edge_sql = format!(
+            "DELETE FROM graph_edges WHERE source_id IN ({0}) OR target_id IN ({0})",
+            placeholders
+        );
         conn.execute(
-            "DELETE FROM graph_edges WHERE source_id = ?1 OR target_id = ?1",
-            params![id],
+            &edge_sql,
+            rusqlite::params_from_iter(chunk.iter().chain(chunk.iter())),
         )?;
     }
 
