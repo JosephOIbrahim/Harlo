@@ -370,4 +370,46 @@ mod tests {
         store_trace(&conn, &make_trace("t1", "one", 1000)).unwrap();
         assert_eq!(trace_count(&conn).unwrap(), 1);
     }
+
+    #[test]
+    fn test_apoptosis_chunked_path() {
+        // Cross the 900-id chunk boundary so the batched DELETE runs at least
+        // twice and the graph_edges chunked clean-up is exercised.
+        let conn = open_memory_db().unwrap();
+        let total = 950;
+        for i in 0..total {
+            let trace = make_trace(&format!("old_{i}"), "ancient", 0);
+            store_trace(&conn, &trace).unwrap();
+            // Self-edge so we have something to clean up.
+            conn.execute(
+                "INSERT INTO graph_edges
+                   (source_id, target_id, weight, edge_type, created_at)
+                 VALUES (?1, ?1, 1.0, 'self', 0)",
+                params![trace.id],
+            )
+            .unwrap();
+        }
+        // Survivor.
+        store_trace(&conn, &make_trace("new", "fresh", 999_990)).unwrap();
+
+        let report = microglia_apoptosis(&conn, 0.01, 0.05, 1_000_000).unwrap();
+        assert_eq!(report.traces_deleted, total);
+
+        // Boundary ids on either side of the chunk split are gone.
+        assert!(load_trace(&conn, "old_0").unwrap().is_none());
+        assert!(load_trace(&conn, "old_899").unwrap().is_none()); // last of chunk 1
+        assert!(load_trace(&conn, "old_900").unwrap().is_none()); // first of chunk 2
+        assert!(load_trace(&conn, "old_949").unwrap().is_none());
+        assert!(load_trace(&conn, "new").unwrap().is_some());
+
+        // graph_edges for every deleted trace must be gone.
+        let edge_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM graph_edges WHERE source_id LIKE 'old_%'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(edge_count, 0);
+    }
 }

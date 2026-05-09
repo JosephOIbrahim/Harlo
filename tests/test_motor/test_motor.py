@@ -136,9 +136,47 @@ class TestMotorCerebellum:
         cerebellum.record_failure("p", reason="transient downstream error")
         assert observed == [("p", "transient downstream error")]
 
+    def test_decompile_isolates_listener_errors(self):
+        """A raising on_decompile listener must NOT abort record_failure."""
+        from harlo.motor.motor_cerebellum import MotorCerebellum, ActionPattern
+
+        def boom(_pattern, _reason):
+            raise RuntimeError("listener exploded")
+
+        cerebellum = MotorCerebellum(on_decompile=boom)
+        cerebellum.register_pattern(ActionPattern(
+            pattern_id="p", action_type="t", target_pattern="*",
+        ))
+        # Must not raise: listener errors are fire-and-forget.
+        cerebellum.record_failure("p", reason="downstream")
+        reflex = cerebellum.get_pattern("p")
+        # Decompilation bookkeeping completed despite the listener exception.
+        assert reflex.compiled is False
+        assert reflex.success_count == 0
+        assert reflex.decompile_reason == "downstream"
+
 
 class TestExecutorSnapshot:
     """TOCTOU defence: gate decision and handler must see the same state."""
+
+    @pytest.fixture(autouse=True)
+    def _isolate(self, monkeypatch):
+        # Stub the gate to a pass-through so this test exercises ONLY snapshot
+        # semantics, not the live Basal Ganglia policy.  The gate has 5 checks
+        # and adding a 6th in the future would silently break a test that
+        # actually intends to verify snapshot isolation.
+        from harlo.motor import executor as _exec
+        from harlo.motor.basal_ganglia import GateDecision, GateResult
+
+        monkeypatch.setattr(
+            _exec, "gate",
+            lambda action, state, consent=None: GateResult(
+                decision=GateDecision.DISINHIBIT,
+            ),
+        )
+        yield
+        # Clean up the module-level _HANDLERS dict to avoid cross-test leakage.
+        _exec._HANDLERS.pop("snapshot_test", None)
 
     def test_session_state_snapshot_isolation(self):
         """Mutations to session_state during handler must not race the gate."""

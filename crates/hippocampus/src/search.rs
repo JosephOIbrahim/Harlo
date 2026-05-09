@@ -34,7 +34,11 @@ pub fn xor_search(
 
     // Max-heap keyed by (distance, idx): peek = worst kept candidate.
     // Tuple ordering preserves stable-sort semantics on ties (smaller idx wins).
-    let mut heap: BinaryHeap<(u32, usize)> = BinaryHeap::with_capacity(k + 1);
+    // Cap capacity at the available candidates — k may legitimately exceed N
+    // (caller asks for top-1000 but only 50 traces exist) and the
+    // pop-before-push loop never grows the heap beyond `cap` anyway.
+    let cap = k.min(candidates.len());
+    let mut heap: BinaryHeap<(u32, usize)> = BinaryHeap::with_capacity(cap);
     for (idx, (_, sdr_bytes)) in candidates.iter().enumerate() {
         let distance = xor_popcount(query_bytes, sdr_bytes);
         if heap.len() < k {

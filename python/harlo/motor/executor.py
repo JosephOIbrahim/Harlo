@@ -142,6 +142,13 @@ def execute_one(
     # Read-once snapshot of session_state.  Closes the TOCTOU window between
     # the RED check, the Basal Ganglia gate, and the handler invocation —
     # without introducing a synchronisation primitive (preserves 0W-idle).
+    #
+    # Shallow copy is intentional.  Every Basal Ganglia check reads top-level
+    # scalars (cognitive_state, consent_level, ...); the snapshot fully
+    # protects those.  Nested mutable values intentionally remain shared with
+    # the live dict — deepcopy would add hot-path latency and a panic surface
+    # (non-deepcopiable objects in session_state) to defend a threat model
+    # that no current gate check exercises.
     state = dict(session_state)
 
     # Rule 28: RED kills motor

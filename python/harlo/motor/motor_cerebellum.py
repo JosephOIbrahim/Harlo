@@ -141,7 +141,13 @@ class MotorCerebellum:
         # Rule 32 literal: success_count=0 on de-compilation.
         pattern.success_count = 0
         if self._on_decompile is not None:
-            self._on_decompile(pattern, reason)
+            try:
+                self._on_decompile(pattern, reason)
+            except Exception:
+                # Observer callbacks are fire-and-forget: a listener error
+                # must not abort the decompilation bookkeeping or the caller
+                # (e.g. Premotor's re-planning loop).
+                pass
 
     # ------------------------------------------------------------------
     # Queries
