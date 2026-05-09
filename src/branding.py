@@ -1,22 +1,25 @@
 """Harlo branding — canonical ASCII banner for chat / CLI / assets surfaces.
 
-Single source of truth. Generated from pyfiglet font='ansi_regular' for the
-word HARLO, wrapped in a Unicode box (3-char internal padding) with a
-descriptor below. To regenerate, run pyfiglet manually and overwrite the
-HARLO_BANNER literal below; mirror the change to assets/harlo_banner.txt
-and assets/harlo_banner_color.png.
+Single source of truth. Generated from pyfiglet font='ansi_shadow' for the
+word HARLO with the pure drop-shadow row trimmed (5 lines, ╗╝ corners
+preserved on the letters). Wrapped in a Unicode box with 3-char internal
+padding and a centered descriptor.
+
+To regenerate: render via pyfiglet, drop the trailing shadow-only row,
+overwrite HARLO_BANNER below, and mirror the literal to
+assets/harlo_banner.txt and assets/harlo_banner_color.png.
 """
 
 HARLO_BANNER = '''
-┌──────────────────────────────────────────────┐
-│                                              │
-│   ██   ██  █████  ██████  ██       ██████    │
-│   ██   ██ ██   ██ ██   ██ ██      ██    ██   │
-│   ███████ ███████ ██████  ██      ██    ██   │
-│   ██   ██ ██   ██ ██   ██ ██      ██    ██   │
-│   ██   ██ ██   ██ ██   ██ ███████  ██████    │
-│                                              │
-│      cognitive substrate · ready · v1.0      │
-│                                              │
-└──────────────────────────────────────────────┘
+┌───────────────────────────────────────────────┐
+│                                               │
+│   ██╗  ██╗ █████╗ ██████╗ ██╗      ██████╗    │
+│   ██║  ██║██╔══██╗██╔══██╗██║     ██╔═══██╗   │
+│   ███████║███████║██████╔╝██║     ██║   ██║   │
+│   ██╔══██║██╔══██║██╔══██╗██║     ██║   ██║   │
+│   ██║  ██║██║  ██║██║  ██║███████╗╚██████╔╝   │
+│                                               │
+│      cognitive substrate · ready · v1.0       │
+│                                               │
+└───────────────────────────────────────────────┘
 '''
