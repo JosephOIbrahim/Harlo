@@ -144,12 +144,14 @@ optional `[dev]` extra. This adds the test-only dependencies (`sentence_transfor
 pip install -e ".[dev]"
 ```
 
-Then run the suite from the repo root with `PYTHONPATH=.` so the in-tree
-`src/` and `python/` packages resolve:
+Then run the suite from the repo root:
 
 ```bash
-PYTHONPATH=. pytest tests/ -q
+pytest tests/ -q
 ```
+
+(`pyproject.toml`'s `[tool.pytest.ini_options] pythonpath = ["."]` puts the
+in-tree `src/` and `python/` packages on `sys.path` automatically.)
 
 Expected outcome on a fresh clone (no `models/cognitive_predictor_v1.joblib`):
 

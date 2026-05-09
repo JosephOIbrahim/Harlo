@@ -3,6 +3,7 @@ target/
 target312/
 __pycache__/
 *.pyc
+.DS_Store
 .venv/
 .venv312/
 *.egg-info/
