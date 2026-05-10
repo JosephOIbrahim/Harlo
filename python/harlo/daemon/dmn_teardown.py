@@ -22,6 +22,11 @@ class DMNTeardown:
         self._thread: Optional[threading.Thread] = None
         self._abort_event = threading.Event()
         self._temp_file: Optional[Path] = None
+        # Guards `_thread` mutation so that abort() and start() cannot
+        # race on a half-replaced reference.  Without it, a rapid
+        # close()→open()→close() sequence can leave abort() joining the
+        # OLD thread while the NEW one runs unaborted (Rule 19 fail).
+        self._state_lock = threading.Lock()
 
     @property
     def is_running(self) -> bool:
@@ -33,25 +38,30 @@ class DMNTeardown:
         Returns immediately (CLI released in <50ms).
         synthesis_fn runs in background for up to 30s.
         """
-        if self.is_running:
-            self.abort()
+        with self._state_lock:
+            if self._thread is not None and self._thread.is_alive():
+                # In-lock abort: same code path as the public abort()
+                # but we already hold the lock.
+                self._abort_event.set()
+                self._thread.join(timeout=0.01)
 
-        self._abort_event.clear()
-        self._thread = threading.Thread(
-            target=self._run_synthesis,
-            args=(synthesis_fn, context),
-            daemon=True,
-        )
-        self._thread.start()
+            self._abort_event.clear()
+            self._thread = threading.Thread(
+                target=self._run_synthesis,
+                args=(synthesis_fn, context),
+                daemon=True,
+            )
+            self._thread.start()
 
     def abort(self):
         """Abort teardown in <10ms. Rule 19.
 
         Saves progress to temp file (Rule 30), not SQLite.
         """
-        self._abort_event.set()
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=0.01)  # 10ms max wait
+        with self._state_lock:
+            self._abort_event.set()
+            if self._thread is not None and self._thread.is_alive():
+                self._thread.join(timeout=0.01)  # 10ms max wait
 
     def _run_synthesis(self, synthesis_fn, context: dict):
         """Background synthesis with abort checking."""

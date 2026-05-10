@@ -75,9 +75,18 @@ class TrustLedger:
         Returns:
             New trust score after update.
         """
+        # Single connection / single transaction: the previous version
+        # called self.get_score() inside the update, which opened a
+        # SECOND sqlite3 connection (and closed it) before INSERTing on
+        # this one.  Two connect/close cycles per update on what is
+        # warm-path code (per-exchange trust mutations).
         conn = sqlite3.connect(self._db_path)
         try:
-            current = self.get_score(user_id)
+            row = conn.execute(
+                "SELECT trust_score FROM trust_ledger WHERE user_id = ?",
+                (user_id,),
+            ).fetchone()
+            current = row[0] if row else 0.0
             new_score = max(0.0, min(1.0, current + delta))
             now = time.time()
 

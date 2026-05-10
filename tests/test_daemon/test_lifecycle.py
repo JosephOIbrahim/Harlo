@@ -321,3 +321,41 @@ class TestCompliance:
         from harlo.daemon import lifecycle
         source = inspect.getsource(lifecycle)
         assert "while True" not in source
+
+
+class TestDMNTeardownStateLock:
+    """start() and abort() share `_thread`; rapid sequences must not race."""
+
+    def test_back_to_back_start_does_not_orphan_thread(self):
+        """A second start() while the first is still alive must abort the first
+        atomically — without the state lock, the abort could join the OLD
+        thread while the NEW one runs unaborted (Rule 19 fail)."""
+        import threading
+        from harlo.daemon.dmn_teardown import DMNTeardown
+
+        teardown = DMNTeardown()
+
+        # First synthesis: spins until told to abort.
+        running = threading.Event()
+        proceed = threading.Event()
+
+        def first_synth(_ctx, abort_check):
+            running.set()
+            while not abort_check():
+                if proceed.wait(timeout=0.01):
+                    break
+
+        teardown.start(first_synth, context={})
+        assert running.wait(timeout=1.0), "first synthesis never started"
+        first_thread = teardown._thread
+
+        # Second start() must abort the first atomically.
+        teardown.start(lambda _ctx, abort_check: None, context={})
+        second_thread = teardown._thread
+
+        assert second_thread is not first_thread
+        # The first thread observed abort (the loop exits when abort_check()
+        # returns True) — wait for it to terminate cleanly.
+        first_thread.join(timeout=1.0)
+        assert not first_thread.is_alive()
+        second_thread.join(timeout=1.0)
