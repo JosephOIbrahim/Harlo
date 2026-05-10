@@ -11,10 +11,13 @@ This module imports `harlo.usd_lite.persistence` lazily so importing
 """
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from harlo.usd_lite.stage import BrainStage
+
+logger = logging.getLogger(__name__)
 
 
 class Checkpoint:
@@ -45,13 +48,36 @@ class Checkpoint:
 
         Returns True if a write occurred, False if nothing was dirty.
         Clears the dirty set on success.
+
+        The dirty set is **snapshotted before** the write so that:
+
+        * a concurrent ``mark_dirty`` arriving while the write is in
+          flight is preserved (it stays in ``self._dirty`` and will be
+          flushed on the next call), closing the TOCTOU window between
+          the dirty check and the clear; and
+
+        * a failing ``write()`` does **not** discard the dirty record —
+          the snapshotted paths remain dirty for the caller to retry.
         """
         if not self._dirty:
             return False
         # Lazy import so module import doesn't require [substrate].
         from harlo.usd_lite.persistence import write
-        write(stage, target_path)
-        self._dirty.clear()
+
+        snapshot = set(self._dirty)
+        try:
+            write(stage, target_path)
+        except Exception:
+            # The dirty record is the only ledger of "what needs persisting";
+            # do NOT clear it on a failed write or the mutations are lost.
+            logger.exception(
+                "Checkpoint.flush failed; preserving %d dirty paths for retry",
+                len(snapshot),
+            )
+            raise
+        # Clear only the paths we actually attempted to persist.  Paths
+        # marked dirty after the snapshot are kept for the next flush.
+        self._dirty -= snapshot
         return True
 
     def clear(self) -> None:

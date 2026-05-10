@@ -224,3 +224,35 @@ class TestServerInit:
         assert callable(mcp_server.twin_patterns)
         assert callable(mcp_server.twin_session_status)
         assert not hasattr(mcp_server, "twin_ask")
+
+
+class TestEngineLockTimeout:
+    """`_get_engine` must not block indefinitely on a stuck init lock."""
+
+    def test_get_engine_returns_none_on_lock_timeout(self, monkeypatch):
+        """If `_engine_lock` cannot be acquired in time, return None and set the sentinel."""
+        # FastMCP isn't a hard dep of Harlo's core; guard so this test skips
+        # cleanly in environments without the [mcp] runtime install.
+        pytest.importorskip("mcp")
+        import threading
+        from harlo import mcp_server
+
+        # Tighten the timeout so the test runs fast.
+        monkeypatch.setattr(mcp_server, "ENGINE_INIT_TIMEOUT_S", 0.1)
+
+        # Reset state so this test is independent of suite ordering.
+        monkeypatch.setattr(mcp_server, "_engine", None)
+        held_lock = threading.Lock()
+        monkeypatch.setattr(mcp_server, "_engine_lock", held_lock)
+
+        # Hold the lock so _get_engine() must time out waiting for it.
+        held_lock.acquire()
+        try:
+            result = mcp_server._get_engine()
+        finally:
+            held_lock.release()
+
+        # Graceful degradation: returns None, sentinel set so subsequent
+        # calls don't retry.
+        assert result is None
+        assert mcp_server._engine is False

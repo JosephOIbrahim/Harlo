@@ -8,6 +8,7 @@ Promotion to Warm Tier (L2) happens asynchronously via the Observer.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import time
 import uuid
@@ -16,6 +17,13 @@ from pathlib import Path
 from typing import Optional
 
 from harlo.hot_store.schema import ensure_schema
+
+logger = logging.getLogger(__name__)
+
+
+class HotStoreCommitError(RuntimeError):
+    """Wraps SQLite commit failures so callers can distinguish them
+    from schema / programmer errors and apply retry logic."""
 
 
 @dataclass
@@ -88,12 +96,26 @@ class HotStore:
 
         tags_json = json.dumps(tags or [])
 
-        self._conn.execute(
-            "INSERT INTO hot_traces (trace_id, message, tags, domain, timestamp, encoded) "
-            "VALUES (?, ?, ?, ?, ?, 0)",
-            (trace_id, message, tags_json, domain, timestamp),
-        )
-        self._conn.commit()
+        try:
+            self._conn.execute(
+                "INSERT INTO hot_traces (trace_id, message, tags, domain, timestamp, encoded) "
+                "VALUES (?, ?, ?, ?, ?, 0)",
+                (trace_id, message, tags_json, domain, timestamp),
+            )
+            self._conn.commit()
+        except sqlite3.IntegrityError:
+            # Schema violation (e.g. UNIQUE on trace_id) is a caller bug, not
+            # a transient I/O failure.  Let it propagate untyped so existing
+            # callers and tests still see the original exception.
+            raise
+        except sqlite3.OperationalError as exc:
+            # Transient I/O failure (disk full, locked, permission).  Roll
+            # back so the WAL state is consistent for the next caller, then
+            # surface a typed exception so retry logic can distinguish this
+            # from a programmer bug.
+            self._conn.rollback()
+            logger.exception("HotStore.store failed for trace_id=%s", trace_id)
+            raise HotStoreCommitError(str(exc)) from exc
 
         return trace_id
 

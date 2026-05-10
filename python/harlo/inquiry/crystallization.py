@@ -43,22 +43,51 @@ class CrystallizationStore:
         topic_key: str,
         observations: list[str],
         decay_rate: float,
-        preservation_score: float,
+        *,
+        threshold: int | None = None,
+        depth_weight: float | None = None,
+        preservation_score: float | None = None,
     ) -> CrystallizedTrace | None:
         """Attempt to crystallize a trace.
 
         S7: 3+ observations below threshold -> decay rate lambda/10.
+
+        ``preservation_score`` is computed from the constitutional formula
+        ``(len(observations) / threshold) * depth_weight``.  Pass
+        ``threshold`` and ``depth_weight`` as keyword arguments and the
+        engine will compute the score deterministically.
+
+        ``preservation_score=`` is retained as a legacy keyword for the
+        existing test suite; new callers should use the formula path so the
+        score is reproducible from inputs.
+
         Returns the crystallized trace, or None if requirements not met.
         """
         if len(observations) < MIN_OBSERVATIONS_TO_CRYSTALLIZE:
             return None
+
+        if threshold is not None and depth_weight is not None:
+            # S7 literal (CLAUDE.md): preservation_score = (obs/threshold) * depth_weight.
+            # Computed in-engine so eviction is deterministic and callers
+            # cannot inject arbitrary scores.
+            if threshold <= 0:
+                raise ValueError("threshold must be positive")
+            score = (len(observations) / threshold) * depth_weight
+        elif preservation_score is not None:
+            # Legacy path; prefer the formula keyword pair for new code.
+            score = preservation_score
+        else:
+            raise ValueError(
+                "attempt_crystallize requires (threshold, depth_weight) "
+                "or preservation_score"
+            )
 
         # Check if already crystallized
         for existing in self.traces:
             if existing.trace_id == trace_id:
                 existing.observations = observations
                 existing.observation_count = len(observations)
-                existing.preservation_score = preservation_score
+                existing.preservation_score = score
                 return existing
 
         crystallized = CrystallizedTrace(
@@ -68,7 +97,7 @@ class CrystallizationStore:
             observation_count=len(observations),
             original_decay_rate=decay_rate,
             crystallized_decay_rate=decay_rate / DECAY_DIVISOR,
-            preservation_score=preservation_score,
+            preservation_score=score,
         )
 
         if len(self.traces) >= MAX_CRYSTALLIZED:

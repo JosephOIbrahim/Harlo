@@ -4,10 +4,59 @@ from __future__ import annotations
 
 import sqlite3
 import time
+from unittest.mock import patch
 
 import pytest
 
-from harlo.hot_store import HotStore, HotTrace
+from harlo.hot_store import HotStore, HotStoreCommitError, HotTrace
+
+
+class TestStoreFailureHandling:
+    """OperationalError on commit must surface as a typed error and roll back.
+
+    sqlite3.Connection methods are C-implemented so we can't patch.object
+    them directly.  Instead we substitute the whole _conn with a MagicMock.
+    """
+
+    def test_commit_failure_raises_typed_error(self, hot_store):
+        from unittest.mock import MagicMock
+        mock_conn = MagicMock()
+        mock_conn.commit.side_effect = sqlite3.OperationalError("disk I/O error")
+
+        original_conn = hot_store._conn
+        hot_store._conn = mock_conn
+        try:
+            with pytest.raises(HotStoreCommitError, match="disk I/O error"):
+                hot_store.store(message="boom")
+            mock_conn.rollback.assert_called_once()
+        finally:
+            hot_store._conn = original_conn
+
+    def test_integrity_error_is_not_wrapped(self, hot_store):
+        """UNIQUE-constraint violations are caller bugs and must propagate untyped."""
+        # The pre-existing test_store_duplicate_id_raises already exercises this
+        # via real SQL; here we just confirm IntegrityError is preserved.
+        hot_store.store(message="first", trace_id="dup_id")
+        with pytest.raises(sqlite3.IntegrityError):
+            hot_store.store(message="second", trace_id="dup_id")
+
+    def test_store_recovers_after_commit_failure(self, hot_store):
+        """After a failed commit, a subsequent real store() must succeed."""
+        from unittest.mock import MagicMock
+        mock_conn = MagicMock()
+        mock_conn.commit.side_effect = sqlite3.OperationalError("transient")
+
+        original_conn = hot_store._conn
+        hot_store._conn = mock_conn
+        try:
+            with pytest.raises(HotStoreCommitError):
+                hot_store.store(message="will fail")
+        finally:
+            hot_store._conn = original_conn
+
+        # Real connection still works.
+        tid = hot_store.store(message="ok now")
+        assert hot_store.get(tid) is not None
 
 
 class TestStore:

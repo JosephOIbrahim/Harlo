@@ -110,3 +110,57 @@ def test_default_checkpoint_is_module_level():
     from harlo.sync import default_checkpoint
     from harlo.sync import default_checkpoint as second_ref
     assert default_checkpoint is second_ref
+
+
+def _stub_persistence(monkeypatch, write_fn):
+    """Inject a stub `harlo.usd_lite.persistence` module so the lazy import
+    in Checkpoint.flush() resolves to ``write_fn`` regardless of whether the
+    [substrate] extra (pxr) is installed in the test environment."""
+    import sys
+    import types
+    fake = types.ModuleType("harlo.usd_lite.persistence")
+    fake.write = write_fn
+    monkeypatch.setitem(sys.modules, "harlo.usd_lite.persistence", fake)
+
+
+def test_flush_preserves_dirty_on_write_failure(tmp_path, monkeypatch):
+    """If write() raises, dirty paths must be preserved for retry."""
+    from harlo.sync import Checkpoint
+    cp = Checkpoint()
+    cp.mark_dirty("/Brain/A")
+    cp.mark_dirty("/Brain/B")
+
+    def boom(_stage, _target):
+        raise OSError("disk full")
+
+    _stub_persistence(monkeypatch, boom)
+
+    with pytest.raises(OSError, match="disk full"):
+        cp.flush(object(), str(tmp_path / "fail.usda"))
+
+    # The mutations are still pending; caller can retry.
+    assert cp.is_dirty()
+    assert cp.dirty_paths() == frozenset({"/Brain/A", "/Brain/B"})
+
+
+def test_flush_preserves_concurrent_mark_dirty(tmp_path, monkeypatch):
+    """A mark_dirty arriving during write() must NOT be lost when flush clears."""
+    from harlo.sync import Checkpoint
+    cp = Checkpoint()
+    cp.mark_dirty("/Brain/Before")
+
+    captured: list[str] = []
+
+    def slow_write(_stage, _target):
+        # Simulate a concurrent mark_dirty during the write window.
+        captured.append("write_started")
+        cp.mark_dirty("/Brain/During")
+
+    _stub_persistence(monkeypatch, slow_write)
+
+    cp.flush(object(), str(tmp_path / "ok.usda"))
+
+    # The before-write mark was flushed; the during-write mark survives.
+    assert cp.is_dirty()
+    assert cp.dirty_paths() == frozenset({"/Brain/During"})
+    assert captured == ["write_started"]

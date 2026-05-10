@@ -37,6 +37,12 @@ TRUST_DELTA_REJECTED = -0.05
 # serializes process_exchange (pxr.Usd.Stage writes are not thread-safe;
 # exchange_index must be monotonic).
 
+# Engine init can be slow (semantic encoder loads ~500 MB on first call);
+# bound the wait so a stuck init doesn't block every concurrent MCP tool
+# call indefinitely.  On timeout we degrade exactly like an init failure:
+# set the sentinel, return None.
+ENGINE_INIT_TIMEOUT_S = 30.0
+
 _engine = None
 _engine_lock = threading.Lock()
 _exchange_lock = threading.Lock()
@@ -76,7 +82,18 @@ def _get_engine():
     global _engine
     if _engine is not None:
         return _engine if _engine else None
-    with _engine_lock:
+    # Bounded wait: a stuck init must not deadlock every concurrent MCP
+    # tool call.  acquire(timeout=...) returns False on timeout; we treat
+    # that the same as an init exception (sentinel + None), but log it
+    # distinctly so it's diagnosable.
+    if not _engine_lock.acquire(timeout=ENGINE_INIT_TIMEOUT_S):
+        logging.getLogger(__name__).warning(
+            "v9 engine init lock held > %.1fs, falling back to v8-only",
+            ENGINE_INIT_TIMEOUT_S,
+        )
+        _engine = False  # sentinel — don't retry on subsequent calls
+        return None
+    try:
         if _engine is None:
             try:
                 # src/ is not pip-installed; ensure it's importable
@@ -98,6 +115,8 @@ def _get_engine():
                     "v9 engine init failed, falling back to v8-only: %s", e,
                 )
                 _engine = False  # sentinel — don't retry on subsequent calls
+    finally:
+        _engine_lock.release()
     return _engine if _engine else None
 
 

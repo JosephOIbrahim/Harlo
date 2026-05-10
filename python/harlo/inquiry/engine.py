@@ -270,14 +270,24 @@ class InquiryEngine:
         topic_key: str,
         observations: list[str],
         decay_rate: float,
-        preservation_score: float,
+        *,
+        threshold: int | None = None,
+        depth_weight: float | None = None,
+        preservation_score: float | None = None,
     ) -> bool:
-        """S7: Attempt to crystallize a trace. Returns True if crystallized."""
+        """S7: Attempt to crystallize a trace. Returns True if crystallized.
+
+        Pass ``threshold`` and ``depth_weight`` so the constitutional formula
+        ``(len(observations) / threshold) * depth_weight`` is applied; the
+        legacy ``preservation_score`` keyword remains accepted.
+        """
         result = self.crystal_store.attempt_crystallize(
             trace_id=trace_id,
             topic_key=topic_key,
             observations=observations,
             decay_rate=decay_rate,
+            threshold=threshold,
+            depth_weight=depth_weight,
             preservation_score=preservation_score,
         )
         return result is not None

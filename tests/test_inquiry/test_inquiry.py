@@ -161,6 +161,60 @@ class TestCrystallization:
         assert result is not None
         assert result.preservation_score == 0.5
 
+    def test_preservation_score_formula(self):
+        """S7 literal: preservation_score = (obs/threshold) * depth_weight."""
+        from harlo.inquiry.crystallization import CrystallizationStore
+        store = CrystallizationStore()
+        # 6 observations, threshold=3, depth_weight=2.0 -> 6/3 * 2.0 = 4.0
+        result = store.attempt_crystallize(
+            trace_id="t_formula",
+            topic_key="topic",
+            observations=["a", "b", "c", "d", "e", "f"],
+            decay_rate=1.0,
+            threshold=3,
+            depth_weight=2.0,
+        )
+        assert result is not None
+        assert result.preservation_score == 4.0
+
+    def test_formula_eviction_is_deterministic(self):
+        """Eviction picks the lowest formula-derived score."""
+        from harlo.inquiry.crystallization import CrystallizationStore, MAX_CRYSTALLIZED
+        store = CrystallizationStore()
+        # Fill to capacity with score = i * 1.0 (depth_weight scaled by i).
+        for i in range(MAX_CRYSTALLIZED):
+            store.attempt_crystallize(
+                trace_id=f"t{i}",
+                topic_key=f"topic_{i}",
+                observations=["a", "b", "c"],
+                decay_rate=0.01,
+                threshold=3,
+                depth_weight=float(i + 1),  # scores 1.0..50.0
+            )
+        # Add a higher-scoring trace; the lowest (t0, score 1.0) must evict.
+        store.attempt_crystallize(
+            trace_id="winner",
+            topic_key="topic_winner",
+            observations=["a", "b", "c"],
+            decay_rate=0.01,
+            threshold=3,
+            depth_weight=999.0,
+        )
+        assert all(t.trace_id != "t0" for t in store.traces)
+        assert any(t.trace_id == "winner" for t in store.traces)
+
+    def test_formula_requires_inputs(self):
+        """Calling without formula keywords or preservation_score must raise."""
+        from harlo.inquiry.crystallization import CrystallizationStore
+        store = CrystallizationStore()
+        with pytest.raises(ValueError, match="threshold.*depth_weight.*preservation_score"):
+            store.attempt_crystallize(
+                trace_id="t",
+                topic_key="topic",
+                observations=["a", "b", "c"],
+                decay_rate=1.0,
+            )
+
 
 class TestCompliance:
     def test_no_sleep_in_inquiry(self):
