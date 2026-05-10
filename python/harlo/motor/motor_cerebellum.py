@@ -9,9 +9,12 @@ Rule 12: Only VERIFIED resolutions become reflexes (enforced at compilation).
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Callable, Optional
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -134,20 +137,27 @@ class MotorCerebellum:
         Rule 32: Zero-tolerance.  Mandates ``compiled=False`` AND
         ``success_count=0``; once decompiled, requires full GVR
         re-verification before re-compilation.
+
+        Listener ordering: ``on_decompile`` fires BEFORE the
+        ``success_count = 0`` reset so the audit trail observes the
+        pre-reset count.  Listener errors are logged and swallowed —
+        they must not abort the decompilation bookkeeping or the caller
+        (e.g. Premotor's re-planning loop).
         """
         pattern.compiled = False
         pattern.decompiled_at = time.time()
         pattern.decompile_reason = reason
-        # Rule 32 literal: success_count=0 on de-compilation.
-        pattern.success_count = 0
         if self._on_decompile is not None:
             try:
                 self._on_decompile(pattern, reason)
             except Exception:
-                # Observer callbacks are fire-and-forget: a listener error
-                # must not abort the decompilation bookkeeping or the caller
-                # (e.g. Premotor's re-planning loop).
-                pass
+                logger.exception(
+                    "on_decompile listener failed for pattern_id=%s",
+                    pattern.pattern_id,
+                )
+        # Rule 32 literal: reset AFTER notifying observers so the listener
+        # captured the prior count.
+        pattern.success_count = 0
 
     # ------------------------------------------------------------------
     # Queries
