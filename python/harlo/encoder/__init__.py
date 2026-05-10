@@ -167,16 +167,27 @@ def semantic_recall(
         distances.sort(key=lambda x: x[1])
         top_k = distances[:k]
 
-        # Load full traces and compute lazy decay
+        # Batch-fetch the top-k metadata in a single IN-list SELECT.
+        # Replaces k per-id round-trips (one SELECT + fetchone per id) with
+        # one statement; eliminates the SQLite-mutex/parse cost per top-k
+        # candidate.  SQLite's 999-parameter ceiling is well above any
+        # practical k for recall.
+        ids = [tid for tid, _ in top_k]
+        placeholders = ",".join("?" * len(ids))
+        rows = {
+            row[0]: row
+            for row in conn.execute(
+                f"""SELECT id, message, initial_strength, decay_lambda,
+                           created_at, boosts_json, tags_json, domain
+                    FROM traces WHERE id IN ({placeholders})""",
+                ids,
+            )
+        }
+
+        # Preserve the distance ordering established above.
         hits = []
         for trace_id, dist in top_k:
-            row = conn.execute(
-                """SELECT id, message, initial_strength, decay_lambda,
-                          created_at, boosts_json, tags_json, domain
-                   FROM traces WHERE id = ?""",
-                (trace_id,),
-            ).fetchone()
-
+            row = rows.get(trace_id)
             if row is None:
                 continue
 

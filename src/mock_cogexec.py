@@ -36,6 +36,11 @@ from .computations.compute_context_budget import compute_context_budget
 from .computations.compute_allostasis import compute_allostasis
 
 
+# Module-level cache (built at import time at the bottom of this file).
+_DAG: "nx.DiGraph"
+_DAG_ORDER: list[str]
+
+
 def build_dag() -> nx.DiGraph:
     """Build the cognitive computation DAG.
 
@@ -77,8 +82,12 @@ def evaluate_dag(
     Computes all state transitions in topological order.
     Returns the fully resolved CognitiveObservation for this exchange.
     """
-    dag = build_dag()
-    order = list(nx.topological_sort(dag))
+    # The DAG shape is constant — there is exactly one node-set + edge-set
+    # in this codebase, so building it once at module load and reusing
+    # across exchanges saves ~one build + toposort per call.  A typical
+    # session evaluates this on every exchange (≥ hundreds per session).
+    dag = _DAG
+    order = _DAG_ORDER
 
     # Read previous state (Commandment 5: baseline at index 0)
     prev: CognitiveObservation = stage.read_previous(prim_path, exchange_index)
@@ -193,3 +202,8 @@ def evaluate_dag(
     stage.author(prim_path, exchange_index, resolved)
 
     return resolved
+
+
+# Build the DAG once at module import; evaluate_dag() reuses these.
+_DAG = build_dag()
+_DAG_ORDER = list(nx.topological_sort(_DAG))
