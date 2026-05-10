@@ -118,3 +118,32 @@ class TestTrustMultiUser:
         ledger.update(0.3, user_id="bob")
         assert ledger.get_score("alice") == pytest.approx(0.5)
         assert ledger.get_score("bob") == pytest.approx(0.3)
+
+
+class TestUpdateSingleConnection:
+    """trust.update() must open exactly ONE sqlite3 connection.
+
+    Pre-fix: update() opened a connection, then called self.get_score()
+    which opened a SECOND connection (the lazy SELECT path), then INSERTed
+    on the first.  Two connect/close cycles per warm-path update.
+    """
+
+    def test_update_opens_one_connection(self, tmp_path, monkeypatch):
+        import sqlite3
+        from harlo.trust import TrustLedger
+
+        ledger = TrustLedger(str(tmp_path / "trust.db"))
+        # Prime so the first connection has been opened during __init__.
+
+        # Count sqlite3.connect calls during a SINGLE update.
+        real_connect = sqlite3.connect
+        count = {"n": 0}
+
+        def counting_connect(*a, **kw):
+            count["n"] += 1
+            return real_connect(*a, **kw)
+
+        monkeypatch.setattr(sqlite3, "connect", counting_connect)
+        ledger.update(0.1, user_id="alice")
+
+        assert count["n"] == 1, f"update() opened {count['n']} connections; expected 1"

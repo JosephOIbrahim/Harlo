@@ -137,3 +137,33 @@ class TestCoachNoLLM:
         import harlo.coach as coach
         source = open(coach.__file__).read()
         assert "provider" not in source
+
+
+class TestPendingClaimsLogsOnFailure:
+    """Coach silently dropping pending claims on import error is a real
+    semantic-info loss.  Now it logs at exception level so misconfig
+    surfaces in diagnostics.
+    """
+
+    def test_pending_claims_logs_on_exception(self, tmp_path, monkeypatch, caplog):
+        import logging
+        from harlo.coach import _get_pending_claims
+
+        # Force ElenchusQueue to raise on construction so we exercise the
+        # except path.
+        import harlo.elenchus_v8 as ev8
+
+        class BoomQueue:
+            def __init__(self, *a, **kw):
+                raise RuntimeError("simulated misconfig")
+
+        monkeypatch.setattr(ev8, "ElenchusQueue", BoomQueue)
+
+        with caplog.at_level(logging.ERROR, logger="harlo.coach"):
+            result = _get_pending_claims(str(tmp_path / "twin.db"))
+
+        # Graceful degradation: returns [].
+        assert result == []
+        # But the failure is RECORDED, not silent.
+        assert any("pending Elenchus claims unavailable" in r.message for r in caplog.records), \
+            f"expected log message; got: {[r.message for r in caplog.records]}"

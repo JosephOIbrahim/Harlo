@@ -140,8 +140,18 @@ def _get_trust_score(db_path: str) -> float:
         return 0.0
 
 
+_logger = logging.getLogger(__name__)
+
+
 def _get_pending_claims(db_path: str) -> list[dict]:
-    """Get pending Elenchus claims for Coach injection."""
+    """Get pending Elenchus claims for Coach injection.
+
+    Returns [] on failure rather than propagating — the system prompt
+    is best-effort and must not crash the exchange.  But the failure is
+    LOGGED at warning level so a misconfigured ElenchusQueue or missing
+    module surfaces in diagnostics; the previous bare ``except: return []``
+    silently dropped pending claims from the actor's context.
+    """
     try:
         from harlo.elenchus_v8 import ElenchusQueue
         queue = ElenchusQueue(db_path)
@@ -151,6 +161,10 @@ def _get_pending_claims(db_path: str) -> list[dict]:
             for c in claims
         ]
     except Exception:
+        _logger.exception(
+            "Coach: pending Elenchus claims unavailable (db_path=%s)",
+            db_path,
+        )
         return []
 
 

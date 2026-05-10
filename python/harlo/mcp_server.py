@@ -303,14 +303,23 @@ def query_past_experience(query: str, limit: int = 10) -> str:
 
 _hot_store = None
 _injection_store = None
+# Guards the lazy init of _hot_store and _injection_store.  FastMCP can
+# dispatch concurrent tool calls; without this lock two threads can both
+# see None, both construct a fresh store, and the second write clobbers
+# the first — leaving the first thread holding a stale reference to a
+# connection that the second instance will eventually close, causing
+# silent trace loss.
+_store_lock = threading.Lock()
 
 
 def _get_hot_store():
     """Lazy singleton for HotStore. No model loading."""
     global _hot_store
     if _hot_store is None:
-        from harlo.hot_store import HotStore
-        _hot_store = HotStore(str(DATA_DIR / "twin.db"))
+        with _store_lock:
+            if _hot_store is None:
+                from harlo.hot_store import HotStore
+                _hot_store = HotStore(str(DATA_DIR / "twin.db"))
     return _hot_store
 
 
@@ -318,8 +327,10 @@ def _get_injection_store():
     """Lazy singleton for InjectionStore."""
     global _injection_store
     if _injection_store is None:
-        from harlo.injection import InjectionStore
-        _injection_store = InjectionStore(str(DATA_DIR / "twin.db"))
+        with _store_lock:
+            if _injection_store is None:
+                from harlo.injection import InjectionStore
+                _injection_store = InjectionStore(str(DATA_DIR / "twin.db"))
     return _injection_store
 
 

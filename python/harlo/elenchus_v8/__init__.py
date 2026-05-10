@@ -156,13 +156,20 @@ class ElenchusQueue:
         finally:
             conn.close()
 
-    def get_verified(self) -> list[PendingClaim]:
-        """Get all verified claims."""
-        return self._get_by_status("verified")
+    # Default cap on _get_by_status() results.  The queue has no eviction
+    # policy yet; without this cap a long-lived database can grow without
+    # bound and turn a debug query into a full-table scan that materialises
+    # every historical claim.  Most callers want recent claims, not the
+    # entire history; pass `limit=None` for explicit "all".
+    _STATUS_DEFAULT_LIMIT = 100
 
-    def get_rejected(self) -> list[PendingClaim]:
-        """Get all rejected claims."""
-        return self._get_by_status("rejected")
+    def get_verified(self, limit: Optional[int] = _STATUS_DEFAULT_LIMIT) -> list[PendingClaim]:
+        """Get verified claims (most-recent first up to ``limit``)."""
+        return self._get_by_status("verified", limit=limit)
+
+    def get_rejected(self, limit: Optional[int] = _STATUS_DEFAULT_LIMIT) -> list[PendingClaim]:
+        """Get rejected claims (most-recent first up to ``limit``)."""
+        return self._get_by_status("rejected", limit=limit)
 
     def pending_count(self) -> int:
         """Count pending claims."""
@@ -175,15 +182,28 @@ class ElenchusQueue:
         finally:
             conn.close()
 
-    def _get_by_status(self, status: str) -> list[PendingClaim]:
-        """Get claims by status."""
+    def _get_by_status(
+        self, status: str, limit: Optional[int] = _STATUS_DEFAULT_LIMIT,
+    ) -> list[PendingClaim]:
+        """Get claims by status, capped at ``limit`` rows (None = unlimited).
+
+        Returned newest-first so most-recent verifications surface even
+        when the queue is over the cap.
+        """
         conn = sqlite3.connect(self._db_path)
         try:
-            cursor = conn.execute(
-                "SELECT claim_id, claim_text, source_traces, structural_score, timestamp, status "
-                "FROM elenchus_pending WHERE status = ? ORDER BY timestamp ASC",
-                (status,),
-            )
+            if limit is None:
+                cursor = conn.execute(
+                    "SELECT claim_id, claim_text, source_traces, structural_score, timestamp, status "
+                    "FROM elenchus_pending WHERE status = ? ORDER BY timestamp DESC",
+                    (status,),
+                )
+            else:
+                cursor = conn.execute(
+                    "SELECT claim_id, claim_text, source_traces, structural_score, timestamp, status "
+                    "FROM elenchus_pending WHERE status = ? ORDER BY timestamp DESC LIMIT ?",
+                    (status, limit),
+                )
             return [self._row_to_claim(row) for row in cursor.fetchall()]
         finally:
             conn.close()

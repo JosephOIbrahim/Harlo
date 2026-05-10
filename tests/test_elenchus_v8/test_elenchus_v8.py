@@ -151,3 +151,45 @@ class TestQueuePersistence:
         pending = q2.get_pending()
         assert len(pending) == 1
         assert pending[0].claim_id == cid
+
+
+class TestGetByStatusLimit:
+    """The deferred-verification queue must not return unbounded result sets.
+
+    Pre-fix: get_verified() / get_rejected() ran a SELECT WITHOUT LIMIT,
+    materialising the entire historical queue per call.  Fix: default
+    limit (100) with most-recent-first ordering; explicit limit=None
+    available for callers that genuinely want everything.
+    """
+
+    def test_get_verified_default_cap(self, tmp_path):
+        from harlo.elenchus_v8 import ElenchusQueue, ElenchusQueue as Q
+        q = ElenchusQueue(str(tmp_path / "q.db"))
+        # Insert 250 verified claims so the default cap (100) is binding.
+        for i in range(250):
+            cid = q.queue_claim(claim_text=f"c{i}")
+            q.resolve(cid, verdict=True)
+
+        results = q.get_verified()
+        assert len(results) == 100
+        # Most recent first.
+        assert results[0].timestamp >= results[-1].timestamp
+
+    def test_get_verified_explicit_limit_none(self, tmp_path):
+        """Passing limit=None unlocks the full set (for callers that really want it)."""
+        from harlo.elenchus_v8 import ElenchusQueue
+        q = ElenchusQueue(str(tmp_path / "q.db"))
+        for i in range(150):
+            cid = q.queue_claim(claim_text=f"c{i}")
+            q.resolve(cid, verdict=True)
+
+        assert len(q.get_verified(limit=None)) == 150
+
+    def test_get_rejected_default_cap(self, tmp_path):
+        from harlo.elenchus_v8 import ElenchusQueue
+        q = ElenchusQueue(str(tmp_path / "q.db"))
+        for i in range(120):
+            cid = q.queue_claim(claim_text=f"c{i}")
+            q.resolve(cid, verdict=False)
+
+        assert len(q.get_rejected()) == 100

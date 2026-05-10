@@ -224,3 +224,38 @@ class TestServerInit:
         assert callable(mcp_server.twin_patterns)
         assert callable(mcp_server.twin_session_status)
         assert not hasattr(mcp_server, "twin_ask")
+
+
+class TestStoreSingletonLock:
+    """Concurrent MCP calls must not double-construct HotStore / InjectionStore."""
+
+    def test_get_hot_store_is_single_instance_under_concurrency(self, monkeypatch, tmp_path):
+        """Two threads racing on the unsynchronised lazy init used to build
+        two HotStore objects, the second silently clobbering the first.
+        With _store_lock the second thread finds the first instance and reuses it."""
+        pytest.importorskip("mcp")
+        import threading
+        from harlo import mcp_server
+
+        # Reset state so we exercise lazy init.
+        monkeypatch.setattr(mcp_server, "_hot_store", None)
+        # Re-create the lock fresh so we don't leak state across tests.
+        monkeypatch.setattr(mcp_server, "_store_lock", threading.Lock())
+        # Redirect the data dir so we don't touch the real twin.db.
+        monkeypatch.setattr(mcp_server, "DATA_DIR", tmp_path)
+
+        seen: list[int] = []
+        barrier = threading.Barrier(8)
+
+        def racer():
+            barrier.wait()
+            seen.append(id(mcp_server._get_hot_store()))
+
+        threads = [threading.Thread(target=racer) for _ in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        # Every thread observed the same singleton id.
+        assert len(set(seen)) == 1, f"got {len(set(seen))} distinct HotStores: {seen}"

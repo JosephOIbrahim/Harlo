@@ -91,8 +91,13 @@ def escalate(query: str, context: dict, stage_id: str) -> dict:
 
     if is_amygdala_trigger(resolution_dict):
         reflex = create_amygdala_reflex(resolution_dict)
+        # Use the canonical "amygdala_bypass" tag — the same tag the
+        # legacy tests already expect (test_brainstem_legacy/test_bridge
+        # asserts gvr_state="amygdala_bypass" for SAFETY/CONSENT
+        # resolutions).  Tagging this path "VERIFIED" would lie to any
+        # downstream reader of the audit log: GVR was never run.
         reflex_hash = consolidate_resolution(
-            {**resolution_dict, "gvr_state": "VERIFIED"},
+            {**resolution_dict, "gvr_state": "amygdala_bypass"},
             is_amygdala=True,
         )
         result["consolidated"] = True

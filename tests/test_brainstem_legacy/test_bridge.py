@@ -221,3 +221,47 @@ class TestCompliance:
         from harlo.brainstem import consolidation
         source = inspect.getsource(consolidation)
         assert "verified" in source.lower(), "consolidation must check for verified state"
+
+
+class TestAmygdalaAuditTrailTruth:
+    """Rule 7 reflexes must NOT be tagged 'verified' in the audit trail.
+
+    Pre-fix: escalation.py:95 hardcoded gvr_state='VERIFIED' for amygdala
+    paths, lying to any downstream reader of the resolution dict.  Fix:
+    use the canonical 'amygdala_bypass' tag (already standard per the
+    legacy test_amygdala_consolidation test above), and let
+    consolidate_resolution recognise both 'verified' and 'amygdala_bypass'
+    via an explicit allowlist.
+    """
+
+    def test_amygdala_bypass_tag_consolidates(self, tmp_path, monkeypatch):
+        """Resolutions tagged 'amygdala_bypass' must consolidate without the
+        is_amygdala back-compat flag."""
+        from harlo.brainstem import consolidation
+        monkeypatch.setattr(consolidation, "_REFLEX_DIR", tmp_path)
+
+        reflex_hash = consolidation.consolidate_resolution(
+            {"gvr_state": "amygdala_bypass", "outcome": {"safety": True}, "merkle_root": "root"},
+            is_amygdala=False,
+        )
+        assert reflex_hash is not None
+
+    def test_verified_tag_still_consolidates(self, tmp_path, monkeypatch):
+        """Real-GVR resolutions still pass the gate."""
+        from harlo.brainstem import consolidation
+        monkeypatch.setattr(consolidation, "_REFLEX_DIR", tmp_path)
+
+        reflex_hash = consolidation.consolidate_resolution(
+            {"gvr_state": "verified", "outcome": {"data": "x"}, "merkle_root": "root"},
+        )
+        assert reflex_hash is not None
+
+    def test_unverified_states_still_rejected(self, tmp_path, monkeypatch):
+        """Fixable / spec_gamed / unprovable still fail the gate."""
+        from harlo.brainstem import consolidation
+        monkeypatch.setattr(consolidation, "_REFLEX_DIR", tmp_path)
+
+        for bad in ("fixable", "spec_gamed", "unprovable", ""):
+            assert consolidation.consolidate_resolution(
+                {"gvr_state": bad, "outcome": {}, "merkle_root": "root"},
+            ) is None
