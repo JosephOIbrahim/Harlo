@@ -87,7 +87,13 @@ class HotStore:
             The trace_id of the stored trace.
 
         Raises:
-            sqlite3.IntegrityError: If trace_id already exists.
+            sqlite3.IntegrityError: schema/UNIQUE-constraint violation
+                (caller bug, e.g. duplicate ``trace_id``).  Propagated
+                untyped — callers should NOT retry.
+            HotStoreCommitError: transient I/O failure on commit
+                (disk full, locked, permission).  The connection is
+                rolled back to keep WAL state consistent; callers MAY
+                retry.
         """
         if trace_id is None:
             trace_id = uuid.uuid4().hex[:16]

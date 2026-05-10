@@ -164,3 +164,28 @@ def test_flush_preserves_concurrent_mark_dirty(tmp_path, monkeypatch):
     assert cp.is_dirty()
     assert cp.dirty_paths() == frozenset({"/Brain/During"})
     assert captured == ["write_started"]
+
+
+def test_flush_preserves_same_path_remark(tmp_path, monkeypatch):
+    """Re-marking the SAME path during write() must preserve it as dirty.
+
+    Without generation-tagged tracking a set-based snapshot can't tell the
+    pre-flush mark apart from a re-mark during the write window — the
+    second mutation is silently discarded.  This test locks in the
+    generation-based behaviour.
+    """
+    from harlo.sync import Checkpoint
+    cp = Checkpoint()
+    cp.mark_dirty("/Brain/Same")
+
+    def slow_write(_stage, _target):
+        # The caller mutated the same prim again while we were writing
+        # the previous state; the mutation must survive the flush clear.
+        cp.mark_dirty("/Brain/Same")
+
+    _stub_persistence(monkeypatch, slow_write)
+
+    cp.flush(object(), str(tmp_path / "same.usda"))
+
+    assert cp.is_dirty()
+    assert cp.dirty_paths() == frozenset({"/Brain/Same"})

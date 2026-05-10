@@ -66,10 +66,22 @@ class CrystallizationStore:
         if len(observations) < MIN_OBSERVATIONS_TO_CRYSTALLIZE:
             return None
 
+        # Reject partial / mixed formula inputs explicitly so caller bugs
+        # surface instead of silently falling through to the legacy path.
+        if (threshold is None) ^ (depth_weight is None):
+            raise ValueError(
+                "attempt_crystallize: threshold and depth_weight must be "
+                f"supplied together (got threshold={threshold!r}, "
+                f"depth_weight={depth_weight!r})"
+            )
+
         if threshold is not None and depth_weight is not None:
             # S7 literal (CLAUDE.md): preservation_score = (obs/threshold) * depth_weight.
             # Computed in-engine so eviction is deterministic and callers
-            # cannot inject arbitrary scores.
+            # cannot inject arbitrary scores.  When both formula keywords
+            # are supplied, we prefer the formula even if a stray
+            # preservation_score is also passed (caller is in the middle of
+            # a migration; the formula wins by design).
             if threshold <= 0:
                 raise ValueError("threshold must be positive")
             score = (len(observations) / threshold) * depth_weight

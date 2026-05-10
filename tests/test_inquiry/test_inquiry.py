@@ -215,6 +215,31 @@ class TestCrystallization:
                 decay_rate=1.0,
             )
 
+    def test_formula_rejects_partial_inputs(self):
+        """Mixing preservation_score with only one formula keyword is a bug."""
+        from harlo.inquiry.crystallization import CrystallizationStore
+        store = CrystallizationStore()
+        # Only threshold supplied (no depth_weight).
+        with pytest.raises(ValueError, match="must be supplied together"):
+            store.attempt_crystallize(
+                trace_id="t1",
+                topic_key="topic",
+                observations=["a", "b", "c"],
+                decay_rate=1.0,
+                threshold=3,
+                preservation_score=0.5,
+            )
+        # Only depth_weight supplied (no threshold).
+        with pytest.raises(ValueError, match="must be supplied together"):
+            store.attempt_crystallize(
+                trace_id="t2",
+                topic_key="topic",
+                observations=["a", "b", "c"],
+                decay_rate=1.0,
+                depth_weight=2.0,
+                preservation_score=0.5,
+            )
+
 
 class TestCompliance:
     def test_no_sleep_in_inquiry(self):

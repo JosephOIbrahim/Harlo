@@ -26,14 +26,24 @@ class Checkpoint:
     Mark prim paths dirty during a session; `flush()` persists the
     stage when called explicitly. Clears the dirty set on successful
     flush.
+
+    Implementation note: ``_dirty`` is a ``dict[path, generation]`` so a
+    ``mark_dirty(path)`` arriving during a ``flush()`` is distinguishable
+    from the pre-flush mark of the same path.  Each ``mark_dirty`` bumps
+    a monotonic counter and records the path's current generation; flush
+    snapshots the counter, runs the write, and clears only entries whose
+    generation is ``<= snapshot``.  This closes both the
+    different-path-during-write and same-path-during-write TOCTOU windows.
     """
 
     def __init__(self) -> None:
-        self._dirty: set[str] = set()
+        self._dirty: dict[str, int] = {}
+        self._generation: int = 0
 
     def mark_dirty(self, prim_path: str) -> None:
         """Record that `prim_path` has been mutated."""
-        self._dirty.add(prim_path)
+        self._generation += 1
+        self._dirty[prim_path] = self._generation
 
     def is_dirty(self) -> bool:
         """True if any path is marked dirty since the last flush."""
@@ -41,7 +51,7 @@ class Checkpoint:
 
     def dirty_paths(self) -> frozenset[str]:
         """Snapshot of currently-dirty paths (for testing/diagnostics)."""
-        return frozenset(self._dirty)
+        return frozenset(self._dirty.keys())
 
     def flush(self, stage: "BrainStage", target_path: str) -> bool:
         """Persist `stage` to `target_path` if any path is dirty.
@@ -49,22 +59,22 @@ class Checkpoint:
         Returns True if a write occurred, False if nothing was dirty.
         Clears the dirty set on success.
 
-        The dirty set is **snapshotted before** the write so that:
+        The current generation is snapshotted **before** the write so:
 
-        * a concurrent ``mark_dirty`` arriving while the write is in
-          flight is preserved (it stays in ``self._dirty`` and will be
-          flushed on the next call), closing the TOCTOU window between
-          the dirty check and the clear; and
+        * a concurrent ``mark_dirty`` (different path OR same path)
+          arriving while the write is in flight stamps a generation
+          ``> snapshot`` and is preserved for the next flush, closing the
+          TOCTOU window between the dirty check and the clear; and
 
         * a failing ``write()`` does **not** discard the dirty record —
-          the snapshotted paths remain dirty for the caller to retry.
+          the entire dirty mapping remains for the caller to retry.
         """
         if not self._dirty:
             return False
         # Lazy import so module import doesn't require [substrate].
         from harlo.usd_lite.persistence import write
 
-        snapshot = set(self._dirty)
+        snapshot_gen = self._generation
         try:
             write(stage, target_path)
         except Exception:
@@ -72,12 +82,17 @@ class Checkpoint:
             # do NOT clear it on a failed write or the mutations are lost.
             logger.exception(
                 "Checkpoint.flush failed; preserving %d dirty paths for retry",
-                len(snapshot),
+                len(self._dirty),
             )
             raise
-        # Clear only the paths we actually attempted to persist.  Paths
-        # marked dirty after the snapshot are kept for the next flush.
-        self._dirty -= snapshot
+        # Clear only entries whose generation is at or before the snapshot.
+        # Anything stamped during the write keeps a higher generation and
+        # survives — even if it is the same path as a pre-flush mark.
+        self._dirty = {
+            path: gen
+            for path, gen in self._dirty.items()
+            if gen > snapshot_gen
+        }
         return True
 
     def clear(self) -> None:
