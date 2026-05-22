@@ -70,6 +70,12 @@ jobs:
           fi
           [ "$fail" = 0 ] || exit 1
 
+      - name: harlo doctor --strict
+        # Exercises the doctor module itself, not just the underlying
+        # greps. Catches regressions in the doctor's compliance
+        # filters / schema loader / launchd-status branches.
+        run: PYTHONPATH=python python -m harlo.cli.main doctor --strict
+
       - name: Pytest
         run: PYTHONPATH=python python -m pytest tests/ -q --timeout=60
 

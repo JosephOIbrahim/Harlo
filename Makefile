@@ -13,7 +13,7 @@ DMG_PATH ?= dist/Harlo.dmg
 PYTHON ?= python3
 
 .PHONY: help build-rust build-macos sign notarize staple dmg release \
-        clean-macos test compliance-greps verify
+        clean-macos test compliance-greps verify doctor signing-readiness
 
 help:
 	@echo "Harlo build targets"
@@ -26,7 +26,9 @@ help:
 	@echo "  release          build-macos -> sign -> notarize -> dmg"
 	@echo "  test             Run cargo + pytest"
 	@echo "  compliance-greps Run all CLAUDE.md compliance greps"
-	@echo "  verify           test + compliance-greps"
+	@echo "  doctor           Run harlo doctor --strict (operator readiness)"
+	@echo "  signing-readiness Run pre-flight gate before signing"
+	@echo "  verify           test + compliance-greps + doctor + signing-readiness"
 	@echo "  clean-macos      Remove dist/ and build/"
 
 build-rust:
@@ -90,4 +92,10 @@ compliance-greps:
 	    (echo "FAIL: biometric leaked" && exit 1)
 	@echo "all compliance greps passed"
 
-verify: test compliance-greps
+doctor:
+	PYTHONPATH=python $(PYTHON) -m harlo.cli.main doctor --strict
+
+signing-readiness:
+	bash scripts/check_signing_readiness.sh
+
+verify: test compliance-greps doctor signing-readiness
