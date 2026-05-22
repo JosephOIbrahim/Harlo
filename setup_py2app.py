@@ -26,6 +26,29 @@ import plistlib
 from pathlib import Path
 
 from setuptools import setup
+from py2app.build_app import py2app as _Py2AppCommand
+
+
+class HarloPy2App(_Py2AppCommand):
+    """py2app command override.
+
+    py2app 0.28+ raises ``"install_requires is no longer supported"``
+    when ``distribution.install_requires`` is truthy, but setuptools 61+
+    populates that attribute automatically from ``pyproject.toml``'s
+    ``[project].dependencies`` block — so the check fires on every modern
+    project even if setup.py itself never mentions install_requires.
+
+    We install runtime deps in a separate step before invoking py2app
+    (see the macos-build.yml workflow and the Makefile target), so the
+    in-bundle dep-fetch path is unused either way. Clear the attribute
+    so the check passes cleanly.
+    """
+
+    def finalize_options(self):
+        # Must clear *before* super().finalize_options(), which contains
+        # the offending check (build_app.py:656 in py2app 0.28).
+        self.distribution.install_requires = None
+        super().finalize_options()
 
 REPO_ROOT = Path(__file__).resolve().parent
 INFO_PLIST_PATH = REPO_ROOT / "macos" / "Harlo.app" / "Contents" / "Info.plist"
@@ -104,4 +127,5 @@ setup(
     app=APP,
     data_files=DATA_FILES,
     options={"py2app": OPTIONS},
+    cmdclass={"py2app": HarloPy2App},
 )
