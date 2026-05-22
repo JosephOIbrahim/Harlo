@@ -80,8 +80,13 @@ jobs:
           python -m pip install click jsonschema numpy mcp pyyaml pydantic
 
       - name: Build Rust hot path (universal2)
+        # maturin develop requires an active virtualenv; the macos-15
+        # runner does not have one. pip install -e . drives maturin
+        # through PEP 517 build isolation and does not need a venv.
+        # --no-deps skips runtime deps already installed in the prior
+        # step (or installed selectively here).
         run: |
-          maturin develop --release
+          python -m pip install --no-deps -e .
           # Sanity: ensure the .so landed
           python -c "import harlo.hippocampus; print('hippocampus OK')"
 

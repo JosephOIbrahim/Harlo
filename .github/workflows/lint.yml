@@ -39,9 +39,15 @@ jobs:
             pytest pytest-timeout
 
       - name: Build Rust hot path
+        # maturin develop requires an active virtualenv; CI runners
+        # don't have one. pip install -e . goes through maturin via
+        # the PEP 517 build backend and works without a venv. --no-deps
+        # skips the heavy pyproject.toml runtime deps (onnxruntime,
+        # transformers, xgboost) which the next step doesn't need.
         run: |
-          python -m pip install maturin
-          maturin develop --release
+          python -m pip install --upgrade pip maturin
+          python -m pip install --no-deps -e .
+          python -c "import harlo.hippocampus; print('hippocampus OK')"
 
       - name: Compliance greps (CLAUDE.md invariants)
         run: |
