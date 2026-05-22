@@ -17,6 +17,7 @@ from .commands.execute import execute
 from .commands.export_import import export_cmd, import_cmd
 from .commands.inquire import inquire
 from .commands.inquiries import inquiries
+from .commands.intake import intake
 from .commands.mode import mode
 from .commands.modulate import modulate
 from .commands.motor_reflexes import motor_reflexes
@@ -56,6 +57,7 @@ cli.add_command(export_cmd)
 cli.add_command(import_cmd)
 cli.add_command(inquire)
 cli.add_command(inquiries)
+cli.add_command(intake)
 cli.add_command(mode)
 cli.add_command(modulate)
 cli.add_command(motor_reflexes)

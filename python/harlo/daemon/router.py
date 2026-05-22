@@ -17,6 +17,7 @@ def route_command(command: str, args: dict) -> dict:
         Result dictionary with at minimum a "status" key.
     """
     router = {
+        "biometric_ingest": _handle_biometric_ingest,
         "detect": _handle_detect,
         "health": _handle_health,
         "recall": _handle_recall,
@@ -864,3 +865,68 @@ def _handle_inquiries(args: dict) -> dict:
     if expire:
         return {"status": "ok", "result": {"expired": 0}}
     return {"status": "ok", "result": {"inquiries": []}}
+
+
+# ----------------------------------------------------------------------
+# Biometric ingest — XPC bridge → Modulation Layer (Rule 9 + ADR-0001)
+# ----------------------------------------------------------------------
+# Only entry point for biometric data on the Python side. Validates
+# through the dedicated biometric_barrier and forwards to a per-process
+# AllostasisTracker. Returns a `force_red` flag the Motor Cortex
+# consults before disinhibiting any action.
+
+_tracker_singleton = None
+
+
+def _get_biometric_tracker():
+    """Lazy AllostasisTracker singleton scoped to the daemon process.
+
+    The daemon is socket-activated and short-lived (Rule 1), so a
+    fresh tracker per process is fine — the bridge pushes a fresh
+    delta after each activation anyway.
+    """
+    global _tracker_singleton
+    if _tracker_singleton is None:
+        from ..modulation.allostatic import AllostasisTracker
+
+        _tracker_singleton = AllostasisTracker()
+    return _tracker_singleton
+
+
+def _handle_biometric_ingest(args: dict) -> dict:
+    """Validate + record BiometricSamples pushed by HarloHealthBridge.
+
+    Args:
+        samples: list of dicts matching biometric_sample_schema.json
+    """
+    from ..modulation.biometric_barrier import (
+        BiometricBarrierError,
+        validate_biometric,
+    )
+
+    raw_samples = args.get("samples") or []
+    if not isinstance(raw_samples, list):
+        return {"status": "error", "message": "samples must be a list"}
+
+    tracker = _get_biometric_tracker()
+    accepted = 0
+    rejected: list[str] = []
+    for raw in raw_samples:
+        try:
+            sample = validate_biometric(raw)
+        except BiometricBarrierError as exc:
+            rejected.append(str(exc))
+            continue
+        tracker.record_biometric(sample)
+        accepted += 1
+
+    return {
+        "status": "ok",
+        "result": {
+            "accepted": accepted,
+            "rejected": rejected,
+            "depleted": tracker.is_depleted(),
+            "force_red": tracker.should_force_red(),
+            "biometric_load": tracker.get_biometric_load(),
+        },
+    }
