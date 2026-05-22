@@ -6,7 +6,12 @@ runs codesign afterwards, so we control entitlements + deep-signing
 precisely.
 
 Constraints honored:
-  - Universal binary (arm64 + x86_64).
+  - Architecture follows the running Python interpreter. Universal2
+    requires a universal2 Python install on the build machine; CI
+    runners get single-arch Python from actions/setup-python, so
+    forcing `arch: universal2` there fails. Set
+    HARLO_PY2APP_ARCH=universal2 on a local mac with the python.org
+    universal2 installer to produce a fat binary.
   - Plist comes from the on-disk `macos/Harlo.app/Contents/Info.plist`
     so its content (bundle ID, HealthKit usage strings) is the
     single source of truth.
@@ -16,6 +21,7 @@ Constraints honored:
 
 from __future__ import annotations
 
+import os
 import plistlib
 from pathlib import Path
 
@@ -74,7 +80,6 @@ OPTIONS = {
         "unittest",
         "pytest",
     ],
-    "arch": "universal2",
     "strip": False,
     "optimize": 0,
     # We sign in a separate step. py2app's signer is too coarse
@@ -82,10 +87,20 @@ OPTIONS = {
     "codesign_identity": None,
 }
 
+# Architecture: opt-in to universal2 only when explicitly requested
+# (requires a universal2 Python on disk). Default: match the running
+# interpreter, which is what CI runners can actually produce.
+_arch = os.environ.get("HARLO_PY2APP_ARCH")
+if _arch:
+    OPTIONS["arch"] = _arch
+
+# `setup_requires=["py2app"]` is deprecated in setuptools >=70 and
+# breaks under PEP 517 isolation. The workflow / Makefile installs
+# py2app explicitly before invoking this file, so the kwarg is
+# redundant — and removing it avoids the deprecation noise.
 setup(
     name="Harlo",
     app=APP,
     data_files=DATA_FILES,
     options={"py2app": OPTIONS},
-    setup_requires=["py2app"],
 )
