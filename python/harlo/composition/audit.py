@@ -15,9 +15,15 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
+from harlo.daemon.config import AUDIT_LOG as _CONFIG_AUDIT_LOG
+
 from .resolver import Resolution
 
-AUDIT_LOG = Path("data/audit.log")
+
+# Module-level audit log path. Initialized from daemon.config so
+# HARLO_DATA_DIR / macOS defaults flow through, but kept assignable so
+# the historical `audit_mod.AUDIT_LOG = path` test pattern still works.
+AUDIT_LOG: Path = _CONFIG_AUDIT_LOG
 
 
 def _ensure_log() -> None:

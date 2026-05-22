@@ -14,9 +14,13 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from harlo.daemon.config import REFLEX_DIR
 
-# Reflex cache directory
-_REFLEX_DIR = Path("data/reflexes")
+
+# Module-level attribute kept under the historical name so existing
+# tests can `monkeypatch.setattr(consolidation, "_REFLEX_DIR", tmp)`.
+# Default resolution is platform-aware via daemon.config.
+_REFLEX_DIR: Path = REFLEX_DIR
 
 
 def _ensure_reflex_dir() -> None:

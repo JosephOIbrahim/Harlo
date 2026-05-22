@@ -320,12 +320,17 @@ def _handle_resolve(args: dict) -> dict:
 def _handle_compose(args: dict) -> dict:
     """Handle compose command: add a layer to a composition stage."""
     try:
+        import time as _time
+        import uuid as _uuid
+
         from ..daemon.config import STAGES_DIR, ensure_data_dirs
 
         ensure_data_dirs()
         stage_id = args.get("stage_id", "")
         layer_data = args.get("layer_data", {})
         arc_type = args.get("arc_type", "")
+        source = args.get("source") or "compose_cli"
+        layer_id = args.get("layer_id") or _uuid.uuid4().hex[:12]
 
         if not stage_id:
             return {"status": "error", "message": "stage_id is required"}
@@ -344,10 +349,21 @@ def _handle_compose(args: dict) -> dict:
         else:
             stage = MerkleStage(stage_id=stage_id)
 
-        # Create and add layer
-        arc = ArcType(arc_type)
-        layer = Layer(data=layer_data, arc_type=arc)
-        stage.add_layer(layer)
+        # ArcType is an IntEnum keyed by int; accept both "1"/1 and the
+        # case-insensitive name.
+        if isinstance(arc_type, str) and arc_type.isalpha():
+            arc = ArcType[arc_type.upper()]
+        else:
+            arc = ArcType(int(arc_type))
+
+        layer = Layer(
+            arc_type=arc,
+            data=layer_data,
+            source=source,
+            timestamp=int(_time.time()),
+            layer_id=layer_id,
+        )
+        merkle_root = stage.add_layer(layer)
 
         # Save stage
         stage_path.write_text(
@@ -359,12 +375,13 @@ def _handle_compose(args: dict) -> dict:
             "status": "ok",
             "result": {
                 "layer_id": layer.layer_id,
-                "layer_count": len(stage.layers),
+                "layer_count": len(stage.get_layers()),
+                "merkle_root": merkle_root,
             },
         }
     except ImportError as e:
         return {"status": "error", "message": f"Composition module not available: {e}"}
-    except ValueError as e:
+    except (ValueError, KeyError) as e:
         return {"status": "error", "message": f"Invalid arc_type: {e}"}
     except Exception as e:
         return {"status": "error", "message": str(e)}

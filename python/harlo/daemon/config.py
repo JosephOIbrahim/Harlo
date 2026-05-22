@@ -62,6 +62,7 @@ SOCKET_PATH = DATA_DIR / "twind.sock"
 AUDIT_LOG = DATA_DIR / "audit.log"
 STAGES_DIR = DATA_DIR / "stages"
 DEFERRED_DIR = DATA_DIR / "deferred_verifications"
+REFLEX_DIR = DATA_DIR / "reflexes"
 HEALTHKIT_ANCHOR_PATH = DATA_DIR / "healthkit_anchor.bin"
 AGENTS_DIR = DATA_DIR / "agents"
 AGENTS_QUEUE_DIR = AGENTS_DIR / "queue"
@@ -102,6 +103,7 @@ def ensure_data_dirs():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     STAGES_DIR.mkdir(parents=True, exist_ok=True)
     DEFERRED_DIR.mkdir(parents=True, exist_ok=True)
+    REFLEX_DIR.mkdir(parents=True, exist_ok=True)
     AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     AGENTS_QUEUE_DIR.mkdir(parents=True, exist_ok=True)
     AGENTS_OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
