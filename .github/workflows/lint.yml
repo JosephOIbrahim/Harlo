@@ -1,0 +1,109 @@
+name: Lint & Test
+
+# Required PR check: compliance greps, Python tests, Rust tests.
+# Runs on every PR + on pushes to main/development branches.
+# Fast — runs on ubuntu-latest, no macOS minutes.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+
+jobs:
+  python:
+    name: Python tests + compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          # Core runtime + dev deps (sufficient for compliance + the
+          # unit tests that don't need the ML extras).
+          python -m pip install \
+            click jsonschema numpy pyyaml pydantic mcp \
+            pytest pytest-timeout
+
+      - name: Build Rust hot path
+        run: |
+          python -m pip install maturin
+          maturin develop --release
+
+      - name: Compliance greps (CLAUDE.md invariants)
+        run: |
+          set -e
+          fail=0
+          check() {
+            label="$1"; shift
+            if "$@" > /tmp/out 2>&1 && [ -s /tmp/out ]; then
+              echo "FAIL: $label"
+              cat /tmp/out
+              fail=1
+            else
+              echo "PASS: $label"
+            fi
+          }
+          # Rule 1 — 0W idle
+          check "no sleep( in python/harlo/"  grep -rF "sleep(" python/harlo/
+          check "no while True in python/harlo/" grep -rF "while True" python/harlo/
+          # Rule 2 — Action potentials
+          check "no float32 in crates/" grep -rF "float32" crates/
+          check "no cosine in crates/"  grep -rF "cosine"  crates/
+          # Rule 9 + ADR-0001 — biometrics never enter elenchus or bridge
+          if [ -d python/harlo/elenchus ] || [ -d python/harlo/bridge ]; then
+            check "no biometric in elenchus/bridge" \
+              grep -rnF "biometric" python/harlo/elenchus/ python/harlo/bridge/
+          fi
+          [ "$fail" = 0 ] || exit 1
+
+      - name: Pytest
+        run: PYTHONPATH=python python -m pytest tests/ -q --timeout=60
+
+  rust:
+    name: Rust tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cargo test
+        run: cargo test -p hippocampus --release
+
+  signing-readiness:
+    name: Signing-readiness pre-flight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pyyaml
+        run: python -m pip install pyyaml
+
+      - name: Run readiness script
+        run: bash scripts/check_signing_readiness.sh

@@ -29,9 +29,15 @@ from typing import Any
 
 import click
 
-from harlo.daemon.config import INTAKE_FORM_SCHEMA_PATH, TEMP_DIR
+from harlo.daemon.config import (
+    INTAKE_FORM_SCHEMA_PATH,
+    STAGES_DIR,
+    TEMP_DIR,
+    ensure_data_dirs,
+)
+from harlo.composition.stage import MerkleStage
 from harlo.intake.coaching_scaffold import scaffold as build_scaffold
-from harlo.intake.composition_bridge import to_layers
+from harlo.intake.composition_bridge import to_layers, to_merkle_layers
 from harlo.intake.multipliers import _QUESTION_DIMENSIONS, derive_multipliers
 from harlo.intake.questionnaire import (
     IntakeSession,
@@ -133,6 +139,35 @@ def _emit_layers(payload: dict[str, Any], session: IntakeSession) -> list[dict[s
         derived_multipliers=payload["derived_multipliers"],
         scaffold_out=sc,
     )
+
+
+def _persist_stage(payload: dict[str, Any], session: IntakeSession) -> dict[str, Any]:
+    """Write the three INTAKE_CALIBRATED layers into a MerkleStage.
+
+    Returns {stage_id, merkle_root, stage_path} for the JSON payload.
+    """
+    sc = build_scaffold(session)
+    merkle_layers = to_merkle_layers(
+        session=session,
+        session_id=payload["session_id"],
+        derived_multipliers=payload["derived_multipliers"],
+        scaffold_out=sc,
+    )
+    stage_id = f"intake-{payload['session_id']}"
+    stage = MerkleStage(stage_id=stage_id)
+    for layer in merkle_layers:
+        stage.add_layer(layer)
+
+    ensure_data_dirs()
+    stage_path = STAGES_DIR / f"{stage_id}.json"
+    stage_path.write_text(
+        json.dumps(stage.to_dict(), indent=2), encoding="utf-8"
+    )
+    return {
+        "stage_id": stage_id,
+        "merkle_root": stage.get_merkle_root(),
+        "stage_path": str(stage_path),
+    }
 
 
 def _print_question(idx: int, total: int, text: str, *, silent: bool) -> None:
@@ -245,9 +280,10 @@ def start(resume: bool, as_json: bool) -> None:
     payload = _build_payload(session_id, session)
     _validate_payload(payload)
     layers = _emit_layers(payload, session)
+    stage_info = _persist_stage(payload, session)
 
     # Clean up the in-progress temp file — completion is durable
-    # via the Merkle layers below.
+    # via the persisted Merkle stage below.
     _temp_path(session_id).unlink(missing_ok=True)
 
     out = {
@@ -255,6 +291,7 @@ def start(resume: bool, as_json: bool) -> None:
         "session_id": session_id,
         "payload": payload,
         "layers": layers,
+        "stage": stage_info,
     }
     if as_json:
         click.echo(json.dumps(out, indent=2))
@@ -264,6 +301,8 @@ def start(resume: bool, as_json: bool) -> None:
     click.secho("  Intake complete.", fg="green", bold=True)
     click.echo(f"  Session: {session_id}")
     click.echo(f"  Layers emitted: {[l['layer_id'] for l in layers]}")
+    click.echo(f"  Merkle stage: {stage_info['stage_id']}")
+    click.echo(f"  Merkle root:  {stage_info['merkle_root'][:16]}…")
     voice = payload["coaching_voice"]
     click.echo(
         f"  Coaching voice — directness {voice['directness']:.2f}, "

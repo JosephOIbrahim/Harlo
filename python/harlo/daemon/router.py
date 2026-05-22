@@ -34,6 +34,7 @@ def route_command(command: str, args: dict) -> dict:
         "compose": _handle_compose,
         "conflicts": _handle_conflicts,
         "audit": _handle_audit,
+        "audit_layers": _handle_audit_layers,
         "verify": _handle_verify,
         "stuck": _handle_stuck,
         "deferred": _handle_deferred,
@@ -427,6 +428,79 @@ def _handle_audit(args: dict) -> dict:
         }
     except ImportError as e:
         return {"status": "error", "message": f"Composition module not available: {e}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def _handle_audit_layers(args: dict) -> dict:
+    """Handle audit_layers: list composition layers across stages.
+
+    Args:
+        stage_id:    optional — restrict to one stage; omit for all.
+        provenance:  optional — filter by source_type (e.g.,
+                     "intake_calibrated").
+    """
+    try:
+        from ..daemon.config import STAGES_DIR, ensure_data_dirs
+
+        ensure_data_dirs()
+        stage_filter = args.get("stage_id") or ""
+        prov_filter = (args.get("provenance") or "").strip().lower()
+
+        if not STAGES_DIR.exists():
+            return {"status": "ok", "result": {"stages": [], "layer_count": 0}}
+
+        if stage_filter:
+            candidates = [STAGES_DIR / f"{stage_filter}.json"]
+        else:
+            candidates = sorted(STAGES_DIR.glob("*.json"))
+
+        stages_out: list[dict] = []
+        total = 0
+        for path in candidates:
+            if not path.exists():
+                continue
+            try:
+                raw = json.loads(path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+
+            kept: list[dict] = []
+            for layer in raw.get("layers", []):
+                prov = (layer.get("data") or {}).get("provenance") or {}
+                source_type = (prov.get("source_type") or "").lower()
+                if prov_filter and source_type != prov_filter:
+                    continue
+                kept.append(
+                    {
+                        "layer_id": layer.get("layer_id"),
+                        "arc_type": layer.get("arc_type"),
+                        "source": layer.get("source"),
+                        "timestamp": layer.get("timestamp"),
+                        "provenance": prov or None,
+                    }
+                )
+
+            if not kept and (prov_filter or stage_filter):
+                # When filtering, skip stages with zero matches.
+                continue
+
+            stages_out.append(
+                {
+                    "stage_id": raw.get("stage_id", path.stem),
+                    "merkle_root": raw.get("merkle_root"),
+                    "layers": kept,
+                }
+            )
+            total += len(kept)
+
+        return {
+            "status": "ok",
+            "result": {
+                "stages": stages_out,
+                "layer_count": total,
+            },
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

@@ -13,6 +13,7 @@ from .commands.conflicts import conflicts
 from .commands.consent import consent
 from .commands.consolidate import consolidate
 from .commands.deferred import deferred
+from .commands.doctor import doctor
 from .commands.execute import execute
 from .commands.export_import import export_cmd, import_cmd
 from .commands.inquire import inquire
@@ -52,6 +53,7 @@ cli.add_command(conflicts)
 cli.add_command(consent)
 cli.add_command(consolidate)
 cli.add_command(deferred)
+cli.add_command(doctor)
 cli.add_command(execute)
 cli.add_command(export_cmd)
 cli.add_command(import_cmd)

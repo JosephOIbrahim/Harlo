@@ -6,6 +6,20 @@ name: macOS build
 on:
   push:
     tags: ['v*.*.*']
+  pull_request:
+    # PR-time dry-run build to catch py2app / Rust universal2
+    # regressions before they hit a release tag. Guarded by paths
+    # below so doc-only PRs do not burn macOS minutes.
+    paths:
+      - 'macos/**'
+      - 'setup_py2app.py'
+      - 'Makefile'
+      - 'scripts/macos_*.sh'
+      - 'scripts/macos_*.py'
+      - 'scripts/check_signing_readiness.sh'
+      - 'python/harlo/**'
+      - 'crates/**'
+      - '.github/workflows/macos-build.yml'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -17,9 +31,32 @@ permissions:
   contents: write  # for creating draft releases
 
 jobs:
+  readiness:
+    name: Signing-readiness pre-flight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pyyaml
+        run: python -m pip install pyyaml
+      - name: Run readiness script
+        run: bash scripts/check_signing_readiness.sh
+
   build:
+    needs: readiness
     runs-on: macos-15
     timeout-minutes: 60
+
+    # PR-triggered runs sign locally but skip notarization. Tag-pushes
+    # use the original `inputs.dry_run` path. We compute the effective
+    # mode once so the steps below stay readable.
+    env:
+      IS_PR: ${{ github.event_name == 'pull_request' }}
 
     steps:
       - name: Checkout
@@ -70,7 +107,7 @@ jobs:
           rm "$RUNNER_TEMP/cert.p12"
 
       - name: Sign + notarize + staple
-        if: ${{ !inputs.dry_run }}
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run }}
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_DEVELOPER_CERT_IDENTITY: ${{ secrets.APPLE_DEVELOPER_CERT_IDENTITY }}
@@ -84,7 +121,7 @@ jobs:
           rm "$APP_STORE_CONNECT_PRIVATE_KEY_PATH"
 
       - name: Sign only (dry run)
-        if: ${{ inputs.dry_run }}
+        if: ${{ github.event_name == 'pull_request' || inputs.dry_run }}
         env:
           APPLE_DEVELOPER_CERT_IDENTITY: ${{ secrets.APPLE_DEVELOPER_CERT_IDENTITY }}
         run: |
@@ -95,11 +132,13 @@ jobs:
           codesign --verify --deep --strict --verbose=2 dist/Harlo.app
 
       - name: Build DMG
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           brew install create-dmg
           bash scripts/macos_build_dmg.sh dist/Harlo.dmg
 
       - name: Upload artifact
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: Harlo-${{ github.ref_name }}-dmg

@@ -1,7 +1,7 @@
 """Append-only audit trail for composition resolutions.
 
 INVARIANT: The audit log is STRICTLY append-only.
-           DELETE on audit = build fail.
+           Removing entries is a build failure (see compliance grep).
            No truncation, no overwrite, no deletion.
 
 Format: JSON Lines (one JSON object per line) in data/audit.log.

@@ -24,9 +24,11 @@ from harlo.cli.commands.intake import intake
 
 @pytest.fixture
 def tmp_tempdir(monkeypatch, tmp_path):
-    """Force TEMP_DIR to land under tmp_path so each test gets a
-    clean slate."""
+    """Force TEMP_DIR and DATA_DIR under tmp_path so each test gets a
+    clean slate. Both intake's in-progress temp file and the persisted
+    Merkle stage must land in the test sandbox."""
     monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setenv("HARLO_DATA_DIR", str(tmp_path / "data"))
     import importlib
     import harlo.daemon.config as cfg
 

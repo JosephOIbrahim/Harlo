@@ -19,6 +19,7 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from typing import Any
 
+from harlo.composition.layer import ArcType, Layer
 from harlo.usd_lite.prims import Provenance, SourceType
 
 from .coaching_scaffold import CoachingScaffold
@@ -104,11 +105,10 @@ def to_layers(
     derived_multipliers: dict[str, float],
     scaffold_out: CoachingScaffold,
 ) -> list[dict[str, Any]]:
-    """Build the three INTAKE_CALIBRATED Merkle layers.
+    """Build the three INTAKE_CALIBRATED layer dicts.
 
-    Caller is responsible for handing the layers to
-    `composition.stage.MerkleStage.add_layer` for hashing and
-    persistence.
+    Returns wire-format payloads (used by `--json` output and tests).
+    For Merkle persistence, see `to_merkle_layers`.
     """
     intake_hash = _hash_session(session)
     return [
@@ -120,4 +120,39 @@ def to_layers(
     ]
 
 
-__all__ = ["to_layers"]
+def to_merkle_layers(
+    session: IntakeSession,
+    session_id: str,
+    derived_multipliers: dict[str, float],
+    scaffold_out: CoachingScaffold,
+) -> list[Layer]:
+    """Build the three INTAKE_CALIBRATED layers as `Layer` objects.
+
+    These are LIVRPS LOCAL (strongest opinion — user-direct
+    calibration). Caller hands them to
+    `composition.stage.MerkleStage.add_layer` for hashing and
+    persistence into `STAGES_DIR / intake-{session_id}.json`.
+    """
+    dicts = to_layers(
+        session=session,
+        session_id=session_id,
+        derived_multipliers=derived_multipliers,
+        scaffold_out=scaffold_out,
+    )
+    ts = int(datetime.now(tz=timezone.utc).timestamp())
+    return [
+        Layer(
+            arc_type=ArcType.LOCAL,
+            data={
+                "content": d["content"],
+                "provenance": d["provenance"],
+            },
+            source="intake",
+            timestamp=ts,
+            layer_id=d["layer_id"],
+        )
+        for d in dicts
+    ]
+
+
+__all__ = ["to_layers", "to_merkle_layers"]
