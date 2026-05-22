@@ -112,10 +112,12 @@ PROJECT_YML="$ROOT/macos/HarloHealthBridge/project.yml"
 HB_ENT="$ROOT/macos/HarloHealthBridge/Sources/HarloHealthBridge/HarloHealthBridge.entitlements"
 
 if [ -f "$PROJECT_YML" ]; then
-  if python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]).read())" "$PROJECT_YML" 2>/dev/null; then
+  if ! python3 -c "import yaml" 2>/dev/null; then
+    note "pyyaml not installed in python3 — skipping project.yml parse check"
+  elif python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]).read())" "$PROJECT_YML"; then
     pass "project.yml parses"
   else
-    fail "project.yml does not parse"
+    fail "project.yml does not parse (see stderr above)"
   fi
   if grep -q "DEVELOPMENT_TEAM" "$PROJECT_YML"; then
     yml_team="$(grep DEVELOPMENT_TEAM "$PROJECT_YML" | head -1 | awk -F: '{gsub(/[ "]/,"",$2); print $2}')"

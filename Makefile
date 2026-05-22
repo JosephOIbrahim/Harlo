@@ -77,18 +77,25 @@ test:
 	$(PYTHON) -m pytest tests/ -v
 
 compliance-greps:
+	@# --include='*.py' / -F '*.py' filters skip __pycache__ bytecode,
+	@# which legitimately contains the forbidden tokens as string
+	@# constants inside the doctor module (itself a compliance checker).
 	@echo "=== sleep( ==="; \
-	    ! grep -rn "sleep(" python/harlo/ || (echo "FAIL: sleep() found" && exit 1)
+	    ! grep -rn --include='*.py' "sleep(" python/harlo/ || (echo "FAIL: sleep() found" && exit 1)
 	@echo "=== while True ==="; \
-	    ! grep -rn "while True" python/harlo/ || (echo "FAIL: while True found" && exit 1)
+	    ! grep -rn --include='*.py' "while True" python/harlo/ || (echo "FAIL: while True found" && exit 1)
+	@# Filter legitimate hits: Rust doc-comments (// /// //!) and
+	@# `fn test_*` function names. Mirrors the comment filter used by
+	@# tests/test_integration/test_compliance.py so the bash and pytest
+	@# layers agree.
 	@echo "=== float32 in crates ==="; \
-	    ! grep -rn "float32" crates/ | grep -v "no float32\|test_no" || \
+	    ! grep -rnE "float32" crates/ | grep -vE ':[0-9]+:[[:space:]]*(//|fn[[:space:]]+test_)' || \
 	    (echo "FAIL: float32 found" && exit 1)
 	@echo "=== cosine in crates ==="; \
-	    ! grep -rn "cosine" crates/ | grep -v "No cosine\|no cosine" || \
+	    ! grep -rnE "cosine" crates/ | grep -vE ':[0-9]+:[[:space:]]*(//|fn[[:space:]]+test_)' || \
 	    (echo "FAIL: cosine found" && exit 1)
 	@echo "=== biometric in elenchus/bridge ==="; \
-	    ! grep -rn "biometric" python/harlo/elenchus/ python/harlo/bridge/ 2>/dev/null || \
+	    ! grep -rn --include='*.py' "biometric" python/harlo/elenchus/ python/harlo/bridge/ 2>/dev/null || \
 	    (echo "FAIL: biometric leaked" && exit 1)
 	@echo "all compliance greps passed"
 

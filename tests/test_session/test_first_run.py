@@ -19,13 +19,21 @@ import pytest
 @pytest.fixture
 def isolated_data_dir(monkeypatch, tmp_path):
     """Point DATA_DIR at a tmp tree and reload the relevant modules
-    so the module-level constants pick up the new env."""
+    so the module-level constants pick up the new env.
+
+    Also redirects _LEGACY_DATA away from PROJECT_ROOT/data so dev
+    machines (which may have a real ./data/ from earlier dogfooding)
+    don't trigger the migration path and skew fresh_install assertions.
+    CI is clean, so this only matters locally — but the test must
+    pass on both.
+    """
     monkeypatch.setenv("HARLO_DATA_DIR", str(tmp_path))
     import importlib
     import harlo.daemon.config as cfg
     importlib.reload(cfg)
     import harlo.session.first_run as first_run
     importlib.reload(first_run)
+    monkeypatch.setattr(first_run, "_LEGACY_DATA", tmp_path / "no-legacy")
     return tmp_path, first_run
 
 

@@ -181,6 +181,13 @@ class TestBridgeWiring:
         # Idempotent
         assert mcp._get_engine() is eng
 
+    @pytest.mark.skipif(
+        not (PROJECT_ROOT / "models" / "cognitive_predictor_v1.joblib").exists(),
+        reason="cognitive_predictor_v1.joblib not present — regen via "
+               "`python src/train_predictor.py` then rerun. The FAMILY-hours "
+               "routing under test depends on the predictor for delegate "
+               "selection; without it, routing degrades to 'exploring'.",
+    )
     def test_enrich_runs_full_exchange_with_clock_substitution(self, monkeypatch):
         monkeypatch.syspath_prepend(str(PROJECT_ROOT))
         import harlo.mcp_server as mcp
