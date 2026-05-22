@@ -10,7 +10,24 @@
 UNAME_S := $(shell uname -s)
 APP_PATH ?= dist/Harlo.app
 DMG_PATH ?= dist/Harlo.dmg
-PYTHON ?= python3
+
+# Python resolution order:
+#   1. Explicit override on the command line (PYTHON=...)
+#   2. Currently-activated venv ($VIRTUAL_ENV)
+#   3. Project venv at .venv314/bin/python (the convention used in
+#      the dev runbook — see CLAUDE.md "single venv" note)
+#   4. System python3
+# Lets `make verify` work without manual override on a fresh shell
+# in the project root.
+ifndef PYTHON
+  ifdef VIRTUAL_ENV
+    PYTHON := $(VIRTUAL_ENV)/bin/python
+  else ifneq (,$(wildcard .venv314/bin/python))
+    PYTHON := .venv314/bin/python
+  else
+    PYTHON := python3
+  endif
+endif
 
 .PHONY: help build-rust build-macos sign notarize staple dmg release \
         clean-macos test compliance-greps verify doctor signing-readiness

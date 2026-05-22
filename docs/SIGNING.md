@@ -69,6 +69,26 @@ In the GitHub repo settings → Secrets and variables → Actions:
 | `APP_STORE_CONNECT_PRIVATE_KEY` | `cat AuthKey_<KEY_ID>.p8` — paste full file contents |
 | `APPLE_NOTARY_KEYCHAIN_PASSWORD` | any random string (used inside CI's ephemeral keychain) |
 
+## Local build environment
+
+The signing chain (`build-macos`, `sign`, `notarize`, `dmg`) is
+validated end-to-end on CI's macos-15 runner with **Python 3.12**.
+Local builds need the same runtime: py2app's `modulegraph` 0.19.7
+hits an AST-recursion bug on Python 3.14 that does not affect 3.12.
+
+If your project venv (`.venv314/`) is on 3.14 — which is what the
+rest of Harlo development uses — keep a separate 3.12 venv for
+bundling:
+
+```sh
+python3.12 -m venv .venv-bundle
+.venv-bundle/bin/pip install maturin py2app click jsonschema numpy mcp pyyaml pydantic
+PYTHON=.venv-bundle/bin/python make build-macos
+```
+
+For tests + verify (`make verify`), 3.14 is fine — the Makefile
+auto-detects `.venv314/` when no `PYTHON=` is passed.
+
 ## Local dry run before pushing to CI
 
 A first local pass catches problems faster than CI's macos-15 runner.
