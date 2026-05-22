@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Socket-activated MOE agent harness.
+
+        Same Rule-1 pattern as com.harlo.daemon.plist: listening
+        socket lives in launchd; the harness wakes on connect, drains
+        agents/queue/, exits when empty.
+
+        DO NOT add KeepAlive. The harness must not be a long-lived
+        process — that would silently violate Rule 1.
+    -->
+    <key>Label</key>
+    <string>com.harlo.agents</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/harlo</string>
+        <string>agents</string>
+        <string>run</string>
+        <string>--socket-activated</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HARLO_DATA_DIR</key>
+        <string>~/Library/Application Support/Harlo</string>
+    </dict>
+
+    <key>Sockets</key>
+    <dict>
+        <key>HarloAgents</key>
+        <dict>
+            <key>SockPathName</key>
+            <string>~/Library/Application Support/Harlo/agents/agents.sock</string>
+            <key>SockPathMode</key>
+            <integer>384</integer>
+        </dict>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>~/Library/Logs/Harlo/agents.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>~/Library/Logs/Harlo/agents.err.log</string>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+</dict>
+</plist>

@@ -1,0 +1,21 @@
+id: "0001-bootstrap-os-launch"
+role: os_engineer
+title: "Bootstrap macOS launchability: data-path resolver + launchd plists + first-run migration"
+constraints:
+  - "Rule 1 (0W idle) intact: no KeepAlive on daemon or agents plists"
+  - "Rule 11 (no reasoning_trace) intact"
+  - "All compliance greps in CLAUDE.md return 0"
+context_files:
+  - python/harlo/daemon/config.py
+  - python/harlo/mcp_server.py
+  - python/harlo/hebbian/training_data.py
+  - python/harlo/session/first_run.py
+  - macos/launchd/com.harlo.daemon.plist
+  - macos/launchd/com.harlo.agents.plist
+  - macos/Harlo.app/Contents/Info.plist
+  - scripts/macos_install_daemon.py
+acceptance:
+  - "pytest tests/ -v passes"
+  - "cargo test -p hippocampus passes"
+  - "compliance greps return 0"
+  - "fresh install + dogfood migration both produce a working DATA_DIR"

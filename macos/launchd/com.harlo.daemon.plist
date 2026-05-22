@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Socket-activated daemon for Harlo's CLI.
+
+        Rule 1 (0W idle): no KeepAlive. launchd holds the listening
+        socket; the daemon process is spawned only on first connect,
+        inherits the listening FD via LISTEN_FDS, and exits after
+        30s idle (see python/harlo/daemon/main.py:48–97).
+
+        Install: `launchctl bootstrap gui/$(id -u) com.harlo.daemon.plist`
+    -->
+    <key>Label</key>
+    <string>com.harlo.daemon</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/harlo</string>
+        <string>--daemon</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HARLO_DATA_DIR</key>
+        <string>~/Library/Application Support/Harlo</string>
+    </dict>
+
+    <key>Sockets</key>
+    <dict>
+        <key>HarloCommand</key>
+        <dict>
+            <key>SockPathName</key>
+            <string>~/Library/Application Support/Harlo/twind.sock</string>
+            <key>SockPathMode</key>
+            <integer>384</integer> <!-- 0600 -->
+        </dict>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>~/Library/Logs/Harlo/daemon.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>~/Library/Logs/Harlo/daemon.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Interactive</string>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+</dict>
+</plist>

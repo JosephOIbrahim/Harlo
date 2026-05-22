@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        HarloHealthBridge — the ONLY KeepAlive process in the Harlo
+        stack. Required because HKObserverQuery + enableBackgroundDelivery
+        need a resident process to receive HealthKit callbacks.
+
+        Rule 1 (0W idle) is satisfied at the system level: this
+        process is small, event-wakened by HealthKit, and pushes
+        deltas into the (still-0W-idle) Harlo daemon over XPC. The
+        Harlo daemon does not become KeepAlive because of this.
+
+        Disabled by default. Activated by the user from Harlo's
+        Settings → HealthKit pane.
+
+        Requires:
+          - com.apple.developer.healthkit entitlement (signed)
+          - NSHealthShareUsageDescription in Info.plist
+    -->
+    <key>Label</key>
+    <string>com.harlo.healthbridge</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Applications/HarloHealthBridge.app/Contents/MacOS/HarloHealthBridge</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>Crashed</key>
+        <true/>
+    </dict>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>StandardOutPath</key>
+    <string>~/Library/Logs/Harlo/healthbridge.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>~/Library/Logs/Harlo/healthbridge.err.log</string>
+
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+</dict>
+</plist>
