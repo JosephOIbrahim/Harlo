@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Harlo.app entitlements for Phase 5A (hardened runtime).
+
+        Start strict. Add exceptions ONLY when a specific runtime
+        failure forces it, and document the failing log in
+        docs/SIGNING.md.
+
+        NOT sandboxed. Harlo writes to ~/Library/Application Support/Harlo
+        which a sandbox would block from the user-facing CLI side.
+        The HealthBridge (Phase 5B) IS sandboxed because it only
+        needs HealthKit + the daemon socket.
+    -->
+</dict>
+</plist>

@@ -1,0 +1,115 @@
+name: macOS build
+
+# Phase 5A — signs and notarizes Harlo.app only.
+# HealthBridge follows in Phase 5B (see docs/SIGNING.md).
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Skip notarization (build + sign only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write  # for creating draft releases
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Install Python build deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install maturin py2app
+          # Match runtime deps from pyproject.toml
+          python -m pip install click jsonschema numpy mcp pyyaml pydantic
+
+      - name: Build Rust hot path (universal2)
+        run: |
+          maturin develop --release
+          # Sanity: ensure the .so landed
+          python -c "import harlo.hippocampus; print('hippocampus OK')"
+
+      - name: Build Harlo.app via py2app
+        run: |
+          python setup_py2app.py py2app
+          ls -lh dist/
+
+      - name: Import Developer ID certificate
+        env:
+          CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
+          CERT_PW: ${{ secrets.APPLE_DEVELOPER_CERT_PASSWORD }}
+          KEYCHAIN_PW: ${{ secrets.APPLE_NOTARY_KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/harlo-ci.keychain-db"
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN_PATH"
+          security import "$RUNNER_TEMP/cert.p12" -P "$CERT_PW" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PW" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychain -d user | xargs)
+          rm "$RUNNER_TEMP/cert.p12"
+
+      - name: Sign + notarize + staple
+        if: ${{ !inputs.dry_run }}
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_DEVELOPER_CERT_IDENTITY: ${{ secrets.APPLE_DEVELOPER_CERT_IDENTITY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          # Materialize the .p8 from the secret
+          echo "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" > "$RUNNER_TEMP/AuthKey.p8"
+          export APP_STORE_CONNECT_PRIVATE_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          bash scripts/macos_sign_and_notarize.sh dist/Harlo.app
+          rm "$APP_STORE_CONNECT_PRIVATE_KEY_PATH"
+
+      - name: Sign only (dry run)
+        if: ${{ inputs.dry_run }}
+        env:
+          APPLE_DEVELOPER_CERT_IDENTITY: ${{ secrets.APPLE_DEVELOPER_CERT_IDENTITY }}
+        run: |
+          codesign --force --options=runtime --timestamp \
+            --entitlements macos/Harlo.app/Contents/Entitlements.plist \
+            --sign "$APPLE_DEVELOPER_CERT_IDENTITY" \
+            dist/Harlo.app
+          codesign --verify --deep --strict --verbose=2 dist/Harlo.app
+
+      - name: Build DMG
+        run: |
+          brew install create-dmg
+          bash scripts/macos_build_dmg.sh dist/Harlo.dmg
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Harlo-${{ github.ref_name }}-dmg
+          path: dist/Harlo.dmg
+          retention-days: 30
+
+      - name: Attach to draft Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: dist/Harlo.dmg
+          fail_on_unmatched_files: true
