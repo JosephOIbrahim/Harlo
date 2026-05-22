@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        HealthKit access. Apple's 2024+ guidance: declare the
+        `access` array even when empty so the entitlement parses
+        cleanly. The array semantics for HealthKit are "request
+        access to these category identifiers" — empty array means
+        "use HealthKit but no clinical-record access". Harlo only
+        wants the standard sample types, so the array stays empty.
+    -->
+    <key>com.apple.developer.healthkit</key>
+    <true/>
+    <key>com.apple.developer.healthkit.access</key>
+    <array/>
+
+    <!--
+        Sandboxed. HealthBridge has narrow privileges by design:
+        HealthKit read access and one outbound Unix-domain socket
+        connection to the Harlo daemon's twind.sock. Nothing else.
+    -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <!--
+        No general filesystem access. HealthBridge writes ONLY to
+        its own container; the HealthKit anchor lives at
+        ~/Library/Group Containers/233JSS4X69.com.harlo.shared/
+        healthkit_anchor.bin (Phase 5B will set up the App Group).
+    -->
+    <key>com.apple.security.files.user-selected.read-only</key>
+    <false/>
+
+    <!--
+        No network. The daemon socket is a local Unix socket, not
+        TCP, so neither client nor server flags are needed. If a
+        future feature ever talks over TCP, that requires an
+        Architect review and an explicit ADR.
+    -->
+    <key>com.apple.security.network.client</key>
+    <false/>
+    <key>com.apple.security.network.server</key>
+    <false/>
+
+    <!--
+        App Group so HealthBridge and the Harlo daemon can share the
+        HealthKit anchor file. Group ID convention:
+        <TeamID>.com.harlo.shared
+    -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>233JSS4X69.com.harlo.shared</string>
+    </array>
+</dict>
+</plist>

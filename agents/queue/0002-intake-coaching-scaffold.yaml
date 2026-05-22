@@ -1,0 +1,21 @@
+id: "0002-intake-coaching-scaffold"
+role: intake_engineer
+title: "Wire intake form ingestion into Composition Merkle layers with coaching scaffold"
+constraints:
+  - "Rule 7 / Rule 10: anchor gains stay structural 1.0"
+  - "Rule 8: every payload through the BBB or a justified separate barrier"
+  - "S1: no live inquiries below the evidence floor; templates only"
+  - "S8: every raw answer through the sincerity gate"
+context_files:
+  - python/harlo/intake/questionnaire.py
+  - python/harlo/intake/multipliers.py
+  - python/harlo/intake/coaching_scaffold.py
+  - python/harlo/intake/composition_bridge.py
+  - config/intake_form_schema.json
+  - python/harlo/inquiry/sincerity_gate.py
+  - python/harlo/composition/stage.py
+acceptance:
+  - "pytest tests/test_intake/ -v passes"
+  - "harlo intake start completes end-to-end on a clean profile"
+  - "harlo audit shows three INTAKE_CALIBRATED Merkle layers"
+  - "DMN apophenia threshold visibly adjusted within ±10% cap"

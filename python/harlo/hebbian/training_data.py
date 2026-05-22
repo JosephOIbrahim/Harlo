@@ -16,9 +16,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from ..daemon.config import DATA_DIR as _DEFAULT_DATA_DIR
 from ..usd_lite.prims import CognitiveProfilePrim
 
-_DEFAULT_DATA_DIR = Path("data")
 _DEFAULT_FILENAME = "elenchus_training.jsonl"
 _MAX_ROWS = 10_000
 _MAX_ROTATED_FILES = 3

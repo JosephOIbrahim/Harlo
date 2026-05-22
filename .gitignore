@@ -36,3 +36,7 @@ files/
 .coverage
 .pytest_cache/
 .claude/
+
+# Phase 5B — xcodegen output (regenerated each build)
+macos/HarloHealthBridge/HarloHealthBridge.xcodeproj/
+macos/HarloHealthBridge/.build/

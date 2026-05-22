@@ -1,4 +1,4 @@
-# Harlo v6.0-MOTOR — Claude Code Project Instructions
+# Harlo v6.1-MOTOR — Claude Code Project Instructions
 
 ## What This Is
 
@@ -63,8 +63,13 @@ pytest tests/test_integration/ -v  # Integration tests
 8.  JSON BARRIER: jsonschema.validate(). Strip epigenetic_wash on
     write path. Mood ephemeral. Facts permanent. No XML. No regex.
 
-9.  ALLOSTATIC LOAD: Token velocity + prompt frequency. Software
-    only. High = DEPLETED = refuse to wake System 2.
+9.  ALLOSTATIC LOAD: Token velocity + prompt frequency, plus OPTIONAL
+    opt-in biometric signals via the biometric_barrier per ADR-0001
+    (see docs/adr/0001-healthkit-allostatic.md). Biometric signals
+    default OFF per data type and never enter the trace / reflex
+    pipelines — they live in the Modulation Layer only. Samples older
+    than the configured freshness window (default 5 min) cannot drive
+    cognitive_state="RED". High = DEPLETED = refuse to wake System 2.
 
 10. ANCHORS: SAFETY/CONSENT/KNOWLEDGE/CONSTITUTIONAL = gain 1.0
     ALWAYS. Structural. Returns 1.0 before evaluating receptor density.
@@ -202,4 +207,5 @@ grep -r "cosine" crates/                             # MUST return 0 results
 grep -r "DELETE.*audit" python/harlo/       # MUST return 0 results
 grep -r "reasoning_trace" python/harlo/elenchus/verifier.py  # Must be None/absent
 grep -r "store_reflex" python/harlo/        # Must check verification_state
+grep -rn "biometric" python/harlo/elenchus/ python/harlo/bridge/ 2>/dev/null  # MUST return 0 — Rule 9: biometric data stays in Modulation Layer, never enters traces/reflexes
 ```

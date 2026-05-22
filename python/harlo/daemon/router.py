@@ -17,6 +17,7 @@ def route_command(command: str, args: dict) -> dict:
         Result dictionary with at minimum a "status" key.
     """
     router = {
+        "biometric_ingest": _handle_biometric_ingest,
         "detect": _handle_detect,
         "health": _handle_health,
         "recall": _handle_recall,
@@ -33,6 +34,7 @@ def route_command(command: str, args: dict) -> dict:
         "compose": _handle_compose,
         "conflicts": _handle_conflicts,
         "audit": _handle_audit,
+        "audit_layers": _handle_audit_layers,
         "verify": _handle_verify,
         "stuck": _handle_stuck,
         "deferred": _handle_deferred,
@@ -318,12 +320,17 @@ def _handle_resolve(args: dict) -> dict:
 def _handle_compose(args: dict) -> dict:
     """Handle compose command: add a layer to a composition stage."""
     try:
+        import time as _time
+        import uuid as _uuid
+
         from ..daemon.config import STAGES_DIR, ensure_data_dirs
 
         ensure_data_dirs()
         stage_id = args.get("stage_id", "")
         layer_data = args.get("layer_data", {})
         arc_type = args.get("arc_type", "")
+        source = args.get("source") or "compose_cli"
+        layer_id = args.get("layer_id") or _uuid.uuid4().hex[:12]
 
         if not stage_id:
             return {"status": "error", "message": "stage_id is required"}
@@ -342,10 +349,21 @@ def _handle_compose(args: dict) -> dict:
         else:
             stage = MerkleStage(stage_id=stage_id)
 
-        # Create and add layer
-        arc = ArcType(arc_type)
-        layer = Layer(data=layer_data, arc_type=arc)
-        stage.add_layer(layer)
+        # ArcType is an IntEnum keyed by int; accept both "1"/1 and the
+        # case-insensitive name.
+        if isinstance(arc_type, str) and arc_type.isalpha():
+            arc = ArcType[arc_type.upper()]
+        else:
+            arc = ArcType(int(arc_type))
+
+        layer = Layer(
+            arc_type=arc,
+            data=layer_data,
+            source=source,
+            timestamp=int(_time.time()),
+            layer_id=layer_id,
+        )
+        merkle_root = stage.add_layer(layer)
 
         # Save stage
         stage_path.write_text(
@@ -357,12 +375,13 @@ def _handle_compose(args: dict) -> dict:
             "status": "ok",
             "result": {
                 "layer_id": layer.layer_id,
-                "layer_count": len(stage.layers),
+                "layer_count": len(stage.get_layers()),
+                "merkle_root": merkle_root,
             },
         }
     except ImportError as e:
         return {"status": "error", "message": f"Composition module not available: {e}"}
-    except ValueError as e:
+    except (ValueError, KeyError) as e:
         return {"status": "error", "message": f"Invalid arc_type: {e}"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -426,6 +445,79 @@ def _handle_audit(args: dict) -> dict:
         }
     except ImportError as e:
         return {"status": "error", "message": f"Composition module not available: {e}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def _handle_audit_layers(args: dict) -> dict:
+    """Handle audit_layers: list composition layers across stages.
+
+    Args:
+        stage_id:    optional — restrict to one stage; omit for all.
+        provenance:  optional — filter by source_type (e.g.,
+                     "intake_calibrated").
+    """
+    try:
+        from ..daemon.config import STAGES_DIR, ensure_data_dirs
+
+        ensure_data_dirs()
+        stage_filter = args.get("stage_id") or ""
+        prov_filter = (args.get("provenance") or "").strip().lower()
+
+        if not STAGES_DIR.exists():
+            return {"status": "ok", "result": {"stages": [], "layer_count": 0}}
+
+        if stage_filter:
+            candidates = [STAGES_DIR / f"{stage_filter}.json"]
+        else:
+            candidates = sorted(STAGES_DIR.glob("*.json"))
+
+        stages_out: list[dict] = []
+        total = 0
+        for path in candidates:
+            if not path.exists():
+                continue
+            try:
+                raw = json.loads(path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+
+            kept: list[dict] = []
+            for layer in raw.get("layers", []):
+                prov = (layer.get("data") or {}).get("provenance") or {}
+                source_type = (prov.get("source_type") or "").lower()
+                if prov_filter and source_type != prov_filter:
+                    continue
+                kept.append(
+                    {
+                        "layer_id": layer.get("layer_id"),
+                        "arc_type": layer.get("arc_type"),
+                        "source": layer.get("source"),
+                        "timestamp": layer.get("timestamp"),
+                        "provenance": prov or None,
+                    }
+                )
+
+            if not kept and (prov_filter or stage_filter):
+                # When filtering, skip stages with zero matches.
+                continue
+
+            stages_out.append(
+                {
+                    "stage_id": raw.get("stage_id", path.stem),
+                    "merkle_root": raw.get("merkle_root"),
+                    "layers": kept,
+                }
+            )
+            total += len(kept)
+
+        return {
+            "status": "ok",
+            "result": {
+                "stages": stages_out,
+                "layer_count": total,
+            },
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -864,3 +956,68 @@ def _handle_inquiries(args: dict) -> dict:
     if expire:
         return {"status": "ok", "result": {"expired": 0}}
     return {"status": "ok", "result": {"inquiries": []}}
+
+
+# ----------------------------------------------------------------------
+# Biometric ingest — XPC bridge → Modulation Layer (Rule 9 + ADR-0001)
+# ----------------------------------------------------------------------
+# Only entry point for biometric data on the Python side. Validates
+# through the dedicated biometric_barrier and forwards to a per-process
+# AllostasisTracker. Returns a `force_red` flag the Motor Cortex
+# consults before disinhibiting any action.
+
+_tracker_singleton = None
+
+
+def _get_biometric_tracker():
+    """Lazy AllostasisTracker singleton scoped to the daemon process.
+
+    The daemon is socket-activated and short-lived (Rule 1), so a
+    fresh tracker per process is fine — the bridge pushes a fresh
+    delta after each activation anyway.
+    """
+    global _tracker_singleton
+    if _tracker_singleton is None:
+        from ..modulation.allostatic import AllostasisTracker
+
+        _tracker_singleton = AllostasisTracker()
+    return _tracker_singleton
+
+
+def _handle_biometric_ingest(args: dict) -> dict:
+    """Validate + record BiometricSamples pushed by HarloHealthBridge.
+
+    Args:
+        samples: list of dicts matching biometric_sample_schema.json
+    """
+    from ..modulation.biometric_barrier import (
+        BiometricBarrierError,
+        validate_biometric,
+    )
+
+    raw_samples = args.get("samples") or []
+    if not isinstance(raw_samples, list):
+        return {"status": "error", "message": "samples must be a list"}
+
+    tracker = _get_biometric_tracker()
+    accepted = 0
+    rejected: list[str] = []
+    for raw in raw_samples:
+        try:
+            sample = validate_biometric(raw)
+        except BiometricBarrierError as exc:
+            rejected.append(str(exc))
+            continue
+        tracker.record_biometric(sample)
+        accepted += 1
+
+    return {
+        "status": "ok",
+        "result": {
+            "accepted": accepted,
+            "rejected": rejected,
+            "depleted": tracker.is_depleted(),
+            "force_red": tracker.should_force_red(),
+            "biometric_load": tracker.get_biometric_load(),
+        },
+    }

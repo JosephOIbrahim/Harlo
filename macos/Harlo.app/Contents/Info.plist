@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>Harlo</string>
+
+    <key>CFBundleExecutable</key>
+    <string>Harlo</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>com.harlo.app</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <key>CFBundleName</key>
+    <string>Harlo</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>6.1.0</string>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+
+    <!--
+        Menu-bar-only by default; no dock icon. Users open the
+        intake / coach / settings windows on demand from the menu bar.
+    -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- Hardened runtime for notarization -->
+    <key>NSHighResolutionCapable</key>
+    <true/>
+
+    <!--
+        HealthKit usage strings. These render verbatim in macOS's
+        consent dialog and the Settings → Privacy → Health pane.
+        Plain English, no jargon. Required by App Review.
+    -->
+    <key>NSHealthShareUsageDescription</key>
+    <string>Harlo reads heart rate, HRV, sleep, and activity from your Apple Watch (via your iPhone) so it can notice when you are tired or stressed and slow itself down. Data stays on your Mac. You choose per data type. Off by default.</string>
+
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Harlo does not write data to Health. This permission is requested only so macOS shows the same consent dialog if a future feature ever needs it.</string>
+
+    <!--
+        Local network — used to talk to the HealthBridge XPC service
+        if it is enabled. No outbound internet.
+    -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Harlo communicates with its own HealthBridge helper on your Mac. No data leaves your machine.</string>
+
+    <!-- Notifications for surfacing inquiries; never during DEPLETED. -->
+    <key>NSUserNotificationUsageDescription</key>
+    <string>Harlo surfaces gentle coaching prompts as notifications. It will never notify you while you are in DEPLETED state.</string>
+
+    <!--
+        Documents-folder access is NOT requested. All Harlo state
+        lives in ~/Library/Application Support/Harlo/.
+    -->
+</dict>
+</plist>

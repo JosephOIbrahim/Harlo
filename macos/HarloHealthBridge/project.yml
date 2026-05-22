@@ -1,0 +1,73 @@
+# xcodegen spec for HarloHealthBridge (Phase 5B).
+#
+# Generate the Xcode project on demand:
+#     brew install xcodegen
+#     cd macos/HarloHealthBridge && xcodegen generate
+#
+# The generated HarloHealthBridge.xcodeproj is gitignored so we don't
+# commit pbxproj noise. CI regenerates fresh every build.
+#
+# Builds an LSUIElement=true app bundle that owns the HealthKit
+# entitlement, pushes deltas to the Harlo daemon over UDS, and stays
+# out of the way otherwise (ADR-0001).
+
+name: HarloHealthBridge
+
+options:
+  bundleIdPrefix: com.harlo
+  developmentLanguage: en
+  createIntermediateGroups: true
+  defaultConfig: Release
+  deploymentTarget:
+    macOS: "13.0"
+  generateEmptyDirectories: false
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: "233JSS4X69"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "Developer ID Application"
+    ENABLE_HARDENED_RUNTIME: YES
+    OTHER_CODE_SIGN_FLAGS: "--timestamp"
+    PRODUCT_NAME: HarloHealthBridge
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Universal binary so Intel + Apple Silicon both work
+    ARCHS: "$(ARCHS_STANDARD)"
+    ONLY_ACTIVE_ARCH: NO
+
+targets:
+  HarloHealthBridge:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: Sources/HarloHealthBridge
+        excludes:
+          - "HarloHealthBridge.entitlements"
+          - "*.md"
+    info:
+      path: Info.plist
+      properties:
+        # Keys here merge into Info.plist; the on-disk Info.plist is
+        # the source of truth. xcodegen will not overwrite it.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.harlo.healthbridge
+        INFOPLIST_FILE: Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/HarloHealthBridge/HarloHealthBridge.entitlements
+        ENABLE_APP_SANDBOX: YES
+        SKIP_INSTALL: NO
+    dependencies: []
+
+schemes:
+  HarloHealthBridge:
+    build:
+      targets:
+        HarloHealthBridge: all
+    run:
+      config: Debug
+    archive:
+      config: Release

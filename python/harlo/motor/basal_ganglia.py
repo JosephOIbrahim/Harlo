@@ -50,12 +50,27 @@ def _check_anchor(action: PlannedAction, session_state: dict) -> tuple[bool, Opt
     """Check 1: Anchor alignment.
 
     Verify the action's intent is anchored to a legitimate cognitive goal.
+
+    Rule 28 (RED kills motor) is composite as of v6.1 + ADR-0001:
+    explicit RED state OR fresh biometric panic signal (in-freshness
+    HR / HRV from the Modulation Layer) both inhibit motor activity.
+    Stale biometric samples cannot drive RED — see
+    `AllostasisTracker.should_force_red` for the freshness window.
     """
     cognitive_state = session_state.get("cognitive_state", "")
 
     # Rule 28: RED state halts ALL motor activity
     if cognitive_state == "RED":
         return False, "RED state — all motor activity halted (Rule 28)"
+
+    # Composite RED via biometric_force_red flag, set by the daemon
+    # router after a `biometric_ingest` call when the freshness window
+    # is satisfied. Stale samples never set this flag.
+    if session_state.get("biometric_force_red", False):
+        return False, (
+            "RED state — biometric signal within freshness window "
+            "(Rule 28 + ADR-0001)"
+        )
 
     # Action must have a description (minimal anchor requirement)
     if not action.description:

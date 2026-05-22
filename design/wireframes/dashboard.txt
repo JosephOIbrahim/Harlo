@@ -1,0 +1,37 @@
+                       ALLOSTATIC DASHBOARD
+   ┌──────────────────────────────────────────────────────────────┐
+   │  How I'm doing                                          ✕    │
+   │  ════════════════════════════════════════════════════════    │
+   │                                                              │
+   │   ┌────────────────────────┐  ┌─────────────────────────┐    │
+   │   │  Recent activity       │  │  From your Watch        │    │
+   │   │  ───────────────       │  │  ────────────────       │    │
+   │   │                        │  │                         │    │
+   │   │  Tokens / minute       │  │  Heart rate             │    │
+   │   │     last hour:   142   │  │     68 bpm  ·  3 min    │    │
+   │   │     last day:    87    │  │                         │    │
+   │   │                        │  │  HRV (SDNN)             │    │
+   │   │  Prompts / hour        │  │     54 ms   ·  12 min   │    │
+   │   │     last hour:    18   │  │                         │    │
+   │   │     last day:     11   │  │  Sleep (last night)     │    │
+   │   │                        │  │     7h 12m  ·  9h ago   │    │
+   │   │                        │  │                         │    │
+   │   │  Status: NORMAL        │  │  Status: trend OK       │    │
+   │   └────────────────────────┘  └─────────────────────────┘    │
+   │                                                              │
+   │   Data freshness shown next to every value. Apple Watch      │
+   │   data syncs through your iPhone, usually 5–20 min behind.   │
+   │                                                              │
+   │   ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─        │
+   │                                                              │
+   │   [ Connect HealthKit ]    [ Open Privacy ]                  │
+   └──────────────────────────────────────────────────────────────┘
+
+   Rules:
+     - Every Watch metric MUST show freshness ("3 min" / "stale").
+     - No real-time HR in seconds or milliseconds — would be
+       dishonest given 5–20+ min Apple sync latency.
+     - Card border color reflects cognitive_state (neutral /
+       amber / red).
+     - If HealthKit not granted: right card shows ONLY a CTA
+       "Connect HealthKit" and a one-line "Off by default".

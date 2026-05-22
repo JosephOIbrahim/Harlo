@@ -21,12 +21,11 @@ import uuid
 
 from mcp.server import FastMCP
 
-# Resolve paths before anything else
-from pathlib import Path
+# Resolve paths via the single source of truth (Rule: no divergent
+# state directories between CLI and MCP entry points).
+from harlo.daemon.config import DATA_DIR, DB_PATH as _DB_PATH, PROJECT_ROOT
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent
-DATA_DIR = PROJECT_ROOT / "data"
-DB_PATH = str(DATA_DIR / "twin.db")
+DB_PATH = str(_DB_PATH)
 TRUST_DELTA_VERIFIED = 0.02
 TRUST_DELTA_REJECTED = -0.05
 
