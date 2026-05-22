@@ -82,9 +82,10 @@ OPTIONS = {
     ],
     "strip": False,
     "optimize": 0,
-    # We sign in a separate step. py2app's signer is too coarse
-    # for our entitlements requirements.
-    "codesign_identity": None,
+    # Signing is handled by scripts/macos_sign_and_notarize.sh in a
+    # separate step (py2app's signer is too coarse for our entitlements
+    # requirements). Omitting codesign_identity entirely — older py2app
+    # versions reject the option even when set to None.
 }
 
 # Architecture: opt-in to universal2 only when explicitly requested
