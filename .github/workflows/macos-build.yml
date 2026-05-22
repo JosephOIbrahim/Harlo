@@ -80,19 +80,21 @@ jobs:
           python -m pip install click jsonschema numpy mcp pyyaml pydantic
 
       - name: Build Rust hot path (universal2)
-        # maturin develop requires an active virtualenv; the macos-15
-        # runner does not have one. pip install -e . drives maturin
-        # through PEP 517 build isolation and does not need a venv.
-        # --no-deps skips runtime deps already installed in the prior
-        # step (or installed selectively here).
+        # Non-editable install (no -e) on purpose: py2app's modulegraph
+        # follows .pth files from editable installs unreliably and can
+        # fail to bundle the .so. Non-editable lands harlo under
+        # site-packages where py2app sees a normal package layout.
+        # maturin's PEP 517 backend handles release-mode + universal2.
         run: |
-          python -m pip install --no-deps -e .
+          python -m pip install --no-deps .
           # Sanity: ensure the .so landed
           python -c "import harlo.hippocampus; print('hippocampus OK')"
 
       - name: Build Harlo.app via py2app
+        # -v gives modulegraph traversal output so any "package not
+        # found" / dep failure shows the offending import chain.
         run: |
-          python setup_py2app.py py2app
+          python setup_py2app.py py2app -v
           ls -lh dist/
 
       - name: Import Developer ID certificate

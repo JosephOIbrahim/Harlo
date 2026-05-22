@@ -49,34 +49,14 @@ jobs:
           python -m pip install --no-deps -e .
           python -c "import harlo.hippocampus; print('hippocampus OK')"
 
-      - name: Compliance greps (CLAUDE.md invariants)
-        run: |
-          set -e
-          fail=0
-          check() {
-            label="$1"; shift
-            if "$@" > /tmp/out 2>&1 && [ -s /tmp/out ]; then
-              echo "FAIL: $label"
-              cat /tmp/out
-              fail=1
-            else
-              echo "PASS: $label"
-            fi
-          }
-          # Rule 1 — 0W idle
-          check "no sleep( in python/harlo/"  grep -rF "sleep(" python/harlo/
-          check "no while True in python/harlo/" grep -rF "while True" python/harlo/
-          # Rule 2 — Action potentials
-          check "no float32 in crates/" grep -rF "float32" crates/
-          check "no cosine in crates/"  grep -rF "cosine"  crates/
-          # Rule 9 + ADR-0001 — biometrics never enter elenchus or bridge
-          if [ -d python/harlo/elenchus ] || [ -d python/harlo/bridge ]; then
-            check "no biometric in elenchus/bridge" \
-              grep -rnF "biometric" python/harlo/elenchus/ python/harlo/bridge/
-          fi
-          [ "$fail" = 0 ] || exit 1
-
       - name: harlo doctor --strict
+        # Replaces the previous standalone bash compliance grep step,
+        # which produced false positives on legitimate `//!` Rust
+        # doc-comments mentioning the forbidden tokens. The doctor's
+        # compliance check uses the same comment/test-name filter as
+        # tests/test_integration/test_compliance.py, so the two layers
+        # below — doctor here + pytest below — fully cover every
+        # CLAUDE.md invariant with no false positives.
         # Exercises the doctor module itself, not just the underlying
         # greps. Catches regressions in the doctor's compliance
         # filters / schema loader / launchd-status branches.
