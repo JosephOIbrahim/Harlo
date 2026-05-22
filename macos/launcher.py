@@ -1,33 +1,96 @@
-"""Thin launcher used as py2app's `APP` entry point.
+"""macos/launcher.py — single entry point for the Harlo.app bundle.
 
-When users double-click `Harlo.app`, this is what runs. It:
+py2app builds a bundle whose executable is this file. The launchd
+plists invoke this same executable with mode flags:
 
-  1. Runs first-run setup (data dir creation, legacy migration, and
-     — new in Phase 5A — offering to install the launchd units).
-  2. Hands control to the existing CLI / MCP entry point.
+    Harlo.app/Contents/MacOS/Harlo --daemon   ← com.harlo.daemon.plist
+    Harlo.app/Contents/MacOS/Harlo --agents   ← com.harlo.agents.plist
+    Harlo.app/Contents/MacOS/Harlo --mcp      ← MCP server over stdio
+    Harlo.app/Contents/MacOS/Harlo            ← interactive CLI
 
-Kept deliberately tiny so py2app's wrapper has nothing to trip over.
+The dispatcher peels off the first matching mode arg and hands the
+rest to the right submodule. First-run setup (incl. the launchd
+install offer on macOS) runs only on the interactive CLI path —
+calling the daemon doesn't re-trigger setup.
 """
 
 from __future__ import annotations
 
 import sys
+from typing import Sequence
 
 
-def main() -> int:
-    from harlo.session.first_run import run_first_run, prompt_install_launchd
+_MODE_FLAGS = {"--daemon", "--agents", "--mcp"}
+
+
+def _detect_mode(argv: Sequence[str]) -> tuple[str | None, list[str]]:
+    """Return (mode_flag, residual_argv).
+
+    Recognised mode flags are matched anywhere in argv (they may
+    follow other launchd-supplied args). Only the FIRST matching
+    flag is consumed; everything else is passed through to the
+    sub-entry untouched.
+    """
+    residual = list(argv)
+    for flag in _MODE_FLAGS:
+        if flag in residual:
+            residual.remove(flag)
+            return flag, residual
+    return None, residual
+
+
+def _run_daemon() -> int:
+    from harlo.daemon.main import run_socket_activated
+
+    run_socket_activated()
+    return 0
+
+
+def _run_agents(residual: list[str]) -> int:
+    from agents.harness import main as agents_main
+
+    args = list(residual)
+    if "--socket-activated" not in args:
+        args.append("--socket-activated")
+    return agents_main(args)
+
+
+def _run_mcp() -> int:
+    from harlo.mcp_server import main as mcp_main
+
+    mcp_main()
+    return 0
+
+
+def _run_cli(residual: list[str]) -> int:
+    from harlo.session.first_run import prompt_install_launchd, run_first_run
 
     result = run_first_run()
     if result.fresh_install:
         prompt_install_launchd()
 
-    # Fall through to the regular Harlo CLI. The app's Info.plist
-    # marks LSUIElement=true, so there's no dock icon; this process
-    # exits as soon as the CLI/MCP entry returns. The launchd
-    # daemon (installed during first-run) handles steady-state work.
     from harlo.cli.main import main as cli_main
+
+    # Click reads sys.argv directly. Trim our mode-arg residue so
+    # Click sees only the user-facing CLI args.
+    sys.argv = [sys.argv[0], *residual]
     cli_main()
     return 0
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Single entry point. Returns an exit code suitable for sys.exit."""
+    raw = list(sys.argv[1:] if argv is None else argv)
+    mode, residual = _detect_mode(raw)
+
+    if mode == "--daemon":
+        return _run_daemon()
+    if mode == "--agents":
+        return _run_agents(residual)
+    if mode == "--mcp":
+        return _run_mcp()
+
+    return _run_cli(residual)
 
 
 if __name__ == "__main__":

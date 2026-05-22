@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import plistlib
 import shutil
 import subprocess
 import sys
@@ -30,6 +31,47 @@ from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLIST_DIR = REPO_ROOT / "macos" / "launchd"
+
+# Canonical install path the bundled plists reference. Override at
+# install time via HARLO_APP_PATH (e.g. for dev runs, homebrew cask
+# locations, or user-local /Applications variants).
+DEFAULT_APP_PATH = Path("/Applications/Harlo.app")
+DEFAULT_BRIDGE_PATH = Path("/Applications/HarloHealthBridge.app")
+
+
+def _resolved_app_path() -> Path:
+    override = os.environ.get("HARLO_APP_PATH")
+    return Path(override).expanduser() if override else DEFAULT_APP_PATH
+
+
+def _resolved_bridge_path() -> Path:
+    override = os.environ.get("HARLO_BRIDGE_APP_PATH")
+    return Path(override).expanduser() if override else DEFAULT_BRIDGE_PATH
+
+
+def _executable_for(unit_key: str) -> Path:
+    """Locate the executable inside the right bundle for this unit."""
+    if unit_key == "healthbridge":
+        return _resolved_bridge_path() / "Contents" / "MacOS" / "HarloHealthBridge"
+    return _resolved_app_path() / "Contents" / "MacOS" / "Harlo"
+
+
+def _retemplate_plist(src: Path, unit_key: str) -> dict:
+    """Load the source plist and substitute ProgramArguments[0] with
+    the actual bundle executable path on this host.
+
+    Plists shipped in the repo reference /Applications/...; this
+    function rewrites the path when the bundle is somewhere else
+    (HARLO_APP_PATH / HARLO_BRIDGE_APP_PATH set, or dev install).
+    """
+    with src.open("rb") as fh:
+        plist = plistlib.load(fh)
+    args = list(plist.get("ProgramArguments") or [])
+    if not args:
+        raise ValueError(f"{src}: ProgramArguments is empty")
+    args[0] = str(_executable_for(unit_key))
+    plist["ProgramArguments"] = args
+    return plist
 
 UNITS = {
     "daemon": "com.harlo.daemon",
@@ -69,7 +111,13 @@ def _install_one(unit_key: str) -> None:
     if dst.exists():
         _run(["launchctl", "bootout", f"{_domain_target()}/{label}"])
 
-    shutil.copy2(src, dst)
+    # Re-template the bundle executable path before writing. The
+    # repo's plist hardcodes /Applications/Harlo.app; if Harlo.app
+    # lives elsewhere on this host (dev run, custom prefix), the
+    # HARLO_APP_PATH env var supplies the actual location.
+    templated = _retemplate_plist(src, unit_key)
+    with dst.open("wb") as fh:
+        plistlib.dump(templated, fh)
 
     if unit_key == "healthbridge":
         # Bootstrap but do not enable — the user toggles this from

@@ -18,10 +18,8 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/harlo</string>
-        <string>agents</string>
-        <string>run</string>
-        <string>--socket-activated</string>
+        <string>/Applications/Harlo.app/Contents/MacOS/Harlo</string>
+        <string>--agents</string>
     </array>
 
     <key>EnvironmentVariables</key>

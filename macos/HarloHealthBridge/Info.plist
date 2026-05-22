@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>Harlo HealthBridge</string>
+
+    <key>CFBundleExecutable</key>
+    <string>HarloHealthBridge</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>com.harlo.healthbridge</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <key>CFBundleName</key>
+    <string>HarloHealthBridge</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+
+    <!--
+        Menu-bar-less, dock-less helper. Wakes on HKObserverQuery
+        callbacks, pushes deltas to the Harlo daemon over UDS, and
+        otherwise stays out of the way.
+    -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <key>NSHighResolutionCapable</key>
+    <true/>
+
+    <!--
+        HealthKit usage strings — these are the strings the system
+        consent dialog shows when the user grants access. Plain
+        English, no jargon. Mirror the strings in Harlo.app's
+        Info.plist so the experience is consistent if both are
+        ever asked.
+    -->
+    <key>NSHealthShareUsageDescription</key>
+    <string>HealthBridge reads heart rate, HRV, sleep, and activity from your Apple Watch (via your iPhone) and forwards trends to Harlo so it can notice when you are tired or stressed. Data stays on your Mac. You choose per data type.</string>
+
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>HealthBridge does not write to Health. This permission is requested only so macOS can show a consistent consent dialog if a future feature needs it.</string>
+</dict>
+</plist>

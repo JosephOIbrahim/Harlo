@@ -11,14 +11,17 @@
         inherits the listening FD via LISTEN_FDS, and exits after
         30s idle (see python/harlo/daemon/main.py:48–97).
 
-        Install: `launchctl bootstrap gui/$(id -u) com.harlo.daemon.plist`
+        ProgramArguments[0] is the canonical installed bundle path.
+        scripts/macos_install_daemon.py rewrites it on install when
+        Harlo.app lives somewhere else (dev tree, custom prefix,
+        homebrew cask, etc.).
     -->
     <key>Label</key>
     <string>com.harlo.daemon</string>
 
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/harlo</string>
+        <string>/Applications/Harlo.app/Contents/MacOS/Harlo</string>
         <string>--daemon</string>
     </array>
 
