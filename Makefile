@@ -30,7 +30,8 @@ ifndef PYTHON
 endif
 
 .PHONY: help build-rust build-macos sign notarize staple dmg release \
-        clean-macos test compliance-greps verify doctor signing-readiness
+        clean-macos test compliance-greps verify doctor signing-readiness \
+        regen-trajectories regen-predictor
 
 help:
 	@echo "Harlo build targets"
@@ -46,6 +47,8 @@ help:
 	@echo "  doctor           Run harlo doctor --strict (operator readiness)"
 	@echo "  signing-readiness Run pre-flight gate before signing"
 	@echo "  verify           test + compliance-greps + doctor + signing-readiness"
+	@echo "  regen-trajectories  Regenerate data/trajectories_10k.jsonl (~229 MB, ~minutes)"
+	@echo "  regen-predictor     regen-trajectories + train models/cognitive_predictor_v1.joblib"
 	@echo "  clean-macos      Remove dist/ and build/"
 
 build-rust:
@@ -123,3 +126,22 @@ signing-readiness:
 	bash scripts/check_signing_readiness.sh
 
 verify: test compliance-greps doctor signing-readiness
+
+# Synthetic training data for the cognitive predictor. Profile-driven Markov
+# sim from src/trajectory_generator.py — 10K sessions seeded for repro.
+# Gitignored due to size (~229 MB); regenerate locally as needed.
+data/trajectories_10k.jsonl regen-trajectories:
+	$(PYTHON) -m src.trajectory_generator \
+	    --count 10000 --seed 42 --validate \
+	    --output data/trajectories_10k.jsonl
+
+# XGBoost MultiOutputRegressor trained on the trajectories. Gitignored
+# (385 KB binary that's reproducible from --seed 42 + the data above).
+# Five tests in test_sprint*/test_recalibration/test_schedule depend on
+# this artifact — they `pytest.skip` cleanly when it's missing, so the
+# regen is opt-in.
+models/cognitive_predictor_v1.joblib regen-predictor: data/trajectories_10k.jsonl
+	$(PYTHON) -m src.train_predictor \
+	    --data data/trajectories_10k.jsonl \
+	    --output models/cognitive_predictor_v1.joblib \
+	    --seed 42
