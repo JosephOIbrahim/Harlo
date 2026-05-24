@@ -720,6 +720,11 @@ harness/path_c/                    Path C surgery harness (Mile 1 → Mile 3)
 ## Quick Start
 
 ```bash
+# Prerequisite (once per machine): git-lfs fetches the trained predictor
+# model + synthetic trajectories on clone. Without it you get pointer
+# files and predictor-dependent tests skip cleanly.
+git lfs install
+
 git clone <repo-url> && cd harlo
 python3.12 -m venv .venv312 && source .venv312/bin/activate
 
