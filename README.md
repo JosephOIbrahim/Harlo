@@ -20,11 +20,12 @@ layers — no cloud dependency, no data mining, no rented access to your own min
 ## Status
 
 ```
-PRODUCTION LIVE — Harlo v3.4.0-path-c
-1,172 tests passing · Real OpenUSD canonical persistence · USD-Lite runtime tier
+PRODUCTION LIVE — Harlo v6.1-MOTOR
+1,365 passing · 11 skipped · Real OpenUSD canonical persistence · USD-Lite runtime tier
 8/8 phase gates passed · 19 D-block decisions clean (D1-D19)
 Substrate-unified with sister project Moneta · P1 CIP defensible
 458 organic observations collected · 5 sprints shipped · Path C closed (Step 3)
+Phase 5A landed: macOS bundle · intake calibration · biometric barrier · Motor Cortex with Basal Ganglia gating
 ```
 
 | Sprint | Tests | What Shipped |
@@ -35,6 +36,7 @@ Substrate-unified with sister project Moneta · P1 CIP defensible
 | **S4** Real USD | 59 | CognitiveStage wrapping `pxr.Usd.Stage`, stage_factory toggle, `.usda` files on disk with time-sampled CognitiveObservation, delegate sublayer `.usda` files, backend parity verified (mock = real USD) |
 | **S5** Production | 22 | Graceful degradation (independent failure isolation), health check endpoint, kill switches (`ENGINE_ENABLED`, `USE_REAL_USD`, `OBSERVATION_LOGGING`, `PREDICTION_ENABLED`), first session verified, production docs |
 | **Path C** Step 3 v3.4.0 | +39 | Real OpenUSD as canonical persistence (codeless schema, 21 prim types under `harlo` plugin separate from Moneta); USD-Lite engine preserved as fast in-memory runtime tier (Fabric pattern); sync layer per D4 policy table; migration script for USD-Lite v1 → real USD; substrate-unified with sister project Moneta. P1 CIP framing now defensible. |
+| **Phase 5A** macOS + Operator | +51 | macOS app bundle (Harlo.app + launchd socket activation), intake calibration CLI emitting three INTAKE_CALIBRATED Merkle layers, biometric barrier per ADR-0001 (opt-in HealthKit signals, freshness window, never enter trace pipeline), Motor Cortex with Basal Ganglia inhibition-default gating, `harlo doctor --strict` operator readiness, signing-readiness pre-flight (27 checks) |
 
 ---
 
@@ -217,6 +219,135 @@ idempotent on already-migrated files.
 
 ---
 
+## Architecture · v6.1-MOTOR (Brain Stages)
+
+The v6.1-MOTOR architecture is governed by **33 inviolable rules**
+that decompose Harlo into biologically-named stages: two hemispheres
+(Association and Composition), a Bridge with an Amygdala for 1-shot
+safety reflexes, a Modulation Layer fronted by a Blood-Brain Barrier,
+the Elenchus verification engine (GVR with hard trace-exclusion), the
+Default Mode Network for inquiry synthesis, and a Motor Cortex
+governed by Basal Ganglia gating. State lives in real USD layers
+(Path C); the brain stages are how that state is *operated on*.
+
+Inhibition-default Motor Cortex matters because it inverts the usual
+agent-actuation default. Every motor action is INHIBITED until all
+five Basal Ganglia checks pass — anchor · consent · elenchus ·
+reversibility · scope (see `python/harlo/motor/basal_ganglia.py`).
+One failed check = inhibit. No exceptions, no chaining, no implicit
+retry — RED state locks the gate entirely (Rule 28). The Amygdala bypass exists for the inverse
+case: SAFETY and CONSENT resolutions compile to 1-shot permanent
+reflexes (Rule 7), so the verification engine never re-evaluates
+"do not do the unsafe thing."
+
+```mermaid
+flowchart TB
+    INPUT["MCP / CLI input"]:::substrate
+
+    subgraph SENSORY["Sensory · two hemispheres"]
+        HIPP["Hippocampus<br/>Rule 2 · 1-bit SDR<br/>Rule 3 · Rust hot path<br/>Rule 4 · lazy decay"]:::substrate
+        COMP["Composition<br/>Rule 6 · Merkle trees<br/>partial branch O(log n)"]:::substrate
+    end
+
+    subgraph BRIDGE["Bridge with Amygdala"]
+        AMYG["Amygdala<br/>Rule 7 · 1-shot SAFETY/CONSENT<br/>Rule 14 · intent preservation"]:::runtime
+    end
+
+    subgraph MOD["Modulation Layer"]
+        BBB["Blood-Brain Barrier<br/>Rule 8 · jsonschema validate<br/>strip epigenetic wash"]:::substrate
+        ALLO["Allostatic Load<br/>Rule 9 · velocity + freq<br/>+ biometric (ADR-0001)"]:::substrate
+        ANCH["Anchors<br/>Rule 10 · gain 1.0<br/>SAFETY · CONSENT · KNOWLEDGE"]:::substrate
+    end
+
+    subgraph ELENCHUS["Elenchus GVR · verification"]
+        VER["verify()<br/>Rule 11 · TRACE EXCLUSION<br/>Rule 13 · max 3 cycles<br/>Rule 15 · spec-gaming detect"]:::runtime
+        UNPROV["UNPROVABLE state<br/>Rule 16 · dignified park"]:::runtime
+    end
+
+    subgraph DMN["DMN · Inquiry"]
+        INQ["Inquiry Engine<br/>S1 · apophenia guard<br/>S2 · epistemological bypass<br/>S8 · sincerity gate"]:::runtime
+    end
+
+    subgraph MOTOR["Motor Cortex with Basal Ganglia"]
+        BG["Basal Ganglia gate<br/>Rule 23 · INHIBIT default<br/>5 checks · one fails = inhibit"]:::substrate
+        ACT["Atomic action<br/>Rule 24 · one at a time<br/>Rule 32 · zero-tolerance reflex"]:::substrate
+    end
+
+    RED["RED state<br/>Rule 28 · kills motor<br/>Rule 18 · overrides all"]:::runtime
+
+    INPUT --> HIPP
+    INPUT --> COMP
+    HIPP --> AMYG
+    COMP --> AMYG
+    AMYG --> BBB
+    BBB --> ALLO
+    BBB --> ANCH
+    ALLO --> VER
+    ANCH --> VER
+    VER --> UNPROV
+    VER --> INQ
+    INQ --> BG
+    VER --> BG
+    BG --> ACT
+    RED -.->|"inhibit"| BG
+    RED -.->|"halt"| INQ
+    RED -.->|"halt"| VER
+
+    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
+    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+```
+
+### Phase 5A · macOS bundle + operator layer
+
+Phase 5A wraps the v6.1-MOTOR brain in a shippable macOS surface and
+the operator tools to keep it healthy:
+
+- **`harlo intake`** — calibrated questionnaire that emits three
+  `INTAKE_CALIBRATED` Merkle layers (raw answers, derived multipliers,
+  coaching scaffold) under Rule 8 (JSON Barrier) and Rule 19/30
+  (preemption via `TEMP_DIR`, never SQLite mid-flow).
+- **`harlo doctor --strict`** — read-only operator readiness check:
+  DATA_DIR sizing, daemon/PID/socket state, JSON schema parseability,
+  and the eight compliance greps from CLAUDE.md. Exits nonzero in
+  strict mode for CI gating.
+- **`harlo audit`** — surface for Elenchus state and reflex cache
+  inspection without waking System 2.
+- **`biometric_barrier`** — opt-in HealthKit ingest path per
+  ADR-0001. Biometric samples enter the Modulation Layer only;
+  compliance grep forbids them from `bridge/` or `elenchus/`.
+  Freshness window (default 5 min) prevents stale signals from
+  driving RED (Rule 28).
+- **`macos/launchd/*`** — socket-activated daemon plist (0W idle,
+  Rule 1) plus the separate `com.harlo.healthbridge` KeepAlive plist
+  for the HealthKit observer process.
+- **`Harlo.app`** — py2app bundle, codesigned and notarized via the
+  signing chain documented in `docs/SIGNING.md`.
+
+```mermaid
+flowchart LR
+    FIRST["First run"]:::substrate
+    DATA["DATA_DIR setup<br/>ensure_data_dirs()<br/>schemas + stages + temp"]:::substrate
+    INTAKE["harlo intake start<br/>3 Merkle layers<br/>Rule 8 validated"]:::substrate
+    DOC["harlo doctor --strict<br/>27 readiness checks<br/>8 compliance greps"]:::substrate
+    BIO["Biometric ingest<br/>opt-in per data type<br/>ADR-0001 barrier"]:::runtime
+    GATE["Motor gate<br/>Rule 23 · INHIBIT default<br/>5 checks · pass=act"]:::substrate
+    ACT["Atomic action<br/>Rule 24 · one at a time"]:::runtime
+
+    FIRST --> DATA --> INTAKE --> DOC
+    DOC --> BIO
+    DOC --> GATE
+    BIO -.->|"allostatic only"| GATE
+    GATE --> ACT
+
+    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
+    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+```
+
+See `docs/SIGNING.md` and `docs/APPLE_SECRETS_SETUP.md` for the
+signing/notarization chain.
+
+---
+
 ## Tech Stack
 
 - **USD 26.03** — Cognitive state stored in real `.usda` files. Time-sampled. Human-readable. Git-trackable. Sublayer composition via LIVRPS.
@@ -226,6 +357,10 @@ idempotent on already-migrated files.
 - **Python 3.12** (USD) / **3.14** (project) — Dual venv. Real USD on 3.12, graceful mock fallback on 3.14.
 - **Rust** — Hippocampus crate via PyO3. 1-bit SDR encoding, XOR popcount kNN, lazy decay. Sub-2ms recall.
 - **MCP** — 8 tools over stdio. Works with Claude Desktop, Claude Code, any MCP client.
+- **Click 8.x CLI** — `harlo intake`, `harlo doctor`, `harlo audit` operator surfaces.
+- **launchd socket activation** — 0W idle daemon per Rule 1; separate KeepAlive plist for the HealthBridge.
+- **py2app bundling** — Harlo.app produced from the Python source tree.
+- **codesign + notarytool** — Apple Developer ID signing and notarization for distributed artifacts.
 
 ---
 
@@ -624,11 +759,25 @@ OBSERVATION_LOGGING=1    # Emit observations per exchange
 PREDICTION_ENABLED=1     # XGBoost predictions
 ```
 
+### macOS bundle
+
+Build the Rust hot path and run the full verification battery (cargo
+tests, pytest, compliance greps, doctor strict, signing readiness):
+
+```bash
+make build-rust && make verify
+```
+
+The Makefile auto-detects `.venv314/` — no `PYTHON=` override needed
+when developing against the project venv. For the codesign +
+notarytool + DMG chain that produces a distributable `Harlo.app`,
+follow [`docs/SIGNING.md`](docs/SIGNING.md).
+
 ---
 
 ## The 33 Rules
 
-The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), motor safety (inhibition default, one action at a time, RED kills everything), and Hebbian constraints (Merkle isolation, dual masks not XOR, homeostatic plasticity). These aren't guidelines — they're structural constraints enforced by **1,172 tests** (Path C v3.4.0; +39 since Mile 1 baseline). See `CLAUDE.md` for the full specification and `harness/path_c/` for the Path C surgery harness (D1–D19 decisions log, phase gate audits).
+The architecture is constrained by 33 inviolable rules covering biological fidelity (0W idle, 1-bit SDRs, lazy decay), verification integrity (trace exclusion, max 3 GVR cycles, verified-only consolidation), inquiry safeguards (apophenia guard, sincerity gate, rupture & repair), motor safety (inhibition default, one action at a time, RED kills everything), and Hebbian constraints (Merkle isolation, dual masks not XOR, homeostatic plasticity). These aren't guidelines — they're structural constraints enforced by **1,365 passing tests · 11 skipped** (v6.1-MOTOR; +51 since Path C closed). See `CLAUDE.md` for the full specification and `harness/path_c/` for the Path C surgery harness (D1–D19 decisions log, phase gate audits).
 
 ---
 
