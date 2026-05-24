@@ -33,18 +33,28 @@ Required for `macos-build.yml`'s sign / notarize / DMG steps. Until these land, 
 
 ## What's freshly available
 
-### `models/cognitive_predictor_v1.joblib` — regenerated this session
+### Predictor artifacts — tracked via git-lfs
 
-Was missing; XGBoost MultiOutputRegressor trained from `data/trajectories_10k.jsonl` (also regenerated). Training stats: 206 686 train / 25 836 val / 25 836 test rows, 111 features. Unblocks the four tests marked `requires_predictor_model`.
+`models/cognitive_predictor_v1.joblib` (385 KB) and `data/trajectories_10k.jsonl` (237 MB) are now committed via git-lfs (`.gitattributes` tracks `models/*.joblib` and `data/*.jsonl`). Trained this session: XGBoost MultiOutputRegressor, 206 686 train / 25 836 val / 25 836 test rows, 111 features. Unblocks the four tests marked `requires_predictor_model`.
 
-Both artifacts stay gitignored — the trajectories file is 229 MB (too big for raw git, and git-lfs setup is its own workstream), and the .joblib is downstream of it. Canonical regen path now lives in the Makefile:
+**Fresh-clone path (primary):**
 
 ```sh
-make regen-predictor      # generates trajectories if missing, then trains the .joblib
+git lfs install   # one-time, per machine
+git clone https://github.com/JosephOIbrahim/Harlo.git
+# .joblib + .jsonl materialize as real files, not LFS pointers
+```
+
+Contributors without `git lfs install` get tiny pointer files (~130 bytes); predictor-dependent tests (`test_sprint*`, `test_recalibration`, the schedule e2e) skip cleanly when the .joblib content is missing, so the lint loop stays green either way.
+
+**Retrain path (fallback):** rerun against new training data or after schema changes —
+
+```sh
+make regen-predictor      # generates trajectories if missing, then retrains the .joblib
 make regen-trajectories   # just the data step
 ```
 
-Predictor-dependent tests (`test_sprint*`, `test_recalibration`, the schedule e2e) skip cleanly when the .joblib is missing, so regen is opt-in.
+LFS quota: 237 MB used of GitHub's 1 GB free-tier allowance.
 
 ### FAMILY-hours routing — investigated and fixed (was actually a migration bug)
 
