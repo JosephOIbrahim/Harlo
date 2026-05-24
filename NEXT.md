@@ -16,15 +16,14 @@ State captured at master `c42e82d` (+1 local `ee46533` parked) on 2026-05-24, en
 
 ## What's parked
 
-### `ee46533` — workflow file edits, push-blocked on OAuth scope
+### CI workflow hardenings — abandoned this session
 
-Local-only commit holding two macos-build.yml hardenings:
+Two `macos-build.yml` improvements were drafted as a single commit on a local parked branch and then abandoned because the gh CLI OAuth App on `joe002` couldn't hold `workflow` scope (org policy or app config — `gh auth refresh -s workflow` completed the device-code authorize but server-side scopes stayed at `gist, read:org, repo`):
+
 1. **Master push trigger** (paths-filtered) so regressions land-detect immediately instead of waiting for a PR or tag
-2. **Graceful-skip** of the signing chain when Apple Developer secrets are absent, so workflow_dispatch + master push go green as build canaries without forcing secrets to exist first
+2. **Graceful-skip** of the signing chain when Apple Developer secrets are absent, so `workflow_dispatch` + master pushes go green as build canaries without forcing secrets to exist first
 
-Push fails with `refusing to allow an OAuth App to create or update workflow .github/workflows/macos-build.yml without 'workflow' scope`. The gh CLI's OAuth App on `joe002` cannot hold `workflow` scope (possibly org-policy restricted on the Claude Code OAuth app; `gh auth refresh -s workflow` flowed through the device-code authorize but the server-side scopes stayed at `gist, read:org, repo`).
-
-**To resume:** create a fine-grained PAT scoped to `JosephOIbrahim/Harlo` with Contents R+W and Workflows R+W, then `git push https://<PAT>@github.com/JosephOIbrahim/Harlo.git master`. PAT can be revoked immediately after.
+The branch and commit have been deleted. If these turn out to matter later, recreating the 40-line YAML diff takes ~30 minutes — the bigger prereq is a different auth path (fine-grained PAT with Workflows: R+W, or browser edit at <https://github.com/JosephOIbrahim/Harlo/edit/master/.github/workflows/macos-build.yml>).
 
 ### Apple Developer secrets — 8 of them, none provisioned
 
@@ -64,10 +63,10 @@ Owner-quick check: `grep -n FAMILY src/cognitive_engine.py src/schedule.py src/r
 
 ## Next-session candidates, ranked
 
-1. **Land `ee46533` via PAT push** — 5 min once the PAT exists. Unblocks #2.
-2. **Apple secrets** — 30–60 min, browser. Unblocks the full signing pipeline. Walkthrough: `docs/APPLE_SECRETS_SETUP.md`.
-3. **Tag `v0.1.0`** — after #2 lands. Produces the first notarized stapled Harlo.app DMG attached to a draft GitHub release.
-4. **Phase 5B (HealthBridge signing)** — register `com.harlo.healthbridge` in the portal + enable HealthKit capability + extend CI workflow with the second build job. `macos/HarloHealthBridge/` is already fully scaffolded; needs portal-side activation.
+1. **Apple secrets** — 30–60 min, browser. Unblocks the full signing pipeline. Walkthrough: `docs/APPLE_SECRETS_SETUP.md`.
+2. **Tag `v0.1.0`** — after #1 lands. Produces the first notarized stapled Harlo.app DMG attached to a draft GitHub release.
+3. **Phase 5B (HealthBridge signing)** — register `com.harlo.healthbridge` in the portal + enable HealthKit capability + extend CI workflow with the second build job. `macos/HarloHealthBridge/` is already fully scaffolded; needs portal-side activation.
+4. **Investigate the FAMILY-hours routing bug** — `expert='exploring'` instead of `'restorer'` for Sat 11:00 NY. Diagnostic + checklist in the test's xfail reason and earlier section of this file.
 
 ## Pointers
 
