@@ -181,17 +181,6 @@ class TestBridgeWiring:
         # Idempotent
         assert mcp._get_engine() is eng
 
-    @pytest.mark.xfail(
-        reason="FAMILY-hours routing does not select 'restorer' even with "
-               "the predictor present. Initial guess (model missing) was "
-               "ruled out by regenerating cognitive_predictor_v1.joblib — "
-               "test still asserts 'expected restorer, got exploring'. "
-               "Real product bug somewhere in the schedule→routing chain "
-               "(clock substitution reaches process_exchange? schedule "
-               "classifies Sat 11:00 NY as FAMILY? routing honors FAMILY?). "
-               "See NEXT.md for investigation handoff.",
-        strict=False,
-    )
     def test_enrich_runs_full_exchange_with_clock_substitution(self, monkeypatch):
         monkeypatch.syspath_prepend(str(PROJECT_ROOT))
         import harlo.mcp_server as mcp

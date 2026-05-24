@@ -43,17 +43,15 @@ Both artifacts are gitignored — they live locally only. Re-run via:
 .venv314/bin/python -m src.train_predictor --data data/trajectories_10k.jsonl --output models/cognitive_predictor_v1.joblib --seed 42
 ```
 
-### Real product bug surfaced: FAMILY-hours routing
+### FAMILY-hours routing — investigated and fixed (was actually a migration bug)
 
-`tests/test_schedule/test_e2e_mcp_bridge.py::test_enrich_runs_full_exchange_with_clock_substitution` was marked `skipif(not predictor.exists())` earlier this session under the assumption the failure was just missing-artifact. With the predictor now regenerated, the test STILL fails: clock-mocked to Sat 11:00 NY (FAMILY-hours window per the production schedule), routing returns `expert='exploring'` instead of the documented `expert='restorer'`. CLAUDE.md and `mcp_server.py:415` both state "FAMILY hours route to restorer regardless of consent (mirrors the burnout RED safety pattern)" — that's not what the engine actually does.
+Earlier this session, `tests/test_schedule/test_e2e_mcp_bridge.py::test_enrich_runs_full_exchange_with_clock_substitution` was marked `skipif(not predictor.exists())` under the assumption the failure was missing-artifact, then re-marked `xfail` after the predictor regen didn't fix it. Final investigation showed the failure had nothing to do with routing OR the predictor.
 
-Marker updated from `skipif` to `xfail(strict=False)` with the full diagnostic. Investigation handoff:
+Real cause: `python/harlo/session/first_run.py`'s legacy migration skipped any top-level item where `target.exists()`. Engine bootstrap (via `schedule_migrate.migrate_inline`) writes a stub `schedule.usda` at `DATA_DIR/stages/` *before* `first_run` migration runs, so `first_run` saw `stages/` already existed and skipped it — leaving Joe's legacy 3,073-byte `schedule.usda` (with Saturday all-day FAMILY) unmigrated and the empty 198-byte stub in place. `evaluate_schedule` sees `timezone=""` and falls back to `WORK` (`src/schedule.py:132`), so the FAMILY → restorer override at `src/computations/compute_routing.py:91-92` never fires.
 
-1. Does `harlo.clock.now_iso` substitution reach `CognitiveEngine.process_exchange`?
-2. Does the schedule classify Sat 11:00 America/New_York as `ScheduleKind.FAMILY`?
-3. If both yes, does the routing layer have a FAMILY → restorer override at all, or is it predictor-only?
+Fix: `first_run.py` now uses `shutil.copytree(src, dst, dirs_exist_ok=True)` for directory items so engine-bootstrap stubs get overwritten by legacy content. The first-run marker contract guarantees subdir contents at migration time are only auto-generated stubs, not user data — overwriting is safe. Top-level files (twin.db, observations.db, …) still preserve the don't-clobber semantics. Regression test added at `tests/test_session/test_first_run.py::TestFirstRun::test_migration_overwrites_engine_stubs`. The xfail marker on the schedule e2e test was removed — it passes now.
 
-Owner-quick check: `grep -n FAMILY src/cognitive_engine.py src/schedule.py src/routing.py` and trace the override chain.
+CLAUDE.md Rule 28 framing and `mcp_server.py:415` are correct as written; the documented "FAMILY → restorer" behavior IS what the engine implements when the schedule is loaded. The earlier "stale docs" framing was based on a misdiagnosis.
 
 ## Known fragilities (informational, not blockers)
 

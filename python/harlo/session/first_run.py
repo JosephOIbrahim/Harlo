@@ -67,14 +67,25 @@ def run_first_run() -> FirstRunResult:
         migrated_from = _LEGACY_DATA
         for item in _LEGACY_DATA.iterdir():
             target = DATA_DIR / item.name
-            if target.exists():
-                _LOGGER.info("first-run: skip %s (target exists)", item.name)
-                continue
-            if item.is_dir():
-                shutil.copytree(item, target)
-            else:
-                shutil.copy2(item, target)
-            migrated.append(item.name)
+            try:
+                if item.is_dir():
+                    # Recursive merge — overwrite any engine-bootstrap
+                    # stubs the daemon may have authored before first-run
+                    # ran (e.g., the empty `schedule.usda` skeleton from
+                    # schedule_migrate.migrate_inline()). We are gated by
+                    # .first_run_complete; if we're here, target subdirs
+                    # hold only auto-generated stubs, not user data.
+                    shutil.copytree(item, target, dirs_exist_ok=True)
+                else:
+                    # Top-level files (twin.db, observations.db, …) are
+                    # user data — never clobber.
+                    if target.exists():
+                        _LOGGER.info("first-run: skip %s (target exists)", item.name)
+                        continue
+                    shutil.copy2(item, target)
+                migrated.append(item.name)
+            except OSError as exc:
+                _LOGGER.warning("first-run: failed to migrate %s: %s", item.name, exc)
 
     _MARKER.write_text("ok\n", encoding="utf-8")
     fresh = migrated_from is None

@@ -24,8 +24,12 @@ def isolated_data_dir(monkeypatch, tmp_path):
     Also redirects _LEGACY_DATA away from PROJECT_ROOT/data so dev
     machines (which may have a real ./data/ from earlier dogfooding)
     don't trigger the migration path and skew fresh_install assertions.
-    CI is clean, so this only matters locally — but the test must
-    pass on both.
+
+    Cleans up after itself: reloads the modules a second time without
+    HARLO_DATA_DIR so subsequent tests in the session see the real
+    DATA_DIR. Without this, tests like
+    test_schedule/test_e2e_mcp_bridge.py inherit a tmp DATA_DIR pointing
+    at a directory pytest has already torn down.
     """
     monkeypatch.setenv("HARLO_DATA_DIR", str(tmp_path))
     import importlib
@@ -34,7 +38,12 @@ def isolated_data_dir(monkeypatch, tmp_path):
     import harlo.session.first_run as first_run
     importlib.reload(first_run)
     monkeypatch.setattr(first_run, "_LEGACY_DATA", tmp_path / "no-legacy")
-    return tmp_path, first_run
+    try:
+        yield tmp_path, first_run
+    finally:
+        monkeypatch.delenv("HARLO_DATA_DIR", raising=False)
+        importlib.reload(cfg)
+        importlib.reload(first_run)
 
 
 class TestFirstRun:
@@ -51,6 +60,43 @@ class TestFirstRun:
         first_run.run_first_run()
         r2 = first_run.run_first_run()
         assert r2.migrated_paths == ()
+
+    def test_migration_overwrites_engine_stubs(self, monkeypatch, tmp_path):
+        """Regression: engine bootstrap may write a stub schedule.usda
+        into DATA_DIR/stages/ before first_run migration runs. The old
+        `if target.exists(): continue` skip prevented the legacy
+        schedule.usda from migrating, leaving the empty stub in place.
+
+        Repro: pre-create stages/schedule.usda at DATA_DIR (as the
+        engine would). Legacy holds a real schedule.usda. Run first_run.
+        Expect target to hold legacy content, not the stub.
+        """
+        legacy = tmp_path / "legacy_data"
+        dest = tmp_path / "data"
+        # Legacy holds real content.
+        (legacy / "stages").mkdir(parents=True)
+        (legacy / "stages" / "schedule.usda").write_text(
+            "real-schedule-content\n", encoding="utf-8"
+        )
+        # Engine has already written a stub into DATA_DIR/stages/.
+        (dest / "stages").mkdir(parents=True)
+        (dest / "stages" / "schedule.usda").write_text(
+            "stub-skeleton\n", encoding="utf-8"
+        )
+
+        monkeypatch.setenv("HARLO_DATA_DIR", str(dest))
+        import importlib
+        import harlo.daemon.config as cfg
+        importlib.reload(cfg)
+        import harlo.session.first_run as first_run
+        importlib.reload(first_run)
+        monkeypatch.setattr(first_run, "_LEGACY_DATA", legacy)
+
+        first_run.run_first_run()
+
+        assert (dest / "stages" / "schedule.usda").read_text() == (
+            "real-schedule-content\n"
+        ), "engine stub should have been overwritten by legacy migration"
 
 
 class TestLaunchdPrompt:
