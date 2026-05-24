@@ -37,11 +37,14 @@ Required for `macos-build.yml`'s sign / notarize / DMG steps. Until these land, 
 
 Was missing; XGBoost MultiOutputRegressor trained from `data/trajectories_10k.jsonl` (also regenerated). Training stats: 206 686 train / 25 836 val / 25 836 test rows, 111 features. Unblocks the four tests marked `requires_predictor_model`.
 
-Both artifacts are gitignored — they live locally only. Re-run via:
+Both artifacts stay gitignored — the trajectories file is 229 MB (too big for raw git, and git-lfs setup is its own workstream), and the .joblib is downstream of it. Canonical regen path now lives in the Makefile:
+
 ```sh
-.venv314/bin/python -m src.trajectory_generator --count 10000 --seed 42 --validate --output data/trajectories_10k.jsonl
-.venv314/bin/python -m src.train_predictor --data data/trajectories_10k.jsonl --output models/cognitive_predictor_v1.joblib --seed 42
+make regen-predictor      # generates trajectories if missing, then trains the .joblib
+make regen-trajectories   # just the data step
 ```
+
+Predictor-dependent tests (`test_sprint*`, `test_recalibration`, the schedule e2e) skip cleanly when the .joblib is missing, so regen is opt-in.
 
 ### FAMILY-hours routing — investigated and fixed (was actually a migration bug)
 
@@ -64,7 +67,7 @@ CLAUDE.md Rule 28 framing and `mcp_server.py:415` are correct as written; the do
 1. **Apple secrets** — 30–60 min, browser. Unblocks the full signing pipeline. Walkthrough: `docs/APPLE_SECRETS_SETUP.md`.
 2. **Tag `v0.1.0`** — after #1 lands. Produces the first notarized stapled Harlo.app DMG attached to a draft GitHub release.
 3. **Phase 5B (HealthBridge signing)** — register `com.harlo.healthbridge` in the portal + enable HealthKit capability + extend CI workflow with the second build job. `macos/HarloHealthBridge/` is already fully scaffolded; needs portal-side activation.
-4. **Investigate the FAMILY-hours routing bug** — `expert='exploring'` instead of `'restorer'` for Sat 11:00 NY. Diagnostic + checklist in the test's xfail reason and earlier section of this file.
+4. **Investigate the `test_injection` segfault on Python 3.14** — pre-existing flake during full `make verify` runs (USD + tqdm threading interaction). Doesn't affect CI (Python 3.12) or isolated test runs. Lower priority than the lanes above.
 
 ## Pointers
 
