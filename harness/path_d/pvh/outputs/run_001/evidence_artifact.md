@@ -1,6 +1,7 @@
 # PVH Evidence Artifact — v1 (Methodology Validator)
 
 **Generated:** 2026-05-25
+**Commit:** 5c0106d3aeae11fa33ee0474159b7a15994873b0
 **Scope:** path_d v1 — validates harness mechanics, not Harlo's multiplier effect.
 
 ## ⚠️ v1 limitations (read first)
@@ -15,6 +16,7 @@
 - Sessions analyzed: **1**
 - Windows (3-observation): **67**
 - Session `live` (`organic`): 67 windows
+- Corpus details: see `harness/path_d/corpus_investigation.md`
 
 ## Session `live`
 
@@ -51,7 +53,7 @@
 
 ### Observation density (signal-weakness proxy)
 
-- mean gap: 0.2206, max gap: 1, weak-signal fraction (gap>2): 0.0
+- mean gap: 0.2206, max gap: 1 exchange, weak-signal fraction (gap>2 exchanges): 0.0
 
 ## Headline
 
