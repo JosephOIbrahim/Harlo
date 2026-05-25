@@ -193,6 +193,38 @@ executor does NOT make the corpus decision.
 
 ---
 
+## Observations (non-decision log)
+
+### Obs 2026-05-25 — Step 2 verification: local checkout is 13 commits behind `origin/master`
+
+Per the architect's Step 2 instruction (note as observation, not a D-block):
+
+- Local `harness-path-d` base = `0498ee1`; `origin/master` (post-fetch) = `092f420`.
+  `git log master..origin/master` = **13 commits** local does not have, including:
+  - `3f4133a chore: track predictor artifacts via git-lfs`
+  - `303239f docs(next): document git-lfs as primary path for predictor artifacts`
+  - `2d4b7b7 docs: NEXT.md ...`
+  - `f0ce331 Phase 5A: macOS bundle, intake calibration, biometric barrier, operator tooling (#10)`
+- **`NEXT.md`** is NOT genuinely missing from canonical master — it exists on
+  `origin/master`, absent only from the local (behind) checkout.
+- **Predictor LFS:** `.gitattributes` (`models/*.joblib filter=lfs`) and the
+  `!models/cognitive_predictor_v1.joblib` un-ignore exist on `origin/master`
+  only. Local has no `.gitattributes` and gitignores all of `models/`. The
+  origin LFS pointer is valid: `oid sha256:dde0…`, `size 385803` (~385KB).
+- **`substrate` extra IS present locally** (`pyproject.toml:32`,
+  `usd-core>=24.05`) — Step 4 is unblocked on the current checkout.
+- **`git-lfs` binary is NOT installed** (`git-lfs not found`).
+
+**Implication (for architect, not an executor decision):** D26/D27 fixes cannot
+execute on the current local checkout. Materializing the predictor (D26) requires
+BOTH (a) `brew install git-lfs` AND (b) syncing `harness-path-d` with
+`origin/master` so the LFS tracking + pointer + un-ignore are present. (b) is a
+merge/rebase that modifies read-only protected paths (`src/`, `python/harlo/`
+via the Phase 5A bundle) and is NOT covered by D26/D27 — it needs explicit
+architect authorization. Halting at Step 3 per the action sequence.
+
+---
+
 ## Decision summary table
 
 | # | Decision | Authority touched |
