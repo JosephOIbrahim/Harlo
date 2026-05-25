@@ -1,0 +1,15 @@
+total: 69
+--- partition split ---
+  ('organic', 69)
+--- sample observation_json keys ---
+top-level keys: ['action', 'allostasis', 'delegate', 'dynamics', 'exchange_index', 'injection', 'observation_index', 'schedule', 'schema_name', 'session_id', 'state', 'version']
+--- nested block keys ---
+  action -> ['action_type', 'detail']
+  allostasis -> ['load', 'override_ratio_7d', 'sessions_24h', 'trend']
+  delegate -> ['active', 'task_type']
+  dynamics -> ['adrenaline_debt', 'burst_phase', 'exchange_velocity', 'exchanges_without_break', 'frustration_signal', 'session_exchange_count', 'tangent_budget_remaining', 'tasks_completed', 'topic_coherence']
+  injection -> ['alpha', 'phase', 'profile']
+  schedule -> ['kind', 'override_reason']
+  state -> ['altitude', 'burnout', 'context', 'energy', 'exercise_recency_days', 'momentum', 'sleep_quality']
+--- distinct session_ids present? ---
+distinct session_id count: 1

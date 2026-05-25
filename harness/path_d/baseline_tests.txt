@@ -1,0 +1,20 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.11, pytest-9.0.3, pluggy-1.6.0
+rootdir: /Users/josephibrahim/Harlo
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collected 1174 items / 3 errors / 4 skipped
+
+=============================== warnings summary ===============================
+.venv312/lib/python3.12/site-packages/_pytest/config/__init__.py:1310
+  /Users/josephibrahim/Harlo/.venv312/lib/python3.12/site-packages/_pytest/config/__init__.py:1310: PytestConfigWarning: assertions not in test modules or plugins will be ignored because assert statements are not executed by the underlying Python interpreter (are you using python -O?)
+  
+    self._warn_about_missing_assertion(mode)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/test_schedule/test_migration.py
+ERROR tests/test_schedule/test_reload.py
+ERROR tests/test_schedule/test_usd_roundtrip.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+=================== 4 skipped, 1 warning, 3 errors in 10.19s ===================

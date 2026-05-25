@@ -1,0 +1,36 @@
+=== PVH Phase 0 — Predictor Load Contract (Forge task 3) ===
+Command (run in .venv312):
+  .venv312/bin/python -c "
+  from joblib import load
+  m = load('models/cognitive_predictor_v1.joblib')
+  print(type(m).__name__)
+  print(m.estimators_[0].feature_names_in_ if hasattr(...) else 'no feature_names_in_')
+  "
+
+RESULT: FAIL — predictor artifact does not exist.
+
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+  File ".../joblib/numpy_pickle.py", line 735, in load
+    with open(filename, "rb") as f:
+FileNotFoundError: [Errno 2] No such file or directory: 'models/cognitive_predictor_v1.joblib'
+PREDICTOR_EXIT=1
+
+=== Diagnosis ===
+- models/ is gitignored (.gitignore:15); the predictor is a locally-generated
+  artifact, never committed and absent from this working tree.
+- Generator: src/train_predictor.py (joblib.dump, default --output
+  models/cognitive_predictor_v1.joblib).
+- models/ currently contains only the BGE embedding model
+  (bge-small-en-v1.5.onnx + tokenizer), NOT the cognitive predictor.
+- PVH did NOT generate it: Article 1 makes models/ read-only for PVH.
+
+=== Feature-set inference (static, from src/train_predictor.py) ===
+The 111-feature set is computed WITHOUT loading the model, by reading
+_encode_observation() + the 3-step sliding window in train_predictor.py:
+  per-observation = 7 (state) + 10 (ActionType one-hot) + 9 (dynamics)
+                  + 5 (InjectionProfile one-hot) + 1 (alpha) + 1 (phase)
+                  + 4 (allostasis) = 37 features
+  window = 37 x 3 observations = 111 features  [matches documented count]
+The delegate block (delegate.active, delegate.task_type) is NOT encoded.
+There is NO delegate_id anywhere in the feature vector.
