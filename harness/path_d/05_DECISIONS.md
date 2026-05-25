@@ -382,6 +382,122 @@ unblocked. Phase 1 spec authoring awaits the Phase 0 CLOSE sign-off.
 
 ---
 
+## D38 — Trajectory Deflection premise (Article 2) INVALIDATED for v1 (Architect)
+
+**Decision (Architect):** The Trajectory Deflection premise as written in Article
+2 is **invalidated for v1** given the current predictor. The Constitution assumed
+a real forecaster; the actual model has:
+- **Target leakage** — `train_predictor.py:113-135`: the target is
+  `_encode_targets(trajectory[i])` while the features for observation `i` are in
+  the same window (the 4 targets — momentum/burnout/energy/burst_phase — appear
+  verbatim as feature indices 74/75/76/94).
+- **Undefined horizon** — `predict.py` relabels the horizon-0 output as t+1
+  (`exchange_index += 1`); the Constitution assumes a tunable t+horizon; no
+  horizon parameter exists in code.
+
+All three layers (training, inference, Constitution) are mutually inconsistent.
+
+---
+
+## D39 — `[RELITIGATION-REQUEST]` v1 narrowed beyond D35 to a self-validating harness (Architect)
+
+**Decision (Architect):** path_d v1 now means:
+- Harness runs end-to-end (extract → feed reference model → compute outputs →
+  emit artifact).
+- Evidence artifact MUST document: (a) corpus N=69 insufficient for statistical
+  claims; (b) reference predictor has target leakage per
+  `train_predictor.py:113-135`; (c) **no deflection claim is asserted** from v1.
+- The harness validates **its own mechanics**, not Harlo's multiplier effect.
+
+**Amendments (this request), applied in Step 3:**
+- `02_CONSTITUTION.md` Article 2 — predictor's v1 role is "**reference output to
+  characterize, not validated baseline**"; note the leakage limitation.
+- `02_CONSTITUTION.md` Article 3 (Cassandra) — preserved as a **v2 concern**;
+  inapplicable in v1 with a leaky reference predictor.
+
+---
+
+## D40 — TI-003 filed: predictor target leakage = core/RSI surgery, not path_d (Architect)
+
+**Decision (Architect):** File TI-003 in `tracking_issues.md`.
+`models/cognitive_predictor_v1.joblib` was trained with feature-target overlap;
+requires retraining with a proper `t+horizon` target schema. **Belongs to the
+core-surgery / RSI workstream, NOT path_d.** Escalation candidate — likely the
+highest-leverage next surgery after path_d v1 ships. Applied in Step 4 (file).
+
+---
+
+## D41 — Phase 1 prerequisite: confirm no alternative forecaster exists (Architect)
+
+**Decision (Architect):** Before locking D38–D40 amendments, confirm (per
+Resolution 4 of the Phase 1 halt) that no non-leaky forecaster exists elsewhere
+in the repo. Decision rule: if one is found → HALT before Step 3, architect
+re-evaluates D38–D40; if none → D38–D40 stand.
+
+**Investigation (Step 2 findings, logged as observations — not new D-blocks):**
+
+```
+1. .joblib files (excl venvs):  ONLY models/cognitive_predictor_v1.joblib
+2. *predict* source files:      ONLY src/train_predictor.py, src/predict.py
+                                (+ their .pyc) — no alternative
+3. regressor classes in src:    ONLY train_predictor.py + predict.py
+                                (no RandomForest/LGBM/other model code)
+4. models/ contents:            BGE embedder (tokenizer + onnx) + the one
+                                cognitive_predictor_v1.joblib. No other model.
+5. git log (all refs) predict:  only git-lfs tracking (3f4133a) + regen make
+                                targets (aa63953) for the SAME model.
+                                No corrected/retrained forecaster commit.
+6. NEXT.md:38:                  "Trained this session: XGBoost
+                                MultiOutputRegressor ... 111 features" — the
+                                same leaky model. No horizon / no leakage fix.
+
+VERDICT: No alternative non-leaky forecaster exists anywhere in the repo.
+Decision rule → D38–D40 STAND. Proceed to Step 3 amendments.
+```
+
+---
+
+## D42 — Trajectory ordering key (Architect-approved)
+
+Within-session ordering: primary `exchange_index` ASC, tiebreaks
+`observation_index` → `created_at` → `obs_id`. Rationale: `schemas.py`
+Commandment 3 ("exchange_index is the ONLY temporal key"); `created_at` is too
+coarse (all 69 rows in one 4.5h window). Approved per `extraction_strategy.md` §6.
+
+## D43 — Short-session handling (Architect-approved)
+
+Sessions with <3 observations are **emitted** with `below_window_threshold=True`
+and zero windows, never dropped — the methodology validator wants a complete
+inventory. Approved per §6.
+
+## D44 — Missing `session_id` handling (Architect-approved)
+
+Rows lacking `session_id` group under sentinel `"<no-session-id>"` and are
+flagged in metadata (defensive; moot for the current corpus where all rows carry
+`session_id`). Approved per §6.
+
+## D45 — Bypass `ObservationBuffer.sample()` (Architect-approved)
+
+The extractor reads via direct read-only SQL ordered by `exchange_index`, NOT
+`sample()` — `sample()` orders anchor by `RANDOM()` and organic by `priority
+DESC` (`observation_buffer.py:93-138`), which would destroy trajectory order.
+Approved per §6.
+
+## D46 — v1 `actual` convention (Architect-approved)
+
+With no horizon (D38), `actual` = state at the window's final observation, so
+`predicted ≈ actual` by construction in v1. Documented explicitly in every
+artifact rather than hidden. Approved per §6.
+
+## D47 — Reuse `src` encoder by import (Architect-approved)
+
+The extractor imports `src.train_predictor._encode_observation` and
+`src.predict.CognitivePredictor` for byte-identical feature parity, rather than
+reimplementing. Importing is read-only and does not violate Article 1. Approved
+per §6.
+
+---
+
 ## Observations (non-decision log)
 
 ### Obs 2026-05-25 — Step 2 verification: local checkout is 13 commits behind `origin/master`
@@ -436,6 +552,16 @@ architect authorization. Halting at Step 3 per the action sequence.
 | D35 | `[RELITIGATION-REQUEST]` corpus = N=69 organic; v1 reframed as methodology validator (Architect) | Article 4 amended |
 | D36 | TI-002 filed: test suite non-hermetic with analytic corpus (Architect) | tracking_issues.md |
 | D37 | Phase 1 unblocked by reframe; graceful handling of absent fields (Architect) | Handoff Phase 1 |
+| D38 | Trajectory Deflection premise INVALIDATED for v1 (leakage + no horizon) (Architect) | Article 2 |
+| D39 | `[RELITIGATION-REQUEST]` v1 = self-validating harness; no deflection claim (Architect) | Article 2/3 amended |
+| D40 | TI-003: predictor target leakage = core/RSI surgery, not path_d (Architect) | tracking_issues.md |
+| D41 | Prereq: confirm no alternative forecaster before locking D38–D40 (Architect) | Phase 1 gate |
+| D42 | Ordering: exchange_index primary, then observation_index/created_at/obs_id | extractor design |
+| D43 | Short sessions (<3 obs) emitted with flag, not dropped | extractor design |
+| D44 | Missing session_id → sentinel group + flag | extractor design |
+| D45 | Bypass ObservationBuffer.sample(); direct ordered read-only SQL | extractor design |
+| D46 | v1 `actual` = state at window's final obs; predicted ≈ actual by construction | extractor design |
+| D47 | Reuse src encoder via import (read-only); no reimplementation | extractor design |
 
 ---
 

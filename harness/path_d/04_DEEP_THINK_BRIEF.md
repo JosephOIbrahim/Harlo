@@ -240,3 +240,42 @@ detail in `05_DECISIONS.md` (D20–D37) and `corpus_investigation.md`.
   the data-path resolution (SQLite `observations.db`, not `organic_458.usda`)
   held. The new correction is purely the **corpus size and the v1 scope**, not
   the methodology.
+
+---
+
+## Phase 1 Discoveries (appended 2026-05-25)
+
+Phase 1 source review (`train_predictor.py`, `predict.py`, `observation_buffer.py`)
+invalidated the deflection *premise* — a larger correction than Phase 0's
+corpus-size finding. Full detail in `05_DECISIONS.md` D38–D41.
+
+- **D38 — the reference predictor does not forecast.** Two compounding flaws:
+  - *Target leakage* — `train_predictor.py:113-135` trains on window
+    `[t-2,t-1,t]` → target = state of `trajectory[i]` (the same index `i`), and
+    `_encode_observation(obs[i])` already contains those four target fields
+    (momentum/burnout/energy/burst_phase) at feature indices 74/75/76/94. The
+    model is handed the answer; its accuracy is an artifact of leakage.
+  - *No horizon* — training target is the current state (horizon 0); `predict.py`
+    relabels the output as t+1 (`exchange_index += 1`); the Constitution (Art. 2)
+    assumes a tunable `t+horizon` (e.g. t+60). All three layers disagree.
+
+- **D39 — v1 narrowed to a self-validating harness.** "Trajectory Deflection"
+  (the headline contribution from the Round 1 Gemini exchange, the "Cassandra
+  Problem") is **inapplicable in v1** because there is no genuine forecast to
+  deflect. v1 proves pipeline mechanics only; the evidence artifact asserts no
+  deflection claim. Article 2 amended ("reference output to characterize, not a
+  validated baseline"); Article 3 (Cassandra) parked as a v2 concern.
+
+- **D40 — TI-003: predictor retraining is core/RSI surgery, not path_d.** A
+  leakage-free, horizon-defined forecaster is the prerequisite for the original
+  evidence-harness ambition. PVH is read-only on `src/`/`models/` and cannot
+  retrain; this is the likely highest-leverage surgery after path_d v1 ships.
+
+- **Investigation (D41):** confirmed no alternative non-leaky forecaster exists
+  anywhere in the repo (single `.joblib`, single train/predict module pair). So
+  D38–D40 stand; they are not artifacts of looking at a stale model.
+
+**Net effect on the original strategy:** the *methodology* (replay organic
+observations, characterize predictor behavior, emit a legible artifact) survives.
+What collapses is the *evidentiary claim* — the predictor as an un-intervened
+baseline (Option δ). That claim moves to v2, contingent on TI-003.

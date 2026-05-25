@@ -54,3 +54,57 @@ persist observations rather than using a temp/fixture DB.
 - Until then this stays OPEN and is referenced by D31/D32/D33.
 
 *End of TI-002.*
+
+---
+
+## TI-003 — Predictor target leakage + undefined horizon — OPEN
+
+**Filed:** 2026-05-25 during Phase 1 extractor design (per D40).
+**Status:** OPEN. Belongs to **core-surgery / RSI workstream, NOT path_d.**
+Escalation candidate — likely highest-leverage surgery after path_d v1 ships.
+**Severity:** HIGH (model validity).
+
+### Observation (Phase 1)
+
+`models/cognitive_predictor_v1.joblib` (XGBoost `MultiOutputRegressor`, 111
+features) was trained with **feature-target overlap** and has **no defined
+forecasting horizon**:
+
+- **Target leakage** — `src/train_predictor.py:113-135` (`_build_sliding_window`):
+  features = `[obs[i-2], obs[i-1], obs[i]]`; target = `_encode_targets(obs[i])`
+  (same index `i`). `_encode_observation` (`:64-66, :80`) puts those four target
+  values (momentum/burnout/energy/burst_phase) into the feature vector at indices
+  74/75/76/94. The model can satisfy the objective by echoing four of its inputs;
+  reported accuracy is not evidence of forecasting skill.
+- **Undefined horizon** — training target is the current state (horizon 0);
+  `src/predict.py` relabels the output as t+1 (`exchange_index += 1`, `:82`,
+  docstring "predict next state"); `02_CONSTITUTION.md` Article 2 assumes a
+  tunable `t+horizon`. Three inconsistent notions, no horizon parameter in code.
+
+### Blast radius
+
+- **PVH (path_d):** invalidates Option δ (predictor as un-intervened baseline).
+  v1 reframed to a self-validating harness (D38/D39); no deflection claim.
+- **RSI / core:** any subsystem consuming predictor output as a forecast
+  (routing, scaffolding triggers, recalibration) inherits the limitation.
+- **Evidence ambition:** the original predict/intervene/multiply artifact is
+  impossible until this is fixed.
+
+### Recommended surgery (core/RSI, after path_d v1)
+
+1. Redefine the training target as a **future** observation `state(t+h)` for an
+   explicit horizon `h`, drawn from a later trajectory index — not `obs[i]`.
+2. Remove the current-state fields from the feature window at the prediction step
+   (or accept them only as lagged context at `t-1`, `t-2`, never `t` for the
+   leaked targets), eliminating feature-target overlap.
+3. Re-validate with a held-out forecasting metric (not in-window reconstruction).
+4. Version the artifact (`cognitive_predictor_v2.joblib`) and re-activate
+   Constitution Articles 2 & 3 for PVH v2.
+
+### Re-open / close conditions
+
+- **Close** when a leakage-free, horizon-defined forecaster exists and passes a
+  genuine forecasting metric; then PVH v2 can assert deflection.
+- Until then OPEN; referenced by D38/D39/D40 and the Article 2/3 v1 amendments.
+
+*End of TI-003.*

@@ -36,7 +36,15 @@ The XGBoost `cognitive_predictor_v1.joblib` provides the counterfactual referenc
 
 **`[PENDING-RSI-ITEM-2]`** This article's validity depends on whether `delegate_id` (or any LABRE-affected feature) is present in the 111-feature XGBoost set. If yes: baseline is robust post-LABRE-deployment. If no: PVH analysis is bounded to a pre-LABRE-epoch of organic observations, and this article will be amended to specify the epoch boundary.
 
+**v1 amendment (D38/D39, 2026-05-25 — supersedes the "un-intervened baseline" framing for v1).** Phase 1 source review (`train_predictor.py`, `predict.py`) established that the current `cognitive_predictor_v1.joblib` is **not a validated forecaster**:
+- **Target leakage** — `train_predictor.py:113-135` sets the target to `_encode_targets(trajectory[i])` while the features for observation `i` are in the same window; the four targets (momentum/burnout/energy/burst_phase) appear verbatim as feature indices 74/75/76/94. The model is handed the answer as input.
+- **No defined horizon** — training target is the *current* state (horizon 0); `predict.py` relabels that output as t+1 (`exchange_index += 1`); this article assumes a tunable `t+horizon`. The three are mutually inconsistent.
+
+Therefore, in v1 the predictor's role is **"reference output to characterize, NOT a validated un-intervened baseline."** Its output approximates the current state (influenced by features that include the current state) and must not be treated as a forecast. The "predicted state at `t+horizon`" definition of Trajectory Deflection above is **inapplicable in v1** and deferred to v2 (which requires a retrained, leakage-free, horizon-defined forecaster — see TI-003, D40). RSI item 2 is moot under this amendment (a leaky echo model has no meaningful baseline-robustness question).
+
 ### Article 3 — Cassandra-Aware Attribution
+
+**v1 status (D39, 2026-05-25): V2 CONCERN — INAPPLICABLE IN v1.** Cassandra-aware attribution presupposes a validated forecaster that can predict a crash before it materializes. The current reference predictor cannot (target leakage + no horizon, see Article 2 v1 amendment / D38). With a leaky echo model there is no genuine "predicted crash" to attribute, so v1 asserts **no deflection or overshoot rates**. This article is preserved verbatim below as the v2 design, to be reactivated once a leakage-free, horizon-defined forecaster exists (TI-003).
 
 A predicted crash that does not materialize is NOT model error if scaffolding fired between prediction and outcome. The harness must distinguish:
 

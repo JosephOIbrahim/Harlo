@@ -32,6 +32,8 @@ That proof needs an evidence artifact. The artifact answers three questions, in 
 - 1,365 baseline tests still green at every Crucible gate
 - D20+ decisions filed in `05_DECISIONS.md` as execution surfaces them
 
+**v1 narrowing (D38/D39, 2026-05-25 — read with the Scope Reframe at the foot of this doc).** The three questions above (predict / intervene / multiply) are the **v2** evidence goals. Phase 1 source review found the reference predictor has **target leakage and no defined horizon** (`train_predictor.py:113-135`; D38), so it cannot forecast. v1 therefore ships a **self-validating harness**: it proves the pipeline mechanics (extract → feed reference model → compute → emit), and the `evidence_artifact.md` must state plainly that (a) N=69 is insufficient for statistical claims, (b) the reference predictor has target leakage, and (c) **no deflection claim is asserted**. The `deflection_flag` / `overshoot_baseline_flag` columns exist for v2 but are pipeline-status/zero in v1. The Cassandra fixture and "1,365 baseline tests" lines are constrained by D33 (no full-suite runs against the analytic `data/`) and D34 (segfault drift).
+
 ---
 
 ## Scope boundaries
@@ -148,6 +150,14 @@ Harlo multiplying the user require a larger corpus and are NOT supported by
 N=69 single-session data."* The real evidence harness is **v2 (deferred)**,
 once the corpus grows.
 
-The success criterion above still holds — but for v1 it is met by an artifact
-that honestly reports the methodology works and that N=69 is insufficient for
-a statistical multiplier claim. See `05_DECISIONS.md` D24, D35, D37.
+The success criterion above is **further narrowed for v1 by D38/D39**: because
+the reference predictor has target leakage and no defined horizon, v1 cannot make
+*any* deflection or multiplier claim — not even a weak one bounded by N. The v1
+success criterion becomes: **an `evidence_artifact.md` that demonstrates the
+harness runs end-to-end and states plainly its three limits** — (a) N=69
+insufficient, (b) predictor target leakage (`train_predictor.py:113-135`), (c) no
+deflection claim asserted. An artifact that honestly reports "the methodology
+executes; the reference model and corpus cannot yet support a multiplier verdict"
+is a v1 success. The original predict/intervene/multiply criterion returns in v2,
+once a leakage-free forecaster exists (TI-003). See `05_DECISIONS.md` D24, D35,
+D37, D38, D39, D40.
