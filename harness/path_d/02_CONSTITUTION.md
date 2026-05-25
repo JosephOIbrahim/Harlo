@@ -26,6 +26,8 @@ PVH writes only to:
 
 Phase 2 includes an explicit Crucible test (`test_pvh_readonly.py`) verifying that running the harness produces zero mutations to any production data path.
 
+**Baseline-capture rule (D33 amendment, 2026-05-25):** Baseline test captures that would mutate `data/observations.db` are forbidden. Full-suite `pytest tests/` runs against the analytic tree's `data/` are not permitted — the test suite is non-hermetic and writes observations as a side-effect. Capture baselines via `make verify` on the canonical venv (per `NEXT.md`), or in a separate clone with empty/fixture `data/`, or with `pytest-forked`-style isolation. Rationale: D31 — a Phase 0 baseline run mutated the corpus 69→72; restored under D32. See `05_DECISIONS.md` D31/D32/D33.
+
 ### Article 2 — Predictor as Un-Intervened Baseline (Option δ)
 
 The XGBoost `cognitive_predictor_v1.joblib` provides the counterfactual reference for trajectory analysis. Trained on 10K synthetic trajectories via Profile-Driven Markov Biasing modeling cognitive state evolution *before* Harlo scaffolding was deployed, the predictor's output at time `t` represents the expected un-intervened trajectory.
@@ -45,13 +47,15 @@ Both rates are reported. The headline signal is the *delta* between them, not ra
 
 ### Article 4 — Aggressive Scope Cut for v1
 
+**Scope reframe (D35 amendment, 2026-05-25 — supersedes the "458 organic observations" framing).** Phase 0 established empirically that the analytic corpus is **N=69 organic observations, 0 anchor, a single `'live'` session** (`data/observations.db`), not the "458 organic observations" cited here and in the README — that figure was aspirational/incorrect (see `corpus_investigation.md`, `05_DECISIONS.md` D24→D35). Accordingly, **path_d v1 is a METHODOLOGY VALIDATOR, not an evidence harness.** It builds the full PVH pipeline (extractor → evaluators → reporters) and runs it against the actual N=69 corpus to prove the methodology executes end-to-end. The evidence artifact MUST state plainly: *"Methodology proven. Statistical claims about Harlo multiplying the user require a larger corpus and are NOT supported by N=69 single-session data."* The real evidence harness is **v2 (deferred)**, once the corpus grows.
+
 Out of scope (v1):
 
 - Writing analytical Overs back to USD stages — held in Python memory, output to JSON/MD
 - NLP coherence parsing of exchange content — proxied by Observation Density (gap-based heuristic)
 - Complex causal ML for intervention attribution — naive boolean heuristic per Article 3
 - Real-time / streaming analysis — batch replay only
-- Multi-user analysis — single-architect dataset (the 458 organic observations)
+- Multi-user analysis — single-architect dataset (the actual N=69 organic single-session corpus; the "458" figure was aspirational, see D35)
 - Visualization beyond ASCII sparklines and Markdown tables — no D3, Plotly, or HTML templates
 
 In scope (v1):

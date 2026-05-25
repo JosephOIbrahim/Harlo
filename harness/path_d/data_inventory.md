@@ -3,7 +3,11 @@
 **Date:** 2026-05-25
 **Authority:** Empirical baseline. Subordinate to `02_CONSTITUTION.md`.
 **Method:** Direct read-only inspection via `.venv312` (Python 3.12.11).
-**Status:** Captured with material contradictions — see "Contradictions" and `05_DECISIONS.md` (D20–D25).
+**Tree:** updated to post-merge `defab04` (synced with `origin/master`). Original
+capture was on pre-merge `0498ee1`.
+**Status:** Re-run after architect fixes D26 (git-lfs predictor) + D27 (substrate).
+Predictor now loads; baseline now collects. One known pre-existing flake remains
+(see §6). See `05_DECISIONS.md` (D20–D30) and `corpus_investigation.md`.
 
 This document synthesizes Forge tasks 3 (predictor) and 4 (observations) plus
 the `src/schemas.py` field inventory, and cross-references declared schema vs.
@@ -49,23 +53,28 @@ Nested blocks:
 
 ## 2. `models/cognitive_predictor_v1.joblib`
 
-**RESULT: FAIL — artifact does not exist.** (`FileNotFoundError`; see
-`predictor_inventory.txt`.)
+**RESULT: PASS — predictor loads (post-fix).** See `predictor_inventory.txt`.
 
-- `models/` is gitignored (`.gitignore:15`); the predictor is a locally-generated
-  artifact, never committed and absent here.
-- `models/` currently holds only the BGE embedding model
-  (`bge-small-en-v1.5.onnx` + tokenizer) — not the cognitive predictor.
-- Generator exists: `src/train_predictor.py` (`joblib.dump`, default
-  `--output models/cognitive_predictor_v1.joblib`).
-- **PVH did not generate it.** Article 1 makes `models/` read-only for PVH.
-  Filed as **D22**.
+| Property | Value |
+|---|---|
+| model type | `MultiOutputRegressor` |
+| outputs | 4 (`XGBRegressor` per target) |
+| inner estimator | `XGBRegressor` |
+| `n_features_in_` | **111** |
+| `feature_names_in_` | absent (trained on unnamed numpy array) |
+| artifact | 377K; LFS `oid sha256:dde0dfd8…`, `size 385803` |
 
-### Feature set (inferred statically from `src/train_predictor.py`)
+- **History:** on the original checkout (`0498ee1`) this FAILED with
+  `FileNotFoundError` (D22) — the LFS-tracked predictor was absent because the
+  local branch was 13 commits behind origin. Architect resolution **D26**
+  authorized `git lfs pull`; merging `origin/master` brought the
+  `.gitattributes` LFS tracking + `!models/...joblib` un-ignore, and the pull
+  materialized the 377K artifact. PVH did not train it.
 
-Because the artifact is absent, `feature_names_in_` could not be read. The
-feature vector is reconstructed from `_encode_observation()` + the 3-step
-sliding window:
+### Feature set (confirmed: static inference == loaded `n_features_in_`)
+
+The loaded model reports **111** features, matching the reconstruction from
+`_encode_observation()` + the 3-step sliding window:
 
 ```
 per observation = 7 (state ordinals)
@@ -128,22 +137,64 @@ drift.
 
 ## 6. Baseline test environment
 
-See `baseline_tests.txt`. **Suite did not run**: `.venv312` lacks the `pxr`
-(OpenUSD) module, causing 3 collection errors in `tests/test_schedule/`
-(`test_migration.py`, `test_reload.py`, `test_usd_roundtrip.py` — all
-`from pxr import ...`). pytest aborts the whole session on collection errors,
-so 0 of 1174 collected items executed (4 skipped). Expected: 1,365 passed /
-11 skipped. `.venv312` is **not** USD-compatible despite the setup note. → **D23**.
+**Pre-fix (checkout `0498ee1`):** suite aborted at collection — `.venv312`
+lacked `pxr`, 3 `tests/test_schedule/` modules failed to import, only 1174 items
+collected, 0 executed. → **D23**.
+
+**Post-fix (substrate installed, D27):** collection is **fixed** — pytest now
+collects **1376 items / 1 skipped** (= expected 1,365 + 11 total). But the full
+single-process run **segfaults deterministically** (exit 139 / SIGSEGV) at ~26%
+(around `tests/test_injection/`), so the 1,365/11 tally cannot be captured here.
+
+- Root cause is a **documented pre-existing flake** (`NEXT.md:80`): USD + tqdm
+  threading interaction in full-suite runs. Not a PVH regression.
+- Confirmed across 3 runs (`baseline_tests.txt`, `baseline_tests_retry.txt`,
+  `baseline_tests_tqdmoff.txt`); `TQDM_DISABLE=1` did not avoid it;
+  `test_injection` passes 37/37 in isolation.
+- Canonical 1,365/11 was produced on **`.venv314`** (absent here) via
+  `make verify` (`NEXT.md:13`).
+- → **D30** (Commandment 1 baseline integrity is an architect call).
 
 ---
 
-## 7. Contradictions summary (all surfaced, none silently resolved)
+## 7. Contradictions summary (status after architect fixes)
 
-1. **Predictor artifact missing** — Gate 0 Commandment 3 fails. (D22)
-2. **Baseline suite cannot run** — `pxr` missing in `.venv312`; 0 passed vs
-   expected 1,365. (D23)
-3. **Dataset cardinality** — 69 organic / single session vs. documented 458. (D24)
-4. **`.venv312` not USD-compatible** — contradicts the "USD-compatible venv per
-   NEXT.md" setup note; `NEXT.md` does not exist. (folded into D23)
+1. **Predictor artifact missing** → **RESOLVED.** Materialized via git-lfs after
+   merging `origin/master` (D26). Loads; 111 features. (was D22)
+2. **Baseline suite** → **PARTIALLY RESOLVED.** `pxr` collection errors gone
+   (D27); now collects 1376 items, but execution hits a documented pre-existing
+   USD+tqdm segfault. (D23 → D30)
+3. **`.venv312` "not USD-compatible" / `NEXT.md` missing** → **RESOLVED by sync.**
+   `NEXT.md` and the `substrate` extra exist on `origin/master`; local was 13
+   commits behind. `pip install -e ".[substrate]"` makes `.venv312`
+   USD-capable (`pxr` imports). (Step 2 observation)
+4. **Dataset cardinality** — 69 organic / single `'live'` session vs. documented
+   458 (README:27,411). **STILL OPEN, DEFERRED.** (D24, frozen by D29; evidence
+   in `corpus_investigation.md`)
 5. **Schema gap** — `delegate_id` / `scaffolding_requirements` /
-   `intervention_type` absent. (D20)
+   `intervention_type` absent from schema and data. **STILL OPEN** (resolves RSI
+   item 1 as incomplete). (D20)
+
+Of the original four blockers, two are resolved (predictor, venv/NEXT.md), one is
+downgraded to a documented pre-existing flake (baseline segfault), and the corpus
+gap + schema gap remain for architect/RSI resolution.
+
+---
+
+## 8. Phase 0 CLOSE reconciliation (2026-05-25, D32–D37)
+
+Final reconciled state at Phase 0 close:
+
+| Item | Final state |
+|---|---|
+| **Corpus** | **69 organic, 0 anchor, single `'live'` session** — RESTORED from the 72-row breached state by deleting 3 test rows (D32; backup `/tmp/observations.db.prebreach.bak`). Date range 2026-05-11 17:21:55 → 21:48:14. |
+| **Corpus scope** | "458" was aspirational/incorrect. path_d v1 reframed as a **methodology validator** at N=69 (D35; Constitution Article 4 amended). |
+| **Predictor** | Loads; `MultiOutputRegressor`, 4 outputs, **111 features**, no `delegate_id` (D21). |
+| **Baseline** | Collection fixed (1376 items). Full-suite run segfaults (USD+tqdm, NEXT.md:80) — **accepted as documented drift** (D34); canonical 1,365/11 is the `make verify` / `.venv314` number. |
+| **Read-only rule** | Constitution Article 1 amended (D33): no full-suite `pytest` against the analytic `data/`. TI-002 filed (D36). |
+| **Schema gap** | `delegate_id` / `scaffolding_requirements` / `intervention_type` still absent (D20). Phase 1 handles gracefully (D37). |
+
+This document, `corpus_investigation.md`, and `05_DECISIONS.md` (D20–D37)
+together are the empirical record for Phase 0. RSI items 1 & 2 are resolved by
+observation (D20/D21); items 3–7 are not required for the methodology-validator
+scope (D37).

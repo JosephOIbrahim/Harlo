@@ -200,3 +200,43 @@ A future Claude Code session reading this document should be able to answer:
 5. Where do new decisions get filed?
 
 If any of those questions cannot be answered from this document plus `02_CONSTITUTION.md`, the documents are incomplete and the gap is filed as `[BLOCKING-NEW]` before implementation proceeds.
+
+---
+
+## Phase 0 Discoveries (appended 2026-05-25)
+
+Phase 0 pre-flight tested the assumptions in this brief against actual repo
+state. Several were wrong. Recorded here so the origin story stays honest; full
+detail in `05_DECISIONS.md` (D20–D37) and `corpus_investigation.md`.
+
+- **D20 — Schema is incomplete (RSI item 1, resolved by observation).** The
+  `CognitiveObservation` schema and every stored row lack `delegate_id`,
+  `scaffolding_requirements`, and `intervention_type`. The `delegate` block
+  carries only `active` and `task_type`. Deflection attribution must proceed
+  with these fields absent (D37: column-aware analysis, bounded deflection with
+  explicit caveat).
+
+- **D21 — `delegate_id` is NOT in the 111-feature predictor (RSI item 2,
+  resolved).** `train_predictor.py` encodes state/action/dynamics/injection/
+  allostasis (37/observation × 3-window = 111); the delegate block is never
+  encoded. The loaded model confirms 111 features, no `feature_names_in_`. The
+  "pre-LABRE epoch" concern is moot for a single-session corpus with no delegate
+  routing.
+
+- **D24 → D35 — The "458 organic observations" do not exist.** Actual corpus:
+  **N=69 organic, 0 anchor, single `'live'` session** (2026-05-11, ~4.5h). Not
+  in `observations.db` (69), not in `twin.db` (hippocampal store), not the 10K
+  synthetic `trajectories_10k.jsonl`. The 458 (and its "20% anchor / 80%
+  organic" split) was aspirational. **path_d v1 reframed as a methodology
+  validator**; statistical multiplier claims deferred to v2.
+
+- **D31 → D32/D33 — The baseline capture breached read-only discipline.**
+  Running the full `pytest tests/` suite (non-hermetic) wrote 3 observations to
+  `data/observations.db` (69→72). Restored to 69 under D32; Article 1 amended
+  (D33) to forbid full-suite captures against the analytic `data/`. Filed as
+  TI-002 (D36) — a Harlo-wide architectural issue.
+
+- **Rejected-concept status:** "Counterfactual Execution" naming stays rejected;
+  the data-path resolution (SQLite `observations.db`, not `organic_458.usda`)
+  held. The new correction is purely the **corpus size and the v1 scope**, not
+  the methodology.

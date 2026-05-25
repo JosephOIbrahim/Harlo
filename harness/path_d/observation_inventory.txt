@@ -13,3 +13,10 @@ top-level keys: ['action', 'allostasis', 'delegate', 'dynamics', 'exchange_index
   state -> ['altitude', 'burnout', 'context', 'energy', 'exercise_recency_days', 'momentum', 'sleep_quality']
 --- distinct session_ids present? ---
 distinct session_id count: 1
+
+--- richer detail (Step 5 re-query, read-only mode=ro) ---
+session breakdown: {'live': 69}
+created_at range: 2026-05-11 17:21:55 -> 2026-05-11 21:48:14  (~4.5h, single day)
+NOTE: docs cite "458 organic observations" (README:27,411; Constitution
+Article 4). Actual = 69 organic / 0 anchor, single 'live' session. See
+corpus_investigation.md and 05_DECISIONS.md D24 (deferred per D29).

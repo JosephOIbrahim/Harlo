@@ -193,6 +193,195 @@ executor does NOT make the corpus decision.
 
 ---
 
+## D30 — Baseline re-run: collection fixed, execution hits documented USD+tqdm segfault
+
+**Decision:** Documented drift. After D27 (substrate), `pxr` collection errors
+are **resolved** — pytest now collects **1376 items / 1 skipped** (= the expected
+1,365 + 11 total). But the **full single-process run segfaults deterministically**
+(exit 139 / SIGSEGV) at ~26% (around `tests/test_injection/`), so the canonical
+"1,365 passed / 11 skipped" tally **cannot be captured in this environment.**
+
+**Rationale / root cause:**
+- `NEXT.md:80` already tracks this: *"Investigate the `test_injection` segfault …
+  pre-existing flake during full `make verify` runs (USD + tqdm threading
+  interaction). Doesn't affect CI (Python 3.12) or isolated test runs."*
+- Confirmed pre-existing, NOT a PVH regression: PVH is read-analytical and added
+  only `harness/path_d/`. The crash trace shows `Thread 0x…` (threading), matching
+  the documented cause.
+- Deterministic here across 3 runs (`baseline_tests.txt`,
+  `baseline_tests_retry.txt`, `baseline_tests_tqdmoff.txt`). `TQDM_DISABLE=1` did
+  not avoid it. `test_injection` passes 37/37 in isolation.
+- The canonical 1,365/11 baseline (NEXT.md:13) was produced by `make verify`
+  auto-detecting **`.venv314`**, which is **absent** on this machine. `make test`
+  uses the same raw `pytest tests/ -v`, so make verify on `.venv312`+usd-core
+  would hit the same crash.
+- A reproducible cluster of failures/errors appears at ~20% before the crash;
+  the full tally is unknowable because the run never completes.
+
+**This resolves the D23 collection blocker** (pxr now present) but replaces it
+with a deterministic execution segfault.
+
+**Options for the architect (Commandment 1 baseline integrity):**
+1. Accept documented drift: treat NEXT.md:80 as the standing explanation and
+   gate later phases on per-module / isolated runs (which pass) rather than a
+   single full-suite run; OR
+2. Restore/recreate **`.venv314`** and capture the baseline via `make verify`
+   (the canonical procedure); OR
+3. Add an isolating runner (e.g. `pytest-forked` / `-p forked`, not currently
+   installed) so a native crash in one module doesn't abort the session; OR
+4. Fix the underlying USD+tqdm threading interaction (NEXT.md item 4, currently
+   low priority).
+
+PVH does not choose — Commandment 1 baseline integrity is an architect call.
+
+---
+
+## D31 — `[CONTRADICTION]` Baseline test run MUTATES the analytic corpus (read-only breach by side-effect)
+
+**Decision:** Documented contradiction; **HALT for architect remediation.** PVH
+will NOT attempt to repair the corpus (decontamination is a `data/` write and an
+architect call).
+
+**Observation:** `data/observations.db` grew **69 → 72 rows** during this
+session. The 3 new rows are `partition='organic'`, `session_id='live'`,
+`created_at` ≈ **2026-05-25 18:30 UTC** (≈14:30 EDT — within this session's test
+runs), vs. the original 69 all dated 2026-05-11. File mtime moved to today; size
+73728 → 77824 (one SQLite page).
+
+**Cause:** the full `pytest tests/` baseline capture (handoff Phase 0 step 2 /
+architect Step 6) is **not hermetic** — executed tests write to the real
+`data/observations.db`. PVH made **no direct write** (git shows zero changes
+under `data/`); the mutation is a side-effect of the instructed baseline run.
+This only became visible after the D27 fix let tests actually execute (the
+pre-merge run aborted at collection, 0 tests, 0 writes).
+
+**Severity: HIGH.** `data/observations.db` is the exact corpus PVH must
+read-only-analyze. Constitution Article 1 lists it first among no-write paths.
+Capturing the baseline pollutes it. Compounds D24 — the corpus is now 72, of
+which 3 are test artifacts.
+
+**Remediation options (architect):**
+1. Restore `observations.db` to the pre-session 69-row state from a backup, if
+   one exists;
+2. Delete the 3 rows where `created_at >= '2026-05-25'` under explicit architect
+   authorization (trivially separable by date);
+3. Redirect the test suite to a temp/fixture DB (env override) so future
+   baseline runs never touch the canonical corpus;
+4. Run baseline captures in a **separate clone/worktree** so the analytic tree's
+   `observations.db` is never executed against.
+
+**Forward rule (proposed):** future Phase 0 baseline captures must NOT run the
+full suite against the analytic tree's `data/`. PVH read-only integrity on the
+corpus requires test isolation. Architect to confirm.
+
+---
+
+## D32 — D31 remediation: one-time authorized deletion = corpus restoration (Architect)
+
+**Decision (Architect):** The 3 test-generated rows in `data/observations.db`
+(`created_at >= 2026-05-25`) are **AUTHORIZED FOR DELETION as RESTORATION** of the
+analytic corpus to its pre-breach state. This is not a polluting write — it
+restores integrity the architect's own baseline instruction breached. Article 1
+is not violated. ONE-TIME authorization only; no other `data/` writes permitted.
+
+**Audit (logged BEFORE the DELETE, per D32 requirement):**
+
+```
+rows_to_delete (obs_id, partition, created_at):   [match_count = 3]
+  b9624070  organic  2026-05-25 18:30:17
+  bcb9102d  organic  2026-05-25 18:30:17
+  d1c0ab6a  organic  2026-05-25 18:30:17
+pre-delete count:  72
+post-delete count: 69   (verified in Step 2)
+safety backup:     /tmp/observations.db.prebreach.bak (77824 bytes, outside repo, not committed)
+note: all 3 are partition='organic' test artifacts dated today; none are anchor.
+```
+
+---
+
+## D33 — `[RELITIGATION-REQUEST]` Forward rule, Constitution-level (Architect)
+
+**Decision (Architect):** NO full-suite pytest runs against the analytic tree's
+`data/`. Future baseline integrity captures use one of: `make verify` on the
+canonical venv (per NEXT.md); a separate clone with empty/fixture `data/`;
+`pytest-forked` or equivalent isolation.
+
+**Amendment (this request):** `02_CONSTITUTION.md` **Article 1** gains:
+> "Baseline test captures that would mutate `data/observations.db` are
+> forbidden. Use `make verify` on the canonical venv, or run baselines in a
+> separate clone."
+
+Filed as a `[RELITIGATION-REQUEST]` per the Constitution's amendment rule
+(silent amendment forbidden). Applied in Step 3.
+
+---
+
+## D34 — D30 baseline integrity: documented drift accepted (Architect)
+
+**Decision (Architect):** The `.venv314` USD+tqdm threading segfault (NEXT.md
+known fragility) is **ACCEPTED as known drift**. Canonical baseline =
+**1,365 passed / 11 skipped** per `make verify` on `.venv314`. Phase 0's
+`baseline_tests.txt` reflects documented drift (deterministic segfault on
+`.venv312`+usd-core), not a clean run. Gate 0 criterion 2 passes as
+"documented drift per D30/D34."
+
+---
+
+## D35 — `[RELITIGATION-REQUEST]` D24 resolution + scope reframe to methodology validator (Architect)
+
+**Decision (Architect):** The single-session corpus is **ACCEPTED as the actual
+organic corpus**. The "458" figure across README and earlier path_d docs was
+aspirational/incorrect.
+
+**Measured-corpus correction (executor):** the architect's D35 text says
+"~66 organic + 3 anchor / N=66." Measured reality after D32 restoration is
+**69 organic, 0 anchor, single `'live'` session (N=69)**. The 3 deleted rows
+were organic test artifacts, not anchor; the DB has never held anchor rows.
+Authoritative figure for all amendments: **N=69 organic, 0 anchor.**
+
+**path_d v1 REFRAMED as a METHODOLOGY VALIDATOR:**
+- Build the full PVH pipeline (extractor → evaluators → reporters).
+- Run against the actual N=69 organic single-session corpus.
+- Evidence artifact MUST state: *"Methodology proven. Statistical claims about
+  Harlo multiplying the user require a larger corpus and are NOT supported by
+  N=69 single-session data."*
+- v2 (deferred) is the real evidence harness once the corpus grows.
+
+**Amendments (this request), applied in Step 3:**
+- `02_CONSTITUTION.md` Article 4 — replace "458 organic observations" with the
+  actual corpus + methodology-validator reframe.
+- `01_KICKOFF.md` — update all "458" references; add a "Scope Reframe (D35)"
+  section.
+- `04_DEEP_THINK_BRIEF.md` — append "Phase 0 Discoveries" (D20, D21, D24→D35,
+  D31, the v1 reframe).
+
+---
+
+## D36 — TI-002 filed: test suite non-hermetic with analytic corpus (Architect)
+
+**Decision (Architect):** File TI-002 in a new
+`harness/path_d/tracking_issues.md` (path_c format). The test suite sharing
+`data/observations.db` with production analytics is a Harlo-wide architectural
+issue beyond path_d's scope; recommended near-term surgery after path_d v1
+ships. Applied in Step 4.
+
+---
+
+## D37 — Phase 1 unblocked by the D35 reframe (Architect)
+
+**Decision (Architect):** The methodology-validator scope does NOT require RSI
+items 3–7. Items 1 & 2 are already resolved empirically (D20/D21). Phase 1
+design proceeds against the current schema with graceful handling of absent
+fields:
+- `delegate_id` absent → column-aware analysis (no delegate conditioning);
+- `scaffolding_requirements` absent → deflection analysis bounded, with an
+  explicit caveat in the evidence artifact.
+
+Phase 1 remains NOT-STARTED here; this decision only records that it is
+unblocked. Phase 1 spec authoring awaits the Phase 0 CLOSE sign-off.
+
+---
+
 ## Observations (non-decision log)
 
 ### Obs 2026-05-25 — Step 2 verification: local checkout is 13 commits behind `origin/master`
@@ -239,8 +428,24 @@ architect authorization. Halting at Step 3 per the action sequence.
 | D27 | `pip install -e ".[substrate]"` in `.venv312` = repo-state prep (Architect) | resolves D23 / Article 1 |
 | D28 | Commit FAIL artifacts as historical record before fixes (Architect) | methodology |
 | D29 | D24 corpus question DEFERRED pending investigation (Architect) | Article 2/4 — frozen |
+| D30 | Baseline: collection fixed; deterministic USD+tqdm segfault (NEXT.md:80) | Commandment 1 |
+| D31 | `[CONTRADICTION]` baseline run mutated corpus 69→72; read-only breach by side-effect | Article 1 — HALT |
+| D32 | One-time authorized deletion of 3 test rows = corpus restoration (Architect) | resolves D31 / Article 1 |
+| D33 | `[RELITIGATION-REQUEST]` no full-suite pytest vs analytic data/ (Architect) | Article 1 amended |
+| D34 | D30 segfault accepted as known drift; canonical 1,365/11 on .venv314 (Architect) | Commandment 1 |
+| D35 | `[RELITIGATION-REQUEST]` corpus = N=69 organic; v1 reframed as methodology validator (Architect) | Article 4 amended |
+| D36 | TI-002 filed: test suite non-hermetic with analytic corpus (Architect) | tracking_issues.md |
+| D37 | Phase 1 unblocked by reframe; graceful handling of absent fields (Architect) | Handoff Phase 1 |
 
 ---
 
-*Phase 0 Gate 0 FAILed (D20–D25). Architect resolutions filed (D26–D29).
-Re-running Phase 0 with fixes; new Gate 0 verdict pending.*
+*Phase 0 Gate 0 FAILed (D20–D25). Architect resolutions filed (D26–D29) and
+applied: predictor materialized (D26), substrate installed (D27), branch synced
+with origin/master. Re-run results: predictor loads (D21 confirmed, 111 feats),
+collection fixed, but baseline execution hits a documented pre-existing segfault
+(D30) AND the run mutated the analytic corpus 69→72 (D31, Article 1 breach by
+side-effect). Architect CLOSE decisions D32–D37: corpus restored to 69 (D32),
+Article 1 forward rule (D33), segfault accepted as drift (D34), corpus reframe to
+N=69 methodology validator + Article 4 amendment (D35), TI-002 filed (D36),
+Phase 1 unblocked (D37). Gate 0 verdict at CLOSE: PASS-WITH-DOCUMENTED-DRIFT.
+Phase 1 NOT started — awaiting CLOSE sign-off.*

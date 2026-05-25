@@ -3,18 +3,40 @@ platform darwin -- Python 3.12.11, pytest-9.0.3, pluggy-1.6.0
 rootdir: /Users/josephibrahim/Harlo
 configfile: pyproject.toml
 plugins: anyio-4.13.0
-collected 1174 items / 3 errors / 4 skipped
+collected 1376 items / 1 skipped
 
-=============================== warnings summary ===============================
-.venv312/lib/python3.12/site-packages/_pytest/config/__init__.py:1310
-  /Users/josephibrahim/Harlo/.venv312/lib/python3.12/site-packages/_pytest/config/__init__.py:1310: PytestConfigWarning: assertions not in test modules or plugins will be ignored because assert statements are not executed by the underlying Python interpreter (are you using python -O?)
-  
-    self._warn_about_missing_assertion(mode)
+tests/test_agents/test_harness.py ......                                 [  0%]
+tests/test_brainstem/test_isolation.py .......                           [  0%]
+tests/test_brainstem/test_merkle.py ........                             [  1%]
+tests/test_brainstem/test_provenance.py ...................              [  2%]
+tests/test_brainstem/test_routing.py ......................              [  4%]
+tests/test_brainstem/test_session.py ......                              [  4%]
+tests/test_brainstem_legacy/test_bridge.py .........................     [  6%]
+tests/test_cli/test_audit_layers.py ....                                 [  7%]
+tests/test_cli/test_doctor.py .....                                      [  7%]
+tests/test_cli/test_intake_cli.py .....                                  [  7%]
+tests/test_cli/test_intake_persistence.py ...                            [  7%]
+tests/test_cli/test_recall_cmd.py ....                                   [  8%]
+tests/test_coach/test_coach.py .............                             [  9%]
+tests/test_compaction/test_compaction.py ...........                     [ 10%]
+tests/test_composition/test_merkle.py ...................                [ 11%]
+tests/test_composition/test_path_relocation_and_compose.py ........      [ 11%]
+tests/test_daemon/test_biometric_ingest.py .......                       [ 12%]
+tests/test_daemon/test_lifecycle.py ............................F        [ 14%]
+tests/test_elenchus/test_gvr.py ..........................               [ 16%]
+tests/test_elenchus_v8/test_elenchus_v8.py ....................          [ 17%]
+tests/test_encoder/test_semantic.py FFFFFFFEEEEEFFFFFFF..FF...F          [ 19%]
+tests/test_federated_recall/test_federated_recall.py ..........          [ 20%]
+tests/test_hebbian/test_dual_masks.py ...........                        [ 21%]
+tests/test_hebbian/test_merkle_isolation.py .....                        [ 21%]
+tests/test_hebbian/test_reconstruction.py .................              [ 23%]
+tests/test_hebbian/test_stability.py ...........                         [ 23%]
+tests/test_hebbian/test_training_data.py ................                [ 25%]
+tests/test_hippocampus/test_recall.py ................                   [ 26%]
+tests/test_hot_store/test_crud.py ...................                    [ 27%]
+tests/test_hot_store/test_fts5.py ........                               [ 28%]
+tests/test_hot_store/test_promotion.py .........                         [ 28%]
+tests/test_hot_store/test_schema.py ......                               [ 29%]
+tests/test_injection/test_injection.py ................Fatal Python error: Segmentation fault
 
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-=========================== short test summary info ============================
-ERROR tests/test_schedule/test_migration.py
-ERROR tests/test_schedule/test_reload.py
-ERROR tests/test_schedule/test_usd_roundtrip.py
-!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
-=================== 4 skipped, 1 warning, 3 errors in 10.19s ===================
+Fatal Python error: 

@@ -98,7 +98,7 @@ Three rounds of Gemini Deep Think exchanges and one cross-workstream coordinatio
 
 - **A-feeds-D coupling** (Gemini Round 2). Pre-optimizing PVH for a hypothetical synthetic stress test (Option D from strategic options) creates architectural tax in service of work that may never happen. Decoupled. Capture patterns that obviously serve D *if* they emerge; do not pre-design for D.
 
-- **Synthetic-only validation as headline evidence** (Gemini Round 2 → 3). The 278K synthetic exchanges from S1 are a stress test of the cognitive physics engine, not evidence the system multiplies a real user. Headline evidence must operate on the 458 organic observations, not synthetic-only.
+- **Synthetic-only validation as headline evidence** (Gemini Round 2 → 3). The 278K synthetic exchanges from S1 are a stress test of the cognitive physics engine, not evidence the system multiplies a real user. Headline evidence must operate on the organic observation corpus — measured in Phase 0 as **N=69 organic, single session** (originally cited as 458; corrected per the Scope Reframe below / D35) — not synthetic-only.
 
 - **Allostatic Efficiency requiring kill-switch baseline** (Gemini Round 3). Asking the architect to deliberately work without scaffolding for 2 weeks to generate baseline data is biologically expensive and halts the sprint. Rejected in favor of Option δ (Trajectory Deflection) using the predictor itself as un-intervened baseline.
 
@@ -123,3 +123,31 @@ Single sentence: **a skeptical neuroscience or HCI reviewer reads `evidence_arti
 If the artifact shows the loop is not distinguishable from chance, that is still a successful outcome of path_d — it is honest evidence that the current predictor/scaffolding loop is not yet a multiplier, which informs whether the next surgery should be predictor improvement, scaffolding redesign, or observation enrichment.
 
 The failure mode is producing an artifact that is *not interpretable* either way. That is the failure path_d exists to avoid.
+
+---
+
+## Scope Reframe (D35, 2026-05-25)
+
+Phase 0 pre-flight changed the scope of path_d v1. The empirical findings:
+
+- **Corpus is N=69 organic, 0 anchor, a single `'live'` session** — not the
+  "458 organic observations" cited throughout this document and the README.
+  The 458 figure was aspirational/incorrect; it is not present in
+  `data/observations.db`, `data/twin.db`, or the 10K synthetic
+  `data/trajectories_10k.jsonl` (see `corpus_investigation.md`).
+- **The XGBoost predictor loads** (`MultiOutputRegressor`, 4 outputs, 111
+  features) and carries **no `delegate_id`** feature (RSI item 2 resolved, D21).
+- **The observation schema lacks** `delegate_id` / `scaffolding_requirements` /
+  `intervention_type` (RSI item 1 resolved as incomplete, D20).
+
+**Reframe:** path_d v1 is now a **METHODOLOGY VALIDATOR**, not an evidence
+harness. It builds the full PVH pipeline (extractor → evaluators → reporters)
+and proves it runs end-to-end against the actual N=69 corpus. The evidence
+artifact must state plainly: *"Methodology proven. Statistical claims about
+Harlo multiplying the user require a larger corpus and are NOT supported by
+N=69 single-session data."* The real evidence harness is **v2 (deferred)**,
+once the corpus grows.
+
+The success criterion above still holds — but for v1 it is met by an artifact
+that honestly reports the methodology works and that N=69 is insufficient for
+a statistical multiplier claim. See `05_DECISIONS.md` D24, D35, D37.
