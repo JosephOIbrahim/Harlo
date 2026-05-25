@@ -1,0 +1,168 @@
+name: macOS build
+
+# Phase 5A — signs and notarizes Harlo.app only.
+# HealthBridge follows in Phase 5B (see docs/SIGNING.md).
+
+on:
+  push:
+    tags: ['v*.*.*']
+  pull_request:
+    # PR-time dry-run build to catch py2app / Rust universal2
+    # regressions before they hit a release tag. Guarded by paths
+    # below so doc-only PRs do not burn macOS minutes.
+    paths:
+      - 'macos/**'
+      - 'setup_py2app.py'
+      - 'Makefile'
+      - 'scripts/macos_*.sh'
+      - 'scripts/macos_*.py'
+      - 'scripts/check_signing_readiness.sh'
+      - 'python/harlo/**'
+      - 'crates/**'
+      - '.github/workflows/macos-build.yml'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Skip notarization (build + sign only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write  # for creating draft releases
+
+jobs:
+  readiness:
+    name: Signing-readiness pre-flight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pyyaml
+        run: python -m pip install pyyaml
+      - name: Run readiness script
+        run: bash scripts/check_signing_readiness.sh
+
+  build:
+    needs: readiness
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    # PR-triggered runs are advisory: py2app on macos-15 + Python 3.12
+    # is a flaky surface and the logs aren't readable from our remote
+    # tooling. We still RUN it on PRs as a canary, but don't BLOCK the
+    # PR on it — the user can inspect failures via the Actions UI.
+    # Tag-pushes stay strict; release artifacts must build cleanly.
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+    # PR-triggered runs sign locally but skip notarization. Tag-pushes
+    # use the original `inputs.dry_run` path. We compute the effective
+    # mode once so the steps below stay readable.
+    env:
+      IS_PR: ${{ github.event_name == 'pull_request' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Install Python build deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install maturin py2app
+          # Match runtime deps from pyproject.toml
+          python -m pip install click jsonschema numpy mcp pyyaml pydantic
+
+      - name: Build Rust hot path (universal2)
+        # Non-editable install (no -e) on purpose: py2app's modulegraph
+        # follows .pth files from editable installs unreliably and can
+        # fail to bundle the .so. Non-editable lands harlo under
+        # site-packages where py2app sees a normal package layout.
+        # maturin's PEP 517 backend handles release-mode + universal2.
+        run: |
+          python -m pip install --no-deps .
+          # Sanity: ensure the .so landed
+          python -c "import harlo.hippocampus; print('hippocampus OK')"
+
+      - name: Build Harlo.app via py2app
+        # -v gives modulegraph traversal output so any "package not
+        # found" / dep failure shows the offending import chain.
+        run: |
+          python setup_py2app.py py2app -v
+          ls -lh dist/
+
+      - name: Import Developer ID certificate
+        env:
+          CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
+          CERT_PW: ${{ secrets.APPLE_DEVELOPER_CERT_PASSWORD }}
+          KEYCHAIN_PW: ${{ secrets.APPLE_NOTARY_KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/harlo-ci.keychain-db"
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN_PATH"
+          security import "$RUNNER_TEMP/cert.p12" -P "$CERT_PW" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PW" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychain -d user | xargs)
+          rm "$RUNNER_TEMP/cert.p12"
+
+      - name: Sign + notarize + staple
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run }}
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_DEVELOPER_CERT_IDENTITY: ${{ secrets.APPLE_DEVELOPER_CERT_IDENTITY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          # Materialize the .p8 from the secret
+          echo "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" > "$RUNNER_TEMP/AuthKey.p8"
+          export APP_STORE_CONNECT_PRIVATE_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          bash scripts/macos_sign_and_notarize.sh dist/Harlo.app
+          rm "$APP_STORE_CONNECT_PRIVATE_KEY_PATH"
+
+      - name: Sign only (dry run)
+        if: ${{ github.event_name == 'pull_request' || inputs.dry_run }}
+        env:
+          APPLE_DEVELOPER_CERT_IDENTITY: ${{ secrets.APPLE_DEVELOPER_CERT_IDENTITY }}
+        run: |
+          codesign --force --options=runtime --timestamp \
+            --entitlements macos/Harlo.app/Contents/Entitlements.plist \
+            --sign "$APPLE_DEVELOPER_CERT_IDENTITY" \
+            dist/Harlo.app
+          codesign --verify --deep --strict --verbose=2 dist/Harlo.app
+
+      - name: Build DMG
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          brew install create-dmg
+          bash scripts/macos_build_dmg.sh dist/Harlo.dmg
+
+      - name: Upload artifact
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Harlo-${{ github.ref_name }}-dmg
+          path: dist/Harlo.dmg
+          retention-days: 30
+
+      - name: Attach to draft Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: dist/Harlo.dmg
+          fail_on_unmatched_files: true

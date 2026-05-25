@@ -1,0 +1,44 @@
+                       SETTINGS  ·  ADVANCED
+   ┌──────────────────────────────────────────────────────────────┐
+   │  Settings   Privacy   HealthKit   Advanced            ✕      │
+   │  ════════════════════════════════════════════════════════    │
+   │                                                              │
+   │   Sections                                                   │
+   │   ────────                                                   │
+   │     ▸ Audit            Composition layers + provenance       │
+   │     ▸ Reflex cache     Verified, compiled responses          │
+   │     ▸ Inquiry queue    Templates + crystallized patterns     │
+   │     ▸ Compliance       Live grep results from CLAUDE.md      │
+   │     ▸ Kill switch      Terminate daemon and bridge now       │
+   │                                                              │
+   │   Audit (expanded)                                           │
+   │   ────────────────                                           │
+   │     Layer                          Provenance     Created    │
+   │     ──────                         ──────────     ───────    │
+   │     UserProfile                    intake         5/22 18:04 │
+   │     InitialAnchorAnnotations       intake         5/22 18:04 │
+   │     CoachingContext                intake         5/22 18:04 │
+   │     RecentDecision-2026-05-19      composition    5/19 09:32 │
+   │     ...                                                      │
+   │                                                              │
+   │   Compliance (live)                                          │
+   │   ─────────────────                                          │
+   │     sleep( in python/harlo/             0  ✓                 │
+   │     while True in python/harlo/         0  ✓                 │
+   │     float32 in crates/                  0  ✓                 │
+   │     cosine in crates/                   0  ✓                 │
+   │     biometric in elenchus/ + bridge/    0  ✓                 │
+   │                                                              │
+   │   ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─        │
+   │                                                              │
+   │   [ Kill daemon now ]    [ Kill bridge now ]                 │
+   │                                                              │
+   └──────────────────────────────────────────────────────────────┘
+
+   Rules:
+     - This is the ONLY surface where internal vocabulary appears
+       in user copy (Elenchus / DMN / Hippocampus etc.). Always
+       parenthesized with the user-facing term first.
+     - Compliance section refreshes on view open; not auto-polled.
+     - Kill switches are real — they call `launchctl bootout`.
+       Confirmation sheet before either fires.

@@ -1,0 +1,39 @@
+                          COACH  —  480 × 720
+   ┌──────────────────────────────────────────────┐
+   │  Harlo                              ●  ⓘ    │ ← menu-bar icon
+   │  ════════════════════════════════════════    │   reflects state
+   │                                              │
+   │   What's on your mind?                       │
+   │   ┌────────────────────────────────────┐     │
+   │   │                                    │     │
+   │   │                                    │     │
+   │   └────────────────────────────────────┘     │
+   │                                              │
+   │   ────────────────────────────────────       │
+   │                                              │
+   │   You're noticing a pattern in your work     │
+   │   where you defer the hardest piece. Want    │
+   │   to start there instead? Or save it for     │
+   │   tomorrow morning when you're fresh?        │
+   │                                              │
+   │   ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─        │
+   │                                              │
+   │   ›  May I ask — does this defer pattern     │
+   │      show up around tasks that are           │
+   │      ambiguous, or also ones that are        │
+   │      well-defined?                           │
+   │                                              │
+   │      [ Answer ]   [ Not now ]                │
+   │                                              │
+   └──────────────────────────────────────────────┘
+
+   Rules:
+     - One text input. Plain placeholder. No "typing…" indicator.
+     - At most ONE inquiry below the response.
+     - "Not now" decrements rupture cooldown (S3); 3 dismissals
+       in a row → "want me to stop?" prompt on next surface.
+     - During DEPLETED: pane stays open but lower-contrast; no
+       inquiry surfaces, only a one-line "I'm tiring — slow turns".
+     - During RED: pane is replaced by the recovery menu.
+
+   No avatar, no streaks, no "typing…" indicator, no auto-pop-up.

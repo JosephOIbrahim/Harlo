@@ -1,0 +1,44 @@
+                       RED RECOVERY  (modal)
+   ┌──────────────────────────────────────────────────────────────┐
+   │  Harlo                                          ●            │ ← red icon
+   │  ════════════════════════════════════════════════════════    │
+   │                                                              │
+   │                                                              │
+   │                    Stop.                                     │
+   │                                                              │
+   │       I noticed something just now that I don't              │
+   │       feel right continuing through. Let's pause.            │
+   │                                                              │
+   │                                                              │
+   │                                                              │
+   │       What would you like to do?                             │
+   │                                                              │
+   │       ┌──────────────────────────────────────────┐           │
+   │       │  Pause Harlo for 24 hours                │           │
+   │       └──────────────────────────────────────────┘           │
+   │                                                              │
+   │       ┌──────────────────────────────────────────┐           │
+   │       │  Start a fresh session                   │           │
+   │       │  (memory kept, current reasoning reset)  │           │
+   │       └──────────────────────────────────────────┘           │
+   │                                                              │
+   │       ┌──────────────────────────────────────────┐           │
+   │       │  Show me what happened                   │           │
+   │       └──────────────────────────────────────────┘           │
+   │                                                              │
+   │       ┌──────────────────────────────────────────┐           │
+   │       │  Talk to me                              │           │
+   │       │  (limited mode — no motor actions)       │           │
+   │       └──────────────────────────────────────────┘           │
+   │                                                              │
+   └──────────────────────────────────────────────────────────────┘
+
+   Rules (Rule 18):
+     - Modal within the Harlo window only — does NOT cover the
+       user's whole screen / other apps.
+     - Nothing else in Harlo is clickable until the user chooses.
+     - No "Dismiss" / "Continue anyway" — RED clears only on a
+       deliberate choice.
+     - One-time pulse animation on entry, then static. No further
+       motion (calm).
+     - VoiceOver label: "Harlo, stopped. Recovery menu open."

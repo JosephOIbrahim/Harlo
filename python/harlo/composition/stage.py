@@ -17,7 +17,14 @@ from typing import Optional
 from .layer import Layer
 from .merkle import MerkleTree, _sha256
 
-STAGES_DIR = Path("data/stages")
+
+def _stages_dir() -> Path:
+    """Resolve STAGES_DIR through daemon.config so platform-aware paths
+    win. Lazy so reloading daemon.config in tests picks up overrides.
+    """
+    from harlo.daemon import config
+
+    return config.STAGES_DIR
 
 
 class MerkleStage:
@@ -112,14 +119,15 @@ class MerkleStage:
 
     def save(self) -> Path:
         """Persist the stage to a JSON file."""
-        STAGES_DIR.mkdir(parents=True, exist_ok=True)
-        path = STAGES_DIR / f"{self.stage_id}.json"
+        stages_dir = _stages_dir()
+        stages_dir.mkdir(parents=True, exist_ok=True)
+        path = stages_dir / f"{self.stage_id}.json"
         path.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
         return path
 
     @classmethod
     def load(cls, stage_id: str) -> MerkleStage:
         """Load a stage from its JSON file."""
-        path = STAGES_DIR / f"{stage_id}.json"
+        path = _stages_dir() / f"{stage_id}.json"
         data = json.loads(path.read_text(encoding="utf-8"))
         return cls.from_dict(data)

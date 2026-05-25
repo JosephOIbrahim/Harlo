@@ -1,0 +1,50 @@
+                          INTAKE  —  640 × 560
+   ┌──────────────────────────────────────────────────────────────┐
+   │  Harlo                                              ⓘ        │
+   │  ════════════════════════════════════════════════════════    │
+   │                                                              │
+   │                     Question 1 of 6                          │
+   │                                                              │
+   │   When you encounter a new idea, do you tend to              │
+   │   connect it to many other concepts, or do you               │
+   │   prefer to understand it step by step on its                │
+   │   own terms?                                                 │
+   │                                                              │
+   │   ┌────────────────────────────────────────────────────┐     │
+   │   │                                                    │     │
+   │   └────────────────────────────────────────────────────┘     │
+   │                                                              │
+   │   [ I don't know ]                                           │
+   │                                                              │
+   │                                                              │
+   │                                                              │
+   │   ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─          │
+   │                                            Back   Next →     │
+   └──────────────────────────────────────────────────────────────┘
+
+   Rules:
+     - Progress as "N of M" — no percentage bar.
+     - "I don't know" is a first-class button (S8 — uncertain).
+     - No "Skip" button; the user engages or quits the window.
+     - Closing the window does NOT cancel — temp file preserved.
+       Reopen from menu bar to resume.
+
+   "What I learned about you" — final screen:
+
+   ┌──────────────────────────────────────────────────────────────┐
+   │                                                              │
+   │            What I learned about you                          │
+   │            ─────────────────────────                         │
+   │                                                              │
+   │   You think associatively, weaving ideas together.           │
+   │   You like specifics over big-picture framing.               │
+   │   You work in bursts more than long sessions.                │
+   │   Under pressure, your thinking sharpens.                    │
+   │                                                              │
+   │   I'll coach you in short, direct exchanges.                 │
+   │                                                              │
+   │                                                              │
+   │   [ Looks right — finish ]    [ Start over ]                 │
+   └──────────────────────────────────────────────────────────────┘
+
+   No numbers, no multipliers, no internal vocabulary.

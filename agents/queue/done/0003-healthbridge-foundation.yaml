@@ -1,0 +1,19 @@
+id: "0003-healthbridge-foundation"
+role: health_bridge
+title: "Stand up the biometric_barrier and AllostasisTracker biometric methods; defer Swift bridge until Apple Developer ID is provisioned"
+constraints:
+  - "ADR-0001 merged before code touches modulation/allostatic.py"
+  - "Rule 9 (v6.1): biometric data NEVER enters trace, reflex, or composition pipelines"
+  - "Freshness window (default 5 min) enforced before RED transitions"
+  - "Compliance grep `grep -rn biometric python/harlo/elenchus/ python/harlo/bridge/` returns 0"
+context_files:
+  - python/harlo/modulation/biometric_barrier.py
+  - python/harlo/modulation/allostatic.py
+  - python/harlo/motor/basal_ganglia.py
+  - config/biometric_sample_schema.json
+  - docs/adr/0001-healthkit-allostatic.md
+acceptance:
+  - "pytest tests/test_biometric_barrier/ -v passes"
+  - "biometric grep returns 0"
+  - "is_depleted() returns True only under composite (tokens OR biometric) threshold"
+  - "should_force_red() returns False for samples older than 5 minutes"

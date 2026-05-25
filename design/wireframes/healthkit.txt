@@ -1,0 +1,53 @@
+                       SETTINGS  ·  HEALTHKIT
+   ┌──────────────────────────────────────────────────────────────┐
+   │  Settings   Privacy   HealthKit   Advanced            ✕      │
+   │  ════════════════════════════════════════════════════════    │
+   │                                                              │
+   │   ┌────────────────────────────────────────────────────────┐ │
+   │   │  How this works                                        │ │
+   │   │  ───────────────                                       │ │
+   │   │  Apple Watch data syncs to your Mac through your       │ │
+   │   │  iPhone, usually within 5–20 minutes. Harlo uses       │ │
+   │   │  this for slow trends like tiredness, not real-time    │ │
+   │   │  alerts. This is an Apple limitation, not a Harlo      │ │
+   │   │  one.                                                  │ │
+   │   └────────────────────────────────────────────────────────┘ │
+   │                                                              │
+   │   What Harlo can read                                        │
+   │   ─────────────────                                          │
+   │                                                              │
+   │     Heart rate                                  ◯ Off  ▾    │
+   │     Used to notice sustained stress.                         │
+   │                                                              │
+   │     Heart rate variability                      ◯ Off  ▾    │
+   │     Better signal than heart rate alone.                     │
+   │                                                              │
+   │     Sleep                                       ◯ Off  ▾    │
+   │     Used to gauge depletion in the morning.                  │
+   │                                                              │
+   │     Activity                                    ◯ Off  ▾    │
+   │     Used to notice unusual sedentary days.                   │
+   │                                                              │
+   │   ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─        │
+   │                                                              │
+   │   [ Disconnect HealthKit ]                                   │
+   │                                                              │
+   └──────────────────────────────────────────────────────────────┘
+
+   Disconnect confirmation sheet:
+
+   ┌──────────────────────────────────────────────────────────────┐
+   │   Disconnect HealthKit?                                      │
+   │   ─────────────────────                                      │
+   │   This will unload HarloHealthBridge and delete the locally  │
+   │   stored sync anchor. Your HealthKit data in Apple Health    │
+   │   is not touched.                                            │
+   │                                                              │
+   │             [ Cancel ]      [ Disconnect ]                   │
+   └──────────────────────────────────────────────────────────────┘
+
+   Rules:
+     - The latency banner is NOT collapsible.
+     - All toggles default OFF.
+     - "Disconnect HealthKit" has equal visual weight to the
+       toggles — not buried.

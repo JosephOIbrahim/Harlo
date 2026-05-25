@@ -1,0 +1,18 @@
+# Cargo build config for Harlo.
+#
+# macOS link flags: pyo3's `extension-module` feature suppresses
+# linking against libpython (correct — Python loads the cdylib and
+# provides the symbols at runtime). The `-undefined dynamic_lookup`
+# pair tells macOS ld64 to defer those symbol resolutions to load
+# time, matching what pyo3's build.rs injects for the cdylib.
+#
+# Without this, `cargo test -p hippocampus` on macOS fails to link
+# the test binary because ld64 is strict about undefined symbols.
+# Linux CI passes the same test command because GNU ld is permissive
+# by default.
+
+[target.'cfg(target_os = "macos")']
+rustflags = [
+    "-C", "link-arg=-undefined",
+    "-C", "link-arg=dynamic_lookup",
+]

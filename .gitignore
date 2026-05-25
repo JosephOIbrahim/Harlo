@@ -1,4 +1,10 @@
-data/
+data/*
+# Exception: the synthetic trajectories used to train the cognitive
+# predictor are tracked via git-lfs (see .gitattributes). The rest of
+# data/ (twin.db, observations.db, stages/, …) stays user-local.
+# `data/*` is used instead of `data/` so the negation below takes
+# effect — git can't re-include files inside an ignored directory.
+!data/trajectories_10k.jsonl
 target/
 target312/
 __pycache__/
@@ -12,8 +18,12 @@ dist/
 *.dylib
 *.pyd
 *.pdb
-models/ 
-encoder_output/ 
+models/*
+# Exception: the trained cognitive predictor is tracked via git-lfs
+# (see .gitattributes). Other model artifacts (bge-small, etc.) stay
+# user-local. Same `models/*` pattern reason as above.
+!models/cognitive_predictor_v1.joblib
+encoder_output/
 .hypothesis/
 
 # Secrets
@@ -36,3 +46,7 @@ files/
 .coverage
 .pytest_cache/
 .claude/
+
+# Phase 5B — xcodegen output (regenerated each build)
+macos/HarloHealthBridge/HarloHealthBridge.xcodeproj/
+macos/HarloHealthBridge/.build/

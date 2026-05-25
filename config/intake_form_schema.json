@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harlo.local/schemas/intake_form.json",
+  "title": "IntakeFormPayload",
+  "description": "Validated intake form output. Crosses the Blood-Brain Barrier (Rule 8) on its way to becoming Composition Merkle layers (Rule 6) with Provenance.INTAKE_CALIBRATED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["session_id", "completed_at", "answers", "derived_multipliers"],
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "answers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "question_id",
+          "dimension",
+          "score",
+          "raw_text",
+          "sincerity_class",
+          "sincerity_confidence"
+        ],
+        "properties": {
+          "question_id": {"type": "string", "minLength": 1},
+          "dimension": {
+            "type": "string",
+            "enum": ["associativity", "detail", "attention", "stress"]
+          },
+          "score": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "raw_text": {"type": "string"},
+          "sincerity_class": {
+            "type": "string",
+            "enum": [
+              "sincere",
+              "sarcastic",
+              "exasperated",
+              "performative",
+              "uncertain"
+            ]
+          },
+          "sincerity_confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        }
+      }
+    },
+    "derived_multipliers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surprise_threshold",
+        "reconstruction_threshold",
+        "hebbian_alpha",
+        "allostatic_threshold",
+        "detail_orientation"
+      ],
+      "properties": {
+        "surprise_threshold": {"type": "number"},
+        "reconstruction_threshold": {"type": "number"},
+        "hebbian_alpha": {"type": "number"},
+        "allostatic_threshold": {"type": "number"},
+        "detail_orientation": {"type": "number"}
+      }
+    },
+    "anchor_seeds": {
+      "type": "object",
+      "description": "Read-only annotations only. Anchor GAINS stay structural 1.0 (Rule 7, Rule 10). This object records user-stated priorities for coaching framing, not gain modifications.",
+      "additionalProperties": false,
+      "properties": {
+        "SAFETY": {"type": "string"},
+        "CONSENT": {"type": "string"},
+        "KNOWLEDGE": {"type": "string"},
+        "CONSTITUTIONAL": {"type": "string"}
+      }
+    },
+    "coaching_voice": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "directness": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+        "warmth": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+        "preferred_pronoun": {"type": "string"},
+        "rupture_tolerance": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        }
+      }
+    }
+  }
+}
