@@ -104,7 +104,20 @@ jobs:
           python setup_py2app.py py2app -v
           ls -lh dist/
 
+      - name: Detect signing capability
+        id: gate
+        env:
+          CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
+        run: |
+          if [ -n "$CERT_P12" ]; then
+            echo "signing=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signing=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No signing secrets configured — build-only canary (sign/notarize/DMG/release skipped)."
+          fi
+
       - name: Import Developer ID certificate
+        if: ${{ steps.gate.outputs.signing == 'true' }}
         env:
           CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
           CERT_PW: ${{ secrets.APPLE_DEVELOPER_CERT_PASSWORD }}
@@ -121,7 +134,7 @@ jobs:
           rm "$RUNNER_TEMP/cert.p12"
 
       - name: Sign + notarize + staple
-        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run }}
+        if: ${{ steps.gate.outputs.signing == 'true' && github.event_name != 'pull_request' && !inputs.dry_run }}
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_DEVELOPER_CERT_IDENTITY: ${{ secrets.APPLE_DEVELOPER_CERT_IDENTITY }}
@@ -135,7 +148,7 @@ jobs:
           rm "$APP_STORE_CONNECT_PRIVATE_KEY_PATH"
 
       - name: Sign only (dry run)
-        if: ${{ github.event_name == 'pull_request' || inputs.dry_run }}
+        if: ${{ steps.gate.outputs.signing == 'true' && (github.event_name == 'pull_request' || inputs.dry_run) }}
         env:
           APPLE_DEVELOPER_CERT_IDENTITY: ${{ secrets.APPLE_DEVELOPER_CERT_IDENTITY }}
         run: |
@@ -146,13 +159,13 @@ jobs:
           codesign --verify --deep --strict --verbose=2 dist/Harlo.app
 
       - name: Build DMG
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ steps.gate.outputs.signing == 'true' && github.event_name != 'pull_request' }}
         run: |
           brew install create-dmg
           bash scripts/macos_build_dmg.sh dist/Harlo.dmg
 
       - name: Upload artifact
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ steps.gate.outputs.signing == 'true' && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: Harlo-${{ github.ref_name }}-dmg
@@ -160,7 +173,7 @@ jobs:
           retention-days: 30
 
       - name: Attach to draft Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ steps.gate.outputs.signing == 'true' && startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@v2
         with:
           draft: true
