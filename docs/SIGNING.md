@@ -37,7 +37,7 @@ Performed by the human operator at <https://developer.apple.com/account>.
 ### 2. Register the bundle ID
 
 1. Developer portal → **Identifiers** → "+" → **App IDs** → **App**.
-2. Description: `Harlo`. Bundle ID: `com.harlo.app` (Explicit).
+2. Description: `Harlo`. Bundle ID: `com.josephibrahim.harlo` (Explicit).
 3. Capabilities: none required for Phase 5A.
 4. Register.
 
@@ -108,7 +108,7 @@ make dmg
 
 # 5. Verify
 spctl -a -t exec -vv dist/Harlo.app          # → "accepted source=Notarized Developer ID"
-codesign -dvvv dist/Harlo.app                # → identifier=com.harlo.app, runtime, Team ID=233JSS4X69
+codesign -dvvv dist/Harlo.app                # → identifier=com.josephibrahim.harlo, runtime, Team ID=233JSS4X69
 ```
 
 `~/.config/harlo/notary.env` for local runs:

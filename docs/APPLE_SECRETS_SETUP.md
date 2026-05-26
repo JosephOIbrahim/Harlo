@@ -51,9 +51,9 @@ Canonical: [`SIGNING.md` § "Generate a Developer ID Application certificate"](.
 Canonical: [`SIGNING.md` § "Register the bundle ID"](./SIGNING.md#2-register-the-bundle-id).
 
 - [ ] Developer portal → **Identifiers** → "+" → **App IDs** → **App**.
-- [ ] Description: `Harlo`. Bundle ID: **Explicit** → `com.harlo.app`.
+- [ ] Description: `Harlo`. Bundle ID: **Explicit** → `com.josephibrahim.harlo`.
 - [ ] Capabilities: leave all unchecked (Phase 5A needs none — HealthKit lands in 5B).
-- [ ] Register. Confirm `com.harlo.app` shows in the Identifiers list.
+- [ ] Register. Confirm `com.josephibrahim.harlo` shows in the Identifiers list.
 
 ---
 

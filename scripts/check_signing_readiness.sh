@@ -6,7 +6,7 @@
 # Checks performed:
 #   1. macos/Harlo.app/Contents/Info.plist parses (PlistBuddy/Python).
 #   2. macos/Harlo.app/Contents/Entitlements.plist parses.
-#   3. CFBundleIdentifier == com.harlo.app (Phase 5A invariant).
+#   3. CFBundleIdentifier == com.josephibrahim.harlo (Phase 5A invariant).
 #   4. NSAppTransportSecurity exemptions are absent.
 #   5. Hardened-runtime entitlement allow-* keys are absent (would
 #      weaken signing surface). Phase 5A starts strict per Entitlements.plist.
@@ -51,10 +51,10 @@ else
   fi
 
   BUNDLE_ID="$(python3 -c "import plistlib,sys; print(plistlib.loads(open(sys.argv[1],'rb').read()).get('CFBundleIdentifier',''))" "$INFO_PLIST")"
-  if [ "$BUNDLE_ID" = "com.harlo.app" ]; then
-    pass "CFBundleIdentifier = com.harlo.app"
+  if [ "$BUNDLE_ID" = "com.josephibrahim.harlo" ]; then
+    pass "CFBundleIdentifier = com.josephibrahim.harlo"
   else
-    fail "CFBundleIdentifier = '$BUNDLE_ID' (expected com.harlo.app)"
+    fail "CFBundleIdentifier = '$BUNDLE_ID' (expected com.josephibrahim.harlo)"
   fi
 
   if python3 -c "import plistlib,sys; d=plistlib.loads(open(sys.argv[1],'rb').read()); sys.exit(0 if 'NSAppTransportSecurity' not in d else 1)" "$INFO_PLIST"; then
