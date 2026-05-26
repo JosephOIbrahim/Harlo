@@ -37,21 +37,22 @@ fi
 : "${APP_STORE_CONNECT_PRIVATE_KEY_PATH:?must be set}"
 
 echo "==> Deep-signing nested binaries first"
-# Sign every .so / .dylib / nested .app inside the bundle in
-# reverse-depth order so py2app's stripped Rust extension regains
-# a valid signature before the outer bundle signature seals it.
-find "$APP_PATH" \
-    -type f \
-    \( -name "*.dylib" -o -name "*.so" \) \
-    -print0 |
+# Sign every nested Mach-O — detected by content, not just *.dylib/*.so —
+# so py2app's embedded Python.framework binary and the secondary
+# Contents/MacOS/python executable are covered too. Notarization rejects
+# ANY unsigned / non-hardened Mach-O, and those two have no .dylib/.so
+# suffix so the old name-based filter skipped them. --force is idempotent;
+# leaf binaries are signed before the outer bundle seals them.
 while IFS= read -r -d '' bin; do
-    codesign \
-        --force \
-        --options=runtime \
-        --timestamp \
-        --sign "$APPLE_DEVELOPER_CERT_IDENTITY" \
-        "$bin"
-done
+    if file -b "$bin" | grep -q 'Mach-O'; then
+        codesign \
+            --force \
+            --options=runtime \
+            --timestamp \
+            --sign "$APPLE_DEVELOPER_CERT_IDENTITY" \
+            "$bin"
+    fi
+done < <(find "$APP_PATH" -type f -print0)
 
 echo "==> Signing the outer app bundle"
 if [[ -f "$ENTITLEMENTS" ]]; then

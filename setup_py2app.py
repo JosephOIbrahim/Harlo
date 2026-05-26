@@ -102,6 +102,23 @@ OPTIONS = {
         "test",
         "unittest",
         "pytest",
+        # Lean v0.1.0 bundle: the runtime default is the lexical (Rust)
+        # encoder (config.ENCODER_TYPE="lexical"). The semantic path
+        # (harlo.encoder.semantic_encoder / onnx_encoder) is NOT reachable
+        # from any launcher mode (daemon/agents/mcp/CLI) — verified by
+        # importing every entry point with these blocked. Excluding the ML
+        # stack drops ~hundreds of MB and removes protobuf's C-extension,
+        # which py2app trapped (unsignable) inside python312.zip and broke
+        # notarization. Re-add via a [semantic] build if that path ships.
+        "transformers",
+        "onnxruntime",
+        "xgboost",
+        "sentence_transformers",
+        "torch",
+        "sklearn",
+        "scipy",
+        "google",
+        "google.protobuf",
     ],
     "strip": False,
     "optimize": 0,
