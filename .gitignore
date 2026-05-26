@@ -13,6 +13,7 @@ __pycache__/
 .venv/
 .venv312/
 *.egg-info/
+build/
 dist/
 *.so
 *.dylib
