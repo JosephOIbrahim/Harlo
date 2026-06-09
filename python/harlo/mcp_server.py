@@ -307,6 +307,101 @@ def query_past_experience(query: str, limit: int = 10) -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
+@server.tool(name="anchor_demo")
+def anchor_demo() -> str:
+    """Author the SPEC §F2 anchor structural-immunity scene on the live stage.
+
+    Cycle 4 verifier-side: authors an `anchor_layer.usda` (always-strongest
+    sublayer holding the 4 anchor prims), a `base_layer.usda` (weakest, holding
+    non-anchor cognitive defaults), four delta layers (default / stress / rest
+    + ONE adversarial that explicitly authors an opinion on an anchor path),
+    plus per-profile composed roots with `subLayerPaths=[anchor, delta_X, base]`
+    and a clean composed root for the reference clean_anchor_hash.
+
+    The verifier (wave1_harness.check_anchor_immunity) asserts (a) anchor hash
+    invariance across all profiles including adversarial, (b) non-anchor hash
+    variation across modulating profiles (deltas non-vacuous), (c) the
+    adversarial layer actually authored its attack, (d) the composed
+    adversarial stage resolves the attacked anchor to its CLEAN value
+    — proving structural immunity, not parametric protection.
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("anchor_demo", {})
+    try:
+        from harlo.usd_lite.anchor_demo import author_anchor_immunity_demo
+        base_dir = str(DATA_DIR / "stages")
+        result = author_anchor_immunity_demo(base_dir)
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
+@server.tool(name="lossless_demo")
+def lossless_demo() -> str:
+    """Author the SPEC §F2 thesis-test scene on the live `real_usd` stage.
+
+    Cycle 3 verifier-side: authors clean baseline + delta overlay as separate
+    USD sublayers tagged via customLayerData["layer_role"], composes them via
+    root subLayerPaths, plus a clean-only composed root for the reference
+    clean_hash. Returns the reference clean_hash computed through the same
+    `reconstruct_clean` path the verifier uses (apples vs apples for SHA256
+    bit-identity). The verifier reads the actual reconstruction and asserts
+    `SHA256(reconstruct_clean(composed_with_delta)) == clean_hash` — bit-
+    identical, NOT float-tolerant.
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("lossless_demo", {})
+    try:
+        from harlo.usd_lite.lossless_demo import author_lossless_demo
+        base_dir = str(DATA_DIR / "stages")
+        result = author_lossless_demo(base_dir)
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
+@server.tool(name="compose_demo")
+def compose_demo() -> str:
+    """Author the SPEC §F1 thesis-test scene on the live `real_usd` stage.
+
+    Cycle 2 verifier-side: authors LOCAL + VARIANT + SPECIALIZE arcs on three
+    sibling test prims under /Brain/CompositionDemo and saves them to a
+    dedicated .usda. The verifier (wave1_harness.check_native_composition)
+    then opens the file in a cold pxr process and reads pxr's RESOLVED
+    attribute value at each prim — testing the USD-native-priority thesis
+    on real composition semantics, not on a Python IntEnum proxy.
+
+    Returns JSON with: path (the .usda written), attribute (name being
+    composed), scenarios (list of {path, arcs, expected_winner,
+    expected_value}). The verifier asserts pxr's resolution against
+    expected_value at each scenario.
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("compose_demo", {})
+    try:
+        from harlo.usd_lite.composition_demo import author_native_composition_demo
+        stage_path = str(DATA_DIR / "stages" / "composition_demo.usda")
+        result = author_native_composition_demo(stage_path)
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
 @server.tool(name="persist_stage")
 def persist_stage() -> str:
     """Persist the current cognitive state to a USD .usda file.
