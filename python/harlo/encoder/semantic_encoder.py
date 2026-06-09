@@ -10,8 +10,18 @@ Pipeline:
 """
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from typing import Optional
+
+# Lean-bundle degrade path: sentence_transformers is deliberately EXCLUDED
+# from the v0.1.x bundle (see setup_py2app.py excludes). Import optionally
+# so the encoder package loads cleanly; SemanticEncoder.__init__ raises a
+# clear ImportError if instantiation is attempted without the dep. Callers
+# should route to the Rust lexical encoder (harlo.hippocampus.py_recall)
+# on ImportError as the architected degrade path.
+try:
+    from sentence_transformers import SentenceTransformer
+except ImportError:
+    SentenceTransformer = None  # type: ignore[assignment,misc]
 
 # Match the Rust encoder constants
 SDR_WIDTH = 2048
@@ -28,7 +38,17 @@ class SemanticEncoder:
 
         Args:
             model_name: HuggingFace model name. Default uses BGE-small (384-dim).
+
+        Raises:
+            ImportError: If sentence_transformers is not installed (lean-bundle
+                degrade — callers should route to the Rust lexical encoder).
         """
+        if SentenceTransformer is None:
+            raise ImportError(
+                "sentence_transformers is not installed; the lean bundle "
+                "excludes the ML stack. Degrade path: use the Rust lexical "
+                "encoder via harlo.hippocampus.py_recall / py_store_trace."
+            )
         self.model = SentenceTransformer(model_name)
         self.projection_matrix = self._create_projection_matrix()
 

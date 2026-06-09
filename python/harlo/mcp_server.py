@@ -243,10 +243,17 @@ def twin_recall(query: str, depth: str = "normal") -> str:
 
     try:
         try:
-            from encoder import semantic_recall
+            try:
+                from encoder import semantic_recall
+            except ImportError:
+                from harlo.encoder import semantic_recall
+            result = semantic_recall(DB_PATH, query, depth=depth)
         except ImportError:
-            from harlo.encoder import semantic_recall
-        result = semantic_recall(DB_PATH, query, depth=depth)
+            # Lean-bundle degrade: sentence_transformers is excluded from the
+            # bundle on purpose. Route to the Rust lexical encoder, which
+            # returns an identically-shaped dict (context/confidence/traces).
+            from harlo import hippocampus
+            result = hippocampus.py_recall(query, depth, str(DB_PATH))
         response = {
             "status": "ok",
             "context": result.get("context", ""),
