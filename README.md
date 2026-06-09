@@ -26,6 +26,7 @@ PRODUCTION LIVE — Harlo v6.1-MOTOR
 Substrate-unified with sister project Moneta · P1 CIP defensible
 458 organic observations collected · 5 sprints shipped · Path C closed (Step 3)
 Phase 5A landed: macOS bundle · intake calibration · biometric barrier · Motor Cortex with Basal Ganglia gating
+v0.1.2: USD-proof trial — §F1 native composition · §F2 structural lossless · anchor immunity · P5 customData · P1 decision-tier — CONFIRMED on live pxr stage (verifier-first, 4 cycles)
 ```
 
 | Sprint | Tests | What Shipped |
@@ -37,6 +38,74 @@ Phase 5A landed: macOS bundle · intake calibration · biometric barrier · Moto
 | **S5** Production | 22 | Graceful degradation (independent failure isolation), health check endpoint, kill switches (`ENGINE_ENABLED`, `USE_REAL_USD`, `OBSERVATION_LOGGING`, `PREDICTION_ENABLED`), first session verified, production docs |
 | **Path C** Step 3 v3.4.0 | +39 | Real OpenUSD as canonical persistence (codeless schema, 21 prim types under `harlo` plugin separate from Moneta); USD-Lite engine preserved as fast in-memory runtime tier (Fabric pattern); sync layer per D4 policy table; migration script for USD-Lite v1 → real USD; substrate-unified with sister project Moneta. P1 CIP framing now defensible. |
 | **Phase 5A** macOS + Operator | +51 | macOS app bundle (Harlo.app + launchd socket activation), intake calibration CLI emitting three INTAKE_CALIBRATED Merkle layers, biometric barrier per ADR-0001 (opt-in HealthKit signals, freshness window, never enter trace pipeline), Motor Cortex with Basal Ganglia inhibition-default gating, `harlo doctor --strict` operator readiness, signing-readiness pre-flight (27 checks) |
+| **USD Trial** v0.1.2 | +verifier | SOLO trial-harness loop (`docs/trial-harness.md` + `docs/usd-proof-trial.md`); 4 engine cycles verifier-first against `wave1_harness.py`; native USD-composition theses CONFIRMED on the live `pxr`-backed stage: §F1 `LOCAL > VARIANT > SPECIALIZE` resolution, §F2 `reconstruct_clean` bit-identical, anchor structural immunity (adversarial probe), P5 customData state tracking; new MCP tools — `compose_demo`, `lossless_demo`, `anchor_demo`, `p5_state_demo`, `persist_stage`, `decision`. P1 closed via Path C Actor-driven motor surface. |
+
+---
+
+## USD Substrate Trial — Live-Stage Theses Confirmed (v0.1.2)
+
+Four engine cycles run against a verifier-first SOLO trial harness proved
+the foundational USD-as-cognitive-substrate theses **on the live `pxr`-
+backed `real_usd` stage** — not via Python proxy, not by parametric
+guarantee. Every cycle observed RED before the change, GREEN after, and
+was independently re-verified in a cold-pxr process. Trial state lives
+in `docs/usd-proof-trial.md` (SPEC + CHAMPION v6 + LOG).
+
+- **§F1 — USD-native-priority** (Cycle 2). pxr resolves
+  `LOCAL > VARIANT > SPECIALIZE` on `/Brain/CompositionDemo`.
+  `GetPropertyStack` reports the strength order itself. Native composition
+  arcs map to cognitive priority without fighting USD semantics.
+- **§F2 — structural lossless** (Cycle 3). `reconstruct_clean()` as
+  flatten-to-base recovers the clean baseline bit-identically from a
+  composed (clean + delta) stage. Same SHA256 from cold-pxr re-read;
+  reconstruction is exact, not float-tolerant.
+- **§F2 anchor structural immunity** (Cycle 4). CONSTITUTIONAL / SAFETY /
+  CONSENT / KNOWLEDGE anchors invariant across 4 delta profiles. The
+  adversarial profile explicitly authors
+  `/Brain/Anchors/CONSTITUTIONAL.value = "MALICIOUS_OVERRIDE"`; pxr
+  rejects it by composition mechanics — anchor sublayer at
+  `subLayerPaths[0]` wins. Structural, not parametric.
+- **P5 — customData state tracking** (Cycle 5). Unchanged / Edited / New
+  derived per-prim from prim-stack analysis, written to a derived tags
+  sublayer, read back through composition. Three prims, three states —
+  tagged / computed / expected all agree.
+- **P1 decision-tier closure** (Cycle 6). New `decision` MCP tool — the
+  Actor-driven motor surface — queues MotorPrims that
+  `persist_current_brain` drains. Live stage now authors session +
+  entity + decision tiers.
+
+Reproduce: `.venv312/bin/python wave1_harness.py`. The 7-row scoreboard
+asserts the live USD flip, populated hierarchy (P1), native composition
+(P3 / §F1), structural lossless (P4 / §F2), anchor immunity (§F2 follow-
+up), and customData state tracking (P5).
+
+### Path C motor surface (Cycle 6) — Actor → live MotorPrim
+
+```mermaid
+sequenceDiagram
+    participant Actor
+    participant Decision as decision(MCP tool)
+    participant Queue as _PENDING_MOTOR_ACTIONS
+    participant Persist as persist_current_brain
+    participant Brainstem as full_stage(motor_actions=…)
+    participant Writer as writer.py _write_motor
+    participant Stage as runtime.usda
+    Actor->>Decision: decision(action, gate_status="inhibited")
+    Note right of Decision: Rule 23 default —<br/>Basal Ganglia inhibit-by-default
+    Decision->>Queue: queue_motor_action(...)
+    Note over Queue: module-level list,<br/>lives for the MCP subprocess
+    Actor->>Persist: persist_stage
+    Persist->>Queue: snapshot_pending_motor_actions()
+    Persist->>Brainstem: full_stage(motor_actions=…)
+    Brainstem->>Writer: motor_to_prims(...)
+    Writer->>Stage: DefinePrim("/Brain/Motor/action_i", "MotorPrim")
+    Note over Stage: live pxr stage,<br/>/Brain/Motor/* populated
+```
+
+The inert motor system (`premotor`, `basal_ganglia`, `executor`) remains
+disconnected — Path C creates the **smallest honest motor surface**.
+Consent escalation, basal-ganglia gating, and executor wiring are parked
+for future cycles.
 
 ---
 
