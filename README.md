@@ -83,24 +83,33 @@ up), and customData state tracking (P5).
 
 ```mermaid
 sequenceDiagram
-    participant Actor
-    participant Decision as "decision (MCP tool)"
-    participant Queue as "_PENDING_MOTOR_ACTIONS"
-    participant Persist as "persist_current_brain"
-    participant Brainstem as "full_stage(motor_actions=...)"
-    participant Writer as "writer.py _write_motor"
-    participant Stage as "runtime.usda"
-    Actor->>Decision: decision(action, gate_status='inhibited')
-    Note right of Decision: Rule 23 default<br/>Basal Ganglia inhibit-by-default
-    Decision->>Queue: queue_motor_action(...)
+    participant User
+    participant Tool
+    participant Queue
+    participant Persist
+    participant Brain
+    participant Writer
+    participant Stage
+    User->>Tool: decision action gate_status
+    Note right of Tool: Rule 23 default<br/>Basal Ganglia inhibit-by-default
+    Tool->>Queue: queue_motor_action
     Note over Queue: module-level list<br/>lives for the MCP subprocess
-    Actor->>Persist: persist_stage
-    Persist->>Queue: snapshot_pending_motor_actions()
-    Persist->>Brainstem: full_stage(motor_actions=...)
-    Brainstem->>Writer: motor_to_prims(...)
-    Writer->>Stage: DefinePrim('/Brain/Motor/action_i', 'MotorPrim')
-    Note over Stage: live pxr stage<br/>/Brain/Motor/* populated
+    User->>Persist: persist_stage
+    Persist->>Queue: snapshot_pending_motor_actions
+    Persist->>Brain: full_stage with motor_actions
+    Brain->>Writer: motor_to_prims
+    Writer->>Stage: DefinePrim MotorPrim under Brain Motor
+    Note over Stage: live pxr stage<br/>Brain Motor populated
 ```
+
+Diagram legend:
+- **User** = the actor (Claude in production; the trial harness in tests)
+- **Tool** = `decision` MCP tool (Actor-driven motor surface)
+- **Queue** = `_PENDING_MOTOR_ACTIONS` module-level list in `persistence/__init__.py`
+- **Persist** = `persist_current_brain` (called by `persist_stage` MCP tool)
+- **Brain** = `brainstem.stage_builder.full_stage(motor_actions=…)`
+- **Writer** = `python/harlo/usd_lite/persistence/writer.py:_write_motor` — `stage.DefinePrim("/Brain/Motor/action_i", "MotorPrim")`
+- **Stage** = `<DATA_DIR>/stages/runtime.usda` (the live `pxr.Usd.Stage`)
 
 The inert motor system (`premotor`, `basal_ganglia`, `executor`) remains
 disconnected — Path C creates the **smallest honest motor surface**.
