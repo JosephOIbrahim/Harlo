@@ -152,8 +152,8 @@ flowchart TB
     SYNCLAYER --> RUNTIME
     MIG -.->|"upgrade path"| PERSISTENCE
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 The persistence layer is the canonical truth. The runtime layer is the
@@ -231,8 +231,8 @@ flowchart TB
     APIB --> PROV
     PROV -.->|"attaches to"| CLP
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 - **Two abstract bases:** `HarloPrim` (root of every Harlo type) and
@@ -276,8 +276,8 @@ flowchart LR
     CP --> OUT_CP
     INMEM -.-> OUT_INMEM
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 - **write_through** — synchronous persistence on every mutation. Used
@@ -371,8 +371,8 @@ flowchart TB
     RED -.->|"halt"| INQ
     RED -.->|"halt"| VER
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 ### Phase 5A · macOS bundle + operator layer
@@ -417,8 +417,8 @@ flowchart LR
     BIO -.->|"allostatic only"| GATE
     GATE --> ACT
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 See `docs/SIGNING.md` and `docs/APPLE_SECRETS_SETUP.md` for the
@@ -497,12 +497,12 @@ graph TB
     MEMORY --> MCP
     ENGINE -->|"enriched context"| USER
 
-    classDef user fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
-    classDef tool fill:#0f3460,stroke:#3b82f6,color:#93c5fd
-    classDef engine fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe,font-weight:bold
-    classDef usd fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold,stroke-width:3px
-    classDef memory fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
-    classDef buffer fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef user fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
+    classDef tool fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef engine fill:#d4895e,stroke:#a0623d,color:#000000,font-weight:bold
+    classDef usd fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold,stroke-width:3px
+    classDef memory fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef buffer fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 ### Exchange Loop
@@ -530,9 +530,9 @@ graph LR
 
     CALL --> PIPELINE --> RESPONSE
 
-    classDef input fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
-    classDef step fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
-    classDef output fill:#22c55e,stroke:#4ade80,color:#fff,font-weight:bold
+    classDef input fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
+    classDef step fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef output fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
 ```
 
 ### Cognitive State Machines
@@ -632,16 +632,16 @@ graph TB
     MATCH --> DELEGATES
     DELEGATES -->|"Sync/Execute/Commit"| SUBLAYERS
 
-    classDef route fill:#0f3460,stroke:#3b82f6,color:#93c5fd,font-weight:bold
-    classDef req fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
-    classDef red fill:#7f1d1d,stroke:#ef4444,color:#fff,font-weight:bold
-    classDef orange fill:#5c1a1a,stroke:#ef4444,color:#fca5a5
-    classDef consent fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
-    classDef registry fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
-    classDef claude fill:#0f3460,stroke:#3b82f6,color:#93c5fd,font-weight:bold
-    classDef code fill:#1a3a4a,stroke:#06b6d4,color:#a5f3fc,font-weight:bold
-    classDef future fill:#1a1a2e,stroke:#6b7280,color:#9ca3af,stroke-dasharray: 5 5
-    classDef sub fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,stroke-width:2px
+    classDef route fill:#d4895e,stroke:#a0623d,color:#000000,font-weight:bold
+    classDef req fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef red fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
+    classDef orange fill:#e6c466,stroke:#a8884a,color:#000000
+    classDef consent fill:#e6c466,stroke:#a8884a,color:#000000
+    classDef registry fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef claude fill:#d4895e,stroke:#a0623d,color:#000000,font-weight:bold
+    classDef code fill:#d4895e,stroke:#a0623d,color:#000000,font-weight:bold
+    classDef future fill:#d4895e,stroke:#a0623d,color:#000000,stroke-dasharray: 5 5
+    classDef sub fill:#e6c466,stroke:#a8884a,color:#000000,stroke-width:2px
 ```
 
 ### Prediction Pipeline
@@ -685,11 +685,11 @@ graph TB
     ORGANIC -->|"retrain"| TRAINING
     MODEL --> LIVE
 
-    classDef gen fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
-    classDef anchor fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,stroke-width:3px
-    classDef organic fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
-    classDef train fill:#0f3460,stroke:#3b82f6,color:#93c5fd
-    classDef live fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold
+    classDef gen fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef anchor fill:#d4895e,stroke:#a0623d,color:#000000,stroke-width:3px
+    classDef organic fill:#e6c466,stroke:#a8884a,color:#000000
+    classDef train fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef live fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
 ```
 
 ---
