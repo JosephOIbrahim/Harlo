@@ -84,22 +84,22 @@ up), and customData state tracking (P5).
 ```mermaid
 sequenceDiagram
     participant Actor
-    participant Decision as decision(MCP tool)
-    participant Queue as _PENDING_MOTOR_ACTIONS
-    participant Persist as persist_current_brain
-    participant Brainstem as full_stage(motor_actions=…)
-    participant Writer as writer.py _write_motor
-    participant Stage as runtime.usda
-    Actor->>Decision: decision(action, gate_status="inhibited")
-    Note right of Decision: Rule 23 default —<br/>Basal Ganglia inhibit-by-default
+    participant Decision as "decision (MCP tool)"
+    participant Queue as "_PENDING_MOTOR_ACTIONS"
+    participant Persist as "persist_current_brain"
+    participant Brainstem as "full_stage(motor_actions=...)"
+    participant Writer as "writer.py _write_motor"
+    participant Stage as "runtime.usda"
+    Actor->>Decision: decision(action, gate_status='inhibited')
+    Note right of Decision: Rule 23 default<br/>Basal Ganglia inhibit-by-default
     Decision->>Queue: queue_motor_action(...)
-    Note over Queue: module-level list,<br/>lives for the MCP subprocess
+    Note over Queue: module-level list<br/>lives for the MCP subprocess
     Actor->>Persist: persist_stage
     Persist->>Queue: snapshot_pending_motor_actions()
-    Persist->>Brainstem: full_stage(motor_actions=…)
+    Persist->>Brainstem: full_stage(motor_actions=...)
     Brainstem->>Writer: motor_to_prims(...)
-    Writer->>Stage: DefinePrim("/Brain/Motor/action_i", "MotorPrim")
-    Note over Stage: live pxr stage,<br/>/Brain/Motor/* populated
+    Writer->>Stage: DefinePrim('/Brain/Motor/action_i', 'MotorPrim')
+    Note over Stage: live pxr stage<br/>/Brain/Motor/* populated
 ```
 
 The inert motor system (`premotor`, `basal_ganglia`, `executor`) remains
