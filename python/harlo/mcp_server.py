@@ -430,6 +430,36 @@ def compose_demo() -> str:
         })
 
 
+@server.tool(name="decision")
+def decision(action: str, gate_status: str = "inhibited") -> str:
+    """Record an Actor-driven decision; queues a MotorPrim for the next
+    persist_stage. Cycle 6 — Path C motor-surface wire-up.
+
+    Spawns a MotorPrim with the caller's action string. gate_status
+    defaults to "inhibited" per Rule 23 (Basal Ganglia inhibit-by-default).
+    The MotorPrim is queued module-locally; the next `persist_stage` call
+    drains the queue and authors the MotorPrims under /Brain/Motor/.
+
+    Basal_ganglia execution gating is a separate parked decision —
+    MotorPrims author at the requested gate_status without invoking
+    gating logic.
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("decision",
+                         {"action": action, "gate_status": gate_status})
+    try:
+        from harlo.usd_lite.persistence import queue_motor_action
+        entry = queue_motor_action(action, gate_status)
+        response = {"status": "ok", **entry}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
 @server.tool(name="persist_stage")
 def persist_stage() -> str:
     """Persist the current cognitive state to a USD .usda file.

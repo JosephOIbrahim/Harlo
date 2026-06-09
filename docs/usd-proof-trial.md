@@ -41,7 +41,71 @@ lossless *math*); Wave 2 biometrics.  **[ASSERTED]**
 
 ---
 
-## CHAMPION.md  — v5 (Cycle 5: P5 customData state tracking GREEN on live stage)
+## CHAMPION.md  — v6 (Cycle 6: P1 complete — decision-tier MotorPrim authored on live stage via Path C)
+**P1 status: complete.** Session + entity + DECISION tiers all populated on the live
+`real_usd` stage. Cycle 1 deferred the decision tier (no minimal-flow MotorPrim
+production in v9 engine); Cycle 6 resolves the deferral via **Path C: Actor-driven
+motor surface** — a new `decision(action, gate_status="inhibited")` MCP tool that
+queues MotorPrims module-locally, drained by `persist_current_brain` on each
+`persist_stage` call.
+
+**Why Path C and not A/B:** A (placeholder seed in persist) is fabrication per
+Cycle 1 amendment 2; B (engine-wire-up at status/store/coach) requires
+architectural decisions about engine semantics (which trigger? gating?
+observability?) that scope-balloon past the trial. C creates the smallest
+honest motor surface: the Actor (or trial harness) explicitly declares a
+decision; the Twin records it as a MotorPrim. Basal_ganglia execution gating
+remains inert (parked for future cycle).
+
+**Verifier evidence** (cold pxr re-read of `runtime.usda`):
+- `/Brain/Motor (MotorContainerPrim)` — children=1
+- `/Brain/Motor/action_0 (MotorPrim)` —
+  `action = 'trial:verify decision-tier authoring'`,
+  `gate_status = 'inhibited'` (Rule 23 default)
+- Authoring declarative via `stage.DefinePrim(path, "MotorPrim")` +
+  `_set_string`/`_set_token` (writer.py:152-156) — no per-traversal computation.
+
+**Reproduce:** `.venv312/bin/python wave1_harness.py`. `populated hierarchy (P1)`
+scoreboard row now shows
+`decision=PASS(1 MotorPrim, tier_count=1)` (was `decision=deferred` in v5).
+
+**Confidence vs predicates:**
+- **P1 = ~0.7** (was 0.5) — session + entity + decision STRUCTURE all proven on
+  the live stage. Remaining ~0.3: AIMemoryChunk prim (still NO-CODE; P2 work),
+  semantic richness of the MotorPrim (action is trial-flavored — Actor-driven
+  with real cognitive intents is a future surface widening).
+- P3 = ~0.8 (unchanged).
+- P4 = ~0.9 (unchanged).
+- P5 = ~0.7 (unchanged).
+- P2 = 0.0 (unchanged — architect fork at queue end).
+- **P6 = green** — full harness asserts P1+P3+P4+P4b+P5+P6 GREEN; no regression.
+
+**Code added (working tree, uncommitted):**
+- `python/harlo/usd_lite/persistence/__init__.py` — module-level
+  `_PENDING_MOTOR_ACTIONS` list; `queue_motor_action(action, gate_status)` +
+  `snapshot_pending_motor_actions()` helpers; `persist_current_brain` now
+  consumes the queue via `brainstem.full_stage(motor_actions=...)`.
+- `python/harlo/mcp_server.py` — `@server.tool(name="decision")` calling
+  `queue_motor_action`; engine init still untouched.
+- `wave1_harness.py` — `check_populated_hierarchy()` tightened: calls
+  `decision` between `store` and `persist_stage` (if tool exposed), asserts
+  ≥1 MotorPrim under `/Brain/Motor/` (FAIL outright if missing — no more
+  "deferred" exception).
+
+**What did NOT change (per Cycle 6 hard constraints):**
+- `composition/resolver.py` and `usd_lite/composer.py` (inert composers) — untouched.
+- `python/harlo/motor/{basal_ganglia,executor,premotor,consent}.py` — STILL
+  inert (zero production callers). Path C creates the simplest motor surface
+  via `queue_motor_action`; it does NOT invoke `premotor.create_plan`,
+  `basal_ganglia.gate`, or `executor.execute`. Each of those remains a
+  separate future cycle decision (consent escalation, gating logic, etc.).
+- v9 engine init path — untouched.
+
+**v5 retained for history** (in LOG): P5 customData state tracking CONFIRMED.
+
+## CHAMPION-v5 (Cycle 5) — historical record
+**P5 status: GREEN.** customData Unchanged / Edited / New tracking works on a
+multi-layer composed stage.
 **P5 status: GREEN.** customData Unchanged / Edited / New tracking works on a
 multi-layer composed stage. Per-prim tag derived from prim-stack analysis (filtering
 by `customLayerData["layer_role"]`), written into a dedicated tags layer, read back
@@ -334,6 +398,25 @@ no composition. Confidence P1–P5 = 0.0; P6 = partial.
   enum + precedence engine), `schema/HarloSchema.usda` (21 concreteTyped prims; singleApply `Provenance`
   only — no multi-apply, no `AIMemoryChunk`).
 - `FRAME-CONFIRMED` | architect confirmed FRAME + branch (a); engine cycle opens — `OPEN` resolved | 2026-06-09.
+- `CYCLE-6` | BUILD→CHECK on P1 decision-tier — Path C (Actor-driven motor surface).
+  Architect chose Path C from forks {A=placeholder seed (fabrication, kill), B=engine
+  wire-up (architectural overhead, defer), C=new `decision` MCP tool (smallest honest
+  surface)}. Architecture: module-level `_PENDING_MOTOR_ACTIONS` queue in
+  `python/harlo/usd_lite/persistence/__init__.py`; `decision(action, gate_status)`
+  MCP tool appends to it; `persist_current_brain` snapshots and passes via
+  `brainstem.full_stage(motor_actions=...)` (existing-but-unused parameter from Cycle
+  1 reconnaissance); writer.py:152-156 authors `MotorPrim` declaratively.
+  Verifier-first: tightened `check_populated_hierarchy` to assert ≥1 MotorPrim
+  (FAIL outright on missing — no more "deferred" exception). RED observed:
+  `decision=FAIL(0 MotorPrim, tier_count=0)` (session+entity still PASS).
+  BUILD: `queue_motor_action()` + `decision` tool + persist_current_brain
+  queue read. GREEN observed: `decision=PASS(1 MotorPrim, tier_count=1)`,
+  `/Brain/Motor/action_0` (MotorPrim) authored with
+  `action='trial:verify decision-tier authoring'`, `gate_status='inhibited'`.
+  Inert motor system (premotor/basal_ganglia/executor) NOT engaged — Path C
+  bypasses, leaving consent escalation + basal_ganglia gating + executor
+  execution as parked separate decisions. Promotes CHAMPION v5 → v6 |
+  2026-06-09 SOLO; auto-commit per dynamic-workflow approval.
 - `CYCLE-5` | BUILD→CHECK on P5 — customData Unchanged/Edited/New state tracking on
   a multi-layer composed stage. Architecture: base + overlay data layers with role tags,
   plus a derived tags layer that walks an analysis prim stack (base+overlay only, no

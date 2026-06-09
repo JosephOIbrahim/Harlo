@@ -21,6 +21,36 @@ from .writer import write
 from .reader import read
 
 
+# ─── Cycle 6: Path C — Actor-driven motor surface ─────────────────────────
+# Module-level queue for pending motor actions. The `decision` MCP tool
+# appends here; `persist_current_brain` snapshots and includes them in
+# the BrainStage via `brainstem.full_stage(motor_actions=...)`. The queue
+# lives for the Harlo subprocess lifetime — within a single MCP session
+# (which is what the trial-harness verifier exercises). Production-grade
+# durability across spawns would move this to SQLite; out of scope for
+# the trial test, flagged as future work.
+_PENDING_MOTOR_ACTIONS: list = []
+
+
+def queue_motor_action(action: str, gate_status: str = "inhibited") -> dict:
+    """Append a pending MotorPrim record. Returns the entry just queued.
+
+    `gate_status` defaults to ``"inhibited"`` per Rule 23 (Basal Ganglia
+    defaults to INHIBIT ALL). The MotorPrim is authored at this gate
+    status; basal_ganglia execution gating is a separate (parked) cycle.
+    """
+    entry = {"action": action, "gate_status": gate_status}
+    _PENDING_MOTOR_ACTIONS.append(entry)
+    return entry
+
+
+def snapshot_pending_motor_actions() -> list:
+    """Return a copy of the pending motor actions queue (does NOT clear it).
+    The queue is read by persist_current_brain on each persist call; clear
+    semantics are out of scope for the trial test."""
+    return list(_PENDING_MOTOR_ACTIONS)
+
+
 def persist_current_brain(db_path: str, stage_dir) -> dict:
     """Assemble the current cognitive state and write it to a real .usda.
 
@@ -97,25 +127,39 @@ def persist_current_brain(db_path: str, stage_dir) -> dict:
     recall_result = {"traces": traces_for_recall} if traces_for_recall else None
 
     # --- Decision tier -------------------------------------------------------
-    # DEFERRED (amendment 2). No fabrication.
+    # Cycle 6 — Path C: read the Actor-driven motor surface queue (the
+    # `decision` MCP tool appends to it). Each pending entry becomes a
+    # MotorPrim via brainstem.full_stage's motor_actions parameter (which
+    # internally calls motor_to_prims adapter).
+    motor_actions = snapshot_pending_motor_actions()
 
-    brain = full_stage(session=session_dict, recall_result=recall_result)
+    brain = full_stage(
+        session=session_dict,
+        recall_result=recall_result,
+        motor_actions=motor_actions if motor_actions else None,
+    )
 
     path = stage_dir / "runtime.usda"
     write(brain, str(path))
+
+    decision_count = len(motor_actions)
+    decision_deferred = decision_count == 0
+    decision_reason = (
+        "no decision MCP tool calls yet — Actor-driven motor surface idle "
+        "(call `decision(action=...)` to queue a MotorPrim)"
+        if decision_deferred else
+        "motor surface engaged — Actor-driven via `decision` MCP tool"
+    )
 
     return {
         "path": str(path),
         "tier_counts": {
             "session": 1 if session_dict else 0,
             "entity": len(traces_for_recall),
-            "decision": 0,
+            "decision": decision_count,
         },
-        "decision_deferred": True,
-        "decision_deferred_reason": (
-            "no minimal-flow MotorPrim production in v9 engine — needs a "
-            "motor-system wire-up cycle (separate decision)"
-        ),
+        "decision_deferred": decision_deferred,
+        "decision_deferred_reason": decision_reason,
     }
 
 

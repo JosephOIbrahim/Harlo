@@ -686,7 +686,9 @@ def check_populated_hierarchy():
                     f"persist_stage tool not exposed; tools = "
                     f"{[t.get('name') for t in tools]}")
 
-        # Drive minimal state: status triggers engine init, store creates >=1 hot_trace.
+        # Drive minimal state: status triggers engine init, store creates >=1
+        # hot_trace, decision (Cycle 6 — Path C: Actor-driven motor surface)
+        # queues a MotorPrim so the decision tier authors >=1 MotorPrim.
         if status_tool:
             c.call_tool(status_tool, {})
         if store_tool:
@@ -696,6 +698,13 @@ def check_populated_hierarchy():
             if isinstance(store_res, dict) and store_res.get("status") == "error":
                 return ("populated hierarchy (P1)", "FAIL",
                         f"store failed: {store_res.get('error')}")
+        decision_tool = find_tool(tools, "decision")
+        if decision_tool:
+            dec_res = c.call_tool(decision_tool,
+                                  {"action": "trial:verify decision-tier authoring"})
+            if isinstance(dec_res, dict) and dec_res.get("status") == "error":
+                return ("populated hierarchy (P1)", "FAIL",
+                        f"decision tool failed: {dec_res.get('error')}")
 
         persist_res = c.call_tool(persist_tool, {})
         if not isinstance(persist_res, dict) or persist_res.get("status") != "ok":
@@ -732,6 +741,8 @@ def check_populated_hierarchy():
         session_prim = stage.GetPrimAtPath("/Brain/Session")
         traces_root = stage.GetPrimAtPath("/Brain/Association/Traces")
         traces = list(traces_root.GetChildren()) if traces_root.IsValid() else []
+        motor_root = stage.GetPrimAtPath("/Brain/Motor")
+        motor_prims = list(motor_root.GetChildren()) if motor_root.IsValid() else []
 
         session_id = ""
         if session_prim.IsValid():
@@ -741,9 +752,13 @@ def check_populated_hierarchy():
 
         session_ok = session_prim.IsValid() and bool(session_id)
         entity_ok = len(traces) >= 1
+        decision_ok = len(motor_prims) >= 1
 
-        decision_str = (f"deferred ({decision_reason})"
-                        if decision_deferred else "?")
+        decision_str = (f"PASS({len(motor_prims)} MotorPrim, "
+                        f"tier_count={tier_counts.get('decision', 0)})"
+                        if decision_ok else
+                        f"FAIL(0 MotorPrim, tier_count="
+                        f"{tier_counts.get('decision', 0)})")
         detail = (
             f"path={path} · "
             f"session={'PASS' if session_ok else 'FAIL'}(id={session_id!r}, "
@@ -753,7 +768,7 @@ def check_populated_hierarchy():
             f"decision={decision_str}"
         )
 
-        if session_ok and entity_ok:
+        if session_ok and entity_ok and decision_ok:
             return ("populated hierarchy (P1)", "PASS", detail)
         return ("populated hierarchy (P1)", "FAIL", detail)
     except Exception as e:
