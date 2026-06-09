@@ -41,7 +41,60 @@ lossless *math*); Wave 2 biometrics.  **[ASSERTED]**
 
 ---
 
-## CHAMPION.md  — v4 (Cycle 4: §F2 anchor structural immunity CONFIRMED on live stage)
+## CHAMPION.md  — v5 (Cycle 5: P5 customData state tracking GREEN on live stage)
+**P5 status: GREEN.** customData Unchanged / Edited / New tracking works on a
+multi-layer composed stage. Per-prim tag derived from prim-stack analysis (filtering
+by `customLayerData["layer_role"]`), written into a dedicated tags layer, read back
+through normal pxr composition.
+
+**Three prims, three states:**
+
+| prim | layer presence | resolved value | customData["state"] | computed state |
+|---|---|---|---|---|
+| `/Brain/P5/A` | base only | `1.0` | `'Unchanged'` | `'Unchanged'` |
+| `/Brain/P5/B` | base + overlay | `20.0` (overlay) | `'Edited'` | `'Edited'` |
+| `/Brain/P5/C` | overlay only | `30.0` | `'New'` | `'New'` |
+
+All three: `tagged == computed == expected`. Independent cold-pxr re-read confirms
+the prim stacks show exactly the expected layer composition:
+- A: `[tags, base]` (no overlay) → Unchanged
+- B: `[tags, overlay, base]` (both data layers) → Edited
+- C: `[tags, overlay]` (no base) → New
+
+**Architecture:** `subLayerPaths = [tags, overlay, base]`. The tags layer is the
+analysis output (role="tags"); `compute_actual_state()` correctly filters it out
+when classifying so tag presence doesn't influence its own state. Not falsification-
+bearing — build-and-verify.
+
+**Reproduce:** `.venv312/bin/python wave1_harness.py`. New scoreboard row
+`customData state tracking (P5)` shows PASS with per-prim tag-vs-actual comparison.
+
+**Persisted scene:** `<DATA_DIR>/stages/p5_state_demo/{p5_base,p5_overlay,p5_tags,
+composed_p5}.usda`.
+
+**Confidence vs predicates:**
+- P1 = ~0.5 (unchanged from v4).
+- P3 = ~0.8 (unchanged).
+- P4 = ~0.9 (unchanged).
+- **P5 = ~0.7** — customData state tracking mechanism CONFIRMED for the
+  Unchanged/Edited/New tristate on 3 representative prims. Remaining ~0.3:
+  per-attribute granularity (currently per-prim), interaction with anchor layers
+  (does the mechanism scale to multi-overlay stacks like Cycle 4's), state
+  derivation for paths that don't exist in either base or overlay (boundary).
+- P2 = 0.0 (unchanged — separate architect fork).
+- **P6 = green** — full harness asserts P1 + P3 + P4 + P4b + P5 + P6 GREEN.
+
+**Code added (working tree, uncommitted):**
+- `python/harlo/usd_lite/state_tracking_demo.py` (NEW) — `author_p5_state_demo()`
+  authors base + overlay + tags + composed root. `compute_actual_state(prim)`
+  walks PrimStack, filters by layer_role, returns Unchanged/Edited/New.
+- `python/harlo/mcp_server.py` — `@server.tool(name="p5_state_demo")`.
+- `wave1_harness.py` — `check_customdata_state_tracking()`; main updated.
+
+**v4 retained for history** (in LOG): §F2 anchor structural immunity CONFIRMED.
+
+## CHAMPION-v4 (Cycle 4) — historical record
+**SPEC §F2 anchor follow-up status: CONFIRMED (not falsified).**
 **SPEC §F2 anchor follow-up status: CONFIRMED (not falsified).**
 Anchor sections (CONSTITUTIONAL / SAFETY / CONSENT / KNOWLEDGE) are STRUCTURALLY immune
 to injection — not parametrically protected. Asserted on the live (`pxr`-backed) `real_usd`
@@ -281,6 +334,19 @@ no composition. Confidence P1–P5 = 0.0; P6 = partial.
   enum + precedence engine), `schema/HarloSchema.usda` (21 concreteTyped prims; singleApply `Provenance`
   only — no multi-apply, no `AIMemoryChunk`).
 - `FRAME-CONFIRMED` | architect confirmed FRAME + branch (a); engine cycle opens — `OPEN` resolved | 2026-06-09.
+- `CYCLE-5` | BUILD→CHECK on P5 — customData Unchanged/Edited/New state tracking on
+  a multi-layer composed stage. Architecture: base + overlay data layers with role tags,
+  plus a derived tags layer that walks an analysis prim stack (base+overlay only, no
+  tags) via `compute_actual_state()` and writes `customData["state"]` per prim into
+  the tags layer. Composed root `subLayerPaths=[tags, overlay, base]`. RED observed:
+  "`p5_state_demo` tool not exposed". BUILD: new
+  `python/harlo/usd_lite/state_tracking_demo.py` (author + compute_actual_state),
+  `p5_state_demo` MCP tool; verifier from cold pxr asserts tagged == computed ==
+  expected for 3 prims (A=Unchanged base-only, B=Edited base+overlay, C=New
+  overlay-only). GREEN observed: all 3 prims agree across tagged/computed/expected;
+  independent cold-pxr re-read shows correct PrimStack layer roles per prim.
+  Not falsification-bearing — build-and-verify. Promotes CHAMPION v4 → v5 |
+  2026-06-09 SOLO; auto-commit per dynamic-workflow approval.
 - `CYCLE-4` | BUILD→CHECK on the §F2 anchor structural-immunity follow-up. Architecture:
   anchor_layer.usda tagged `customLayerData["layer_role"]="anchor"` authors the 4 anchor
   prims (CONSTITUTIONAL / SAFETY / CONSENT / KNOWLEDGE); base_layer carries non-anchor

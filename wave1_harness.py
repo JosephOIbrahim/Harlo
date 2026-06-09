@@ -203,6 +203,92 @@ def check_spike():
             "separate Swift build the harness can't run; status: not run")
 
 
+def check_customdata_state_tracking():
+    """USD-proof trial P5 — customData Unchanged/Edited/New state tracking.
+
+    Drives `p5_state_demo` (authors base + overlay layers with 3 prims —
+    /Brain/P5/A only in base, /Brain/P5/B in both, /Brain/P5/C only in
+    overlay — then writes a tags layer with `customData["state"]` per
+    prim derived from prim-stack analysis). From cold pxr, asserts each
+    prim's customData["state"] matches the actual composition status
+    computed independently via `compute_actual_state(prim)`.
+
+    Not falsification-bearing — build-and-verify. RED before the tags
+    layer exists, GREEN after.
+    """
+    c = MCPStdioClient(extra_env={REAL_USD_ENV: "1"})
+    try:
+        c.initialize()
+        tools = c.list_tools()
+        p5_tool = find_tool(tools, "p5_state_demo")
+        if not p5_tool:
+            return ("customData state tracking (P5)", "FAIL",
+                    f"p5_state_demo tool not exposed; tools = "
+                    f"{[t.get('name') for t in tools]}")
+
+        res = c.call_tool(p5_tool, {})
+        if not isinstance(res, dict) or res.get("status") != "ok":
+            err = (res.get("error") if isinstance(res, dict) else str(res))
+            return ("customData state tracking (P5)", "FAIL",
+                    f"p5_state_demo error: {err}")
+
+        composed_path = (res.get("paths") or {}).get("composed_p5")
+        prims_expected = res.get("expected_states", {})  # {prim_path: "Unchanged"/"Edited"/"New"}
+        state_key = res.get("state_key", "state")
+
+        if not (composed_path and prims_expected):
+            return ("customData state tracking (P5)", "FAIL",
+                    f"p5_state_demo response missing fields: {list(res.keys())}")
+
+        try:
+            from pxr import Usd
+        except ImportError:
+            return ("customData state tracking (P5)", "FAIL",
+                    "pxr not importable in harness env")
+
+        try:
+            from harlo.usd_lite.state_tracking_demo import compute_actual_state
+        except ImportError as e:
+            return ("customData state tracking (P5)", "FAIL",
+                    f"compute_actual_state not importable: {e}")
+
+        stage = Usd.Stage.Open(composed_path)
+        if stage is None:
+            return ("customData state tracking (P5)", "FAIL",
+                    f"Stage.Open None for {composed_path}")
+
+        rows = []
+        all_match = True
+        for prim_path, expected_state in prims_expected.items():
+            prim = stage.GetPrimAtPath(prim_path)
+            if not prim.IsValid():
+                rows.append(f"{prim_path}: PRIM_MISSING")
+                all_match = False
+                continue
+
+            tagged = prim.GetCustomDataByKey(state_key)
+            actual = compute_actual_state(prim)
+            tagged_ok = (tagged == expected_state)
+            actual_ok = (actual == expected_state)
+            agree = (tagged == actual)
+            if tagged_ok and actual_ok and agree:
+                rows.append(f"{prim_path.split('/')[-1]}: tagged={tagged!r}/actual={actual!r} OK")
+            else:
+                rows.append(f"{prim_path.split('/')[-1]}: tagged={tagged!r} actual={actual!r} "
+                            f"expected={expected_state!r} (tagged_ok={tagged_ok} actual_ok={actual_ok} agree={agree})")
+                all_match = False
+
+        detail = " | ".join(rows)
+        if all_match:
+            return ("customData state tracking (P5)", "PASS", detail)
+        return ("customData state tracking (P5)", "FAIL", detail)
+    except Exception as e:
+        return ("customData state tracking (P5)", "FAIL",
+                f"exception: {type(e).__name__}: {e}")
+    finally:
+        c.close()
+
+
 def check_anchor_immunity():
     """USD-proof trial Cycle 4 / §F2 anchor structural-immunity follow-up:
     are anchor sections (CONSTITUTIONAL / SAFETY / CONSENT / KNOWLEDGE)
@@ -707,7 +793,8 @@ def main():
 
     results = [check_recall(), check_spike(), check_live_usd(),
                check_populated_hierarchy(), check_native_composition(),
-               check_structural_lossless(), check_anchor_immunity()]
+               check_structural_lossless(), check_anchor_immunity(),
+               check_customdata_state_tracking()]
 
     print("\nScoreboard")
     print("-" * 66)
@@ -721,6 +808,7 @@ def main():
     p3 = next((r for r in results if r[0].startswith("native composition")), None)
     p4 = next((r for r in results if r[0].startswith("structural lossless")), None)
     p4b = next((r for r in results if r[0].startswith("anchor immunity")), None)
+    p5 = next((r for r in results if r[0].startswith("customData state tracking")), None)
 
     print("\nFirst-step verdict:")
     if live[1] == "PASS":
@@ -777,13 +865,22 @@ def main():
         else:
             print("  FAIL  P4b not yet green (not a falsification firing). Scope:")
             print(f"        {p4b[2]}")
+
+    if p5 is not None:
+        print("\nP5 verdict (USD-proof trial — customData Unchanged/Edited/New tracking):")
+        if p5[1] == "PASS":
+            print("  PASS  customData state tags match composition status for all 3 prims.")
+        else:
+            print("  FAIL  P5 not yet green. Scope:")
+            print(f"        {p5[2]}")
     print()
     live_ok = live[1] == "PASS"
     p1_ok = p1 is not None and p1[1] == "PASS"
     p3_ok = p3 is not None and p3[1] == "PASS"
     p4_ok = p4 is not None and p4[1] == "PASS"
     p4b_ok = p4b is not None and p4b[1] == "PASS"
-    return 0 if (live_ok and p1_ok and p3_ok and p4_ok and p4b_ok) else 1
+    p5_ok = p5 is not None and p5[1] == "PASS"
+    return 0 if (live_ok and p1_ok and p3_ok and p4_ok and p4b_ok and p5_ok) else 1
 
 
 if __name__ == "__main__":

@@ -307,6 +307,34 @@ def query_past_experience(query: str, limit: int = 10) -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
+@server.tool(name="p5_state_demo")
+def p5_state_demo() -> str:
+    """Author the SPEC P5 customData state-tracking scene on the live stage.
+
+    Cycle 5 verifier-side: authors p5_base + p5_overlay layers with 3 prims
+    (A only-in-base = Unchanged, B in-both = Edited, C only-in-overlay =
+    New), then a derived p5_tags layer that walks the analysis prim stack
+    and writes `customData["state"]` per prim. Composed root has
+    subLayerPaths=[tags, overlay, base]. The verifier reads customData via
+    normal pxr composition and asserts it matches the actual prim-stack
+    state (recomputed independently).
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("p5_state_demo", {})
+    try:
+        from harlo.usd_lite.state_tracking_demo import author_p5_state_demo
+        base_dir = str(DATA_DIR / "stages")
+        result = author_p5_state_demo(base_dir)
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
 @server.tool(name="anchor_demo")
 def anchor_demo() -> str:
     """Author the SPEC §F2 anchor structural-immunity scene on the live stage.
