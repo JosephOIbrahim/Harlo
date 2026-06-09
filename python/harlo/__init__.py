@@ -1,6 +1,6 @@
 """Harlo v8.0 — biologically-architected AI memory and action system."""
 
-__version__ = "8.0.0"
+__version__ = "0.1.3"
 
 from harlo.hippocampus import (
     py_recall,
