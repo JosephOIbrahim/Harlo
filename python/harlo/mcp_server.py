@@ -307,6 +307,35 @@ def query_past_experience(query: str, limit: int = 10) -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
+@server.tool(name="persist_stage")
+def persist_stage() -> str:
+    """Persist the current cognitive state to a USD .usda file.
+
+    Explicit persist entrypoint for the USD-proof trial verifier
+    (`wave1_harness.check_populated_hierarchy`). Assembles a BrainStage from
+    in-process state and writes via `harlo.usd_lite.persistence.write`. The
+    v9 engine init path is NOT modified — persistence is an operation invoked
+    at known times, not a side-effect of init.
+
+    Returns a JSON object with: path (the .usda file written), tier_counts
+    (session/entity/decision prim counts), decision_deferred (bool), and
+    decision_deferred_reason (str).
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("persist_stage", {})
+    try:
+        from harlo.usd_lite.persistence import persist_current_brain
+        result = persist_current_brain(DB_PATH, DATA_DIR / "stages")
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
 _hot_store = None
 _injection_store = None
 # Guards the lazy init of _hot_store and _injection_store.  FastMCP can

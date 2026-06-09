@@ -203,6 +203,107 @@ def check_spike():
             "separate Swift build the harness can't run; status: not run")
 
 
+def check_populated_hierarchy():
+    """USD-proof trial P1 verifier: stage traversal returns a populated hierarchy.
+
+    Drives minimal real state (entity via the existing `store` tool; session
+    auto-created inside `persist_stage`), calls `persist_stage` to write the
+    current brain to disk, then opens the persisted .usda from this harness
+    process and asserts session + entity prim presence. Decision tier is
+    deferred per architect amendment 2 — no minimal-flow MotorPrim production
+    exists in the v9 engine.
+    """
+    c = MCPStdioClient(extra_env={REAL_USD_ENV: "1"})
+    try:
+        c.initialize()
+        tools = c.list_tools()
+
+        persist_tool = find_tool(tools, "persist_stage")
+        store_tool = find_tool(tools, "store")
+        status_tool = find_tool(tools, "status")
+
+        if not persist_tool:
+            return ("populated hierarchy (P1)", "FAIL",
+                    f"persist_stage tool not exposed; tools = "
+                    f"{[t.get('name') for t in tools]}")
+
+        # Drive minimal state: status triggers engine init, store creates >=1 hot_trace.
+        if status_tool:
+            c.call_tool(status_tool, {})
+        if store_tool:
+            store_res = c.call_tool(store_tool,
+                                    {"message": "wave1 trial probe entity",
+                                     "tags": ["wave1-trial"]})
+            if isinstance(store_res, dict) and store_res.get("status") == "error":
+                return ("populated hierarchy (P1)", "FAIL",
+                        f"store failed: {store_res.get('error')}")
+
+        persist_res = c.call_tool(persist_tool, {})
+        if not isinstance(persist_res, dict) or persist_res.get("status") != "ok":
+            err = (persist_res.get("error")
+                   if isinstance(persist_res, dict) else str(persist_res))
+            return ("populated hierarchy (P1)", "FAIL", f"persist_stage error: {err}")
+
+        path = persist_res.get("path")
+        tier_counts = persist_res.get("tier_counts", {})
+        decision_deferred = persist_res.get("decision_deferred", False)
+        decision_reason = persist_res.get("decision_deferred_reason", "")
+
+        if not path or not os.path.exists(path):
+            return ("populated hierarchy (P1)", "FAIL", f"stage path missing: {path!r}")
+
+        # Open + traverse from this harness process — proves a real .usda file,
+        # not a JSON the server made up.
+        try:
+            from pxr import Usd
+        except ImportError:
+            return ("populated hierarchy (P1)", "FAIL",
+                    "pxr not importable in harness env — install usd-core in .venv312")
+
+        stage = Usd.Stage.Open(path)
+        if stage is None:
+            return ("populated hierarchy (P1)", "FAIL",
+                    f"Usd.Stage.Open returned None for {path}")
+
+        brain = stage.GetPrimAtPath("/Brain")
+        if not brain.IsValid():
+            return ("populated hierarchy (P1)", "FAIL",
+                    "/Brain prim missing in persisted stage")
+
+        session_prim = stage.GetPrimAtPath("/Brain/Session")
+        traces_root = stage.GetPrimAtPath("/Brain/Association/Traces")
+        traces = list(traces_root.GetChildren()) if traces_root.IsValid() else []
+
+        session_id = ""
+        if session_prim.IsValid():
+            attr = session_prim.GetAttribute("current_session_id")
+            if attr and attr.IsValid():
+                session_id = attr.Get() or ""
+
+        session_ok = session_prim.IsValid() and bool(session_id)
+        entity_ok = len(traces) >= 1
+
+        decision_str = (f"deferred ({decision_reason})"
+                        if decision_deferred else "?")
+        detail = (
+            f"path={path} · "
+            f"session={'PASS' if session_ok else 'FAIL'}(id={session_id!r}, "
+            f"tier_count={tier_counts.get('session', 0)}) · "
+            f"entity={'PASS' if entity_ok else 'FAIL'}"
+            f"({len(traces)} TracePrim, tier_count={tier_counts.get('entity', 0)}) · "
+            f"decision={decision_str}"
+        )
+
+        if session_ok and entity_ok:
+            return ("populated hierarchy (P1)", "PASS", detail)
+        return ("populated hierarchy (P1)", "FAIL", detail)
+    except Exception as e:
+        return ("populated hierarchy (P1)", "FAIL",
+                f"exception: {type(e).__name__}: {e}")
+    finally:
+        c.close()
+
+
 def check_live_usd():
     try:
         base_st, _ = get_stage_type(extra_env=None)
@@ -231,7 +332,8 @@ def main():
         print("  Edit the config block at the top of this file.\n")
         return 2
 
-    results = [check_recall(), check_spike(), check_live_usd()]
+    results = [check_recall(), check_spike(), check_live_usd(),
+               check_populated_hierarchy()]
 
     print("\nScoreboard")
     print("-" * 66)
@@ -241,15 +343,27 @@ def main():
     print("-" * 66)
 
     live = next(r for r in results if r[0].startswith("live USD"))
+    p1 = next((r for r in results if r[0].startswith("populated hierarchy")), None)
+
     print("\nFirst-step verdict:")
     if live[1] == "PASS":
         print("  PASS  live USD twin flips mock -> live. The first step works.")
-        print("        Next: deeper proof (prim hierarchy / LIVRPS) when you want it.")
     else:
         print("  FAIL  live USD did NOT flip. This scopes the surgery:")
         print(f"        {live[2]}")
+
+    if p1 is not None:
+        print("\nP1 verdict (USD-proof trial — populated hierarchy):")
+        if p1[1] == "PASS":
+            print("  PASS  session + entity tiers populated on live real_usd stage.")
+            print("        Decision tier status reported in the scoreboard detail.")
+        else:
+            print("  FAIL  P1 not yet green. Scope:")
+            print(f"        {p1[2]}")
     print()
-    return 0 if live[1] == "PASS" else 1
+    live_ok = live[1] == "PASS"
+    p1_ok = p1 is not None and p1[1] == "PASS"
+    return 0 if (live_ok and p1_ok) else 1
 
 
 if __name__ == "__main__":
