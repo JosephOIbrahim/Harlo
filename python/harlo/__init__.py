@@ -1,6 +1,6 @@
 """Harlo — biologically-architected AI memory and action system."""
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 # The Rust hot path is optional at import time (D56/B3): pure-Python
 # engine work (trajectory sim, predictor training, schemas) must import
