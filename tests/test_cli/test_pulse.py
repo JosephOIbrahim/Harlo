@@ -212,3 +212,30 @@ def test_listen_requires_pairing(tmp_data) -> None:
     res = runner.invoke(p.pulse, ["listen", "--timeout", "1"])
     assert res.exit_code == 1
     assert "pair" in _combined_output(res).lower()
+
+
+def test_listen_adopts_launchd_socket(tmp_data, monkeypatch) -> None:
+    """When launchd hands us a listening fd, listen() must adopt it
+    (skip bind) and announce the adoption."""
+    import socket as socket_mod
+
+    import harlo.cli.commands.pulse as p
+    from click.testing import CliRunner
+
+    _write_token(tmp_data)  # paired state
+
+    # A real listening TCP socket stands in for launchd's fd.
+    held = socket_mod.socket(socket_mod.AF_INET, socket_mod.SOCK_STREAM)
+    held.bind(("127.0.0.1", 0))
+    held.listen(1)
+    fd = held.detach()  # ownership passes to the adopter, like launchd
+
+    import harlo.daemon.socket_activation as sa
+    monkeypatch.setattr(sa, "adopt_launchd_socket",
+                        lambda name: [fd] if name == "HarloPulse" else None)
+
+    runner = CliRunner()
+    res = runner.invoke(p.pulse, ["listen", "--timeout", "1"])
+    out = _combined_output(res)
+    assert res.exit_code == 0, out
+    assert "launchd socket" in out

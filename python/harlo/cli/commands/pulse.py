@@ -404,23 +404,41 @@ def pulse_listen(timeout: int, bind: str, as_json: bool):
     # zeroconf (new dep, disallowed) or a launchd/dnssd integration;
     # the phone uses manual host:port entry until then (its NWBrowser
     # path is dormant).
-    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    try:
-        srv.bind((bind, port))
-    except OSError as exc:
-        srv.close()
-        msg = f"Cannot bind {bind}:{port}: {exc}"
-        if as_json:
-            click.echo(json.dumps({"error": msg}))
-        else:
-            click.echo(f"Error: {msg}", err=True)
-        raise SystemExit(1)
-    srv.listen(1)
+
+    # Persistent-service mode (push-on-arrival loop): when launchd owns
+    # the TCP socket (macos/launchd/com.harlo.pulse.plist, Sockets key
+    # "HarloPulse"), adopt its fd — launchd spawns us on the phone's
+    # first SYN, we serve until idle, exit 0, and launchd re-arms.
+    # Rule 1 end-to-end: 0W between Watch syncs. Reuses the D69 ctypes
+    # adoption from the daemon (first TCP consumer of that module).
+    srv = None
+    adopted = False
+    from harlo.daemon.socket_activation import adopt_launchd_socket
+    fds = adopt_launchd_socket("HarloPulse")
+    if fds:
+        srv = socket.socket(fileno=fds[0])
+        for extra in fds[1:]:
+            os.close(extra)
+        adopted = True
+    if srv is None:
+        srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            srv.bind((bind, port))
+        except OSError as exc:
+            srv.close()
+            msg = f"Cannot bind {bind}:{port}: {exc}"
+            if as_json:
+                click.echo(json.dumps({"error": msg}))
+            else:
+                click.echo(f"Error: {msg}", err=True)
+            raise SystemExit(1)
+        srv.listen(1)
     srv.settimeout(1.0)
 
     if not as_json:
-        click.echo(f"Listening on {bind}:{port} (idle timeout {timeout}s)...")
+        source = "launchd socket" if adopted else f"{bind}:{port}"
+        click.echo(f"Listening on {source} (idle timeout {timeout}s)...")
 
     sessions: list[dict] = []
     # Deadline-bounded accept loop — never a forever-loop (Rule 1).
