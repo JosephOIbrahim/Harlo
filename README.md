@@ -16,9 +16,10 @@
 
 ---
 
-Your AI coach. Watches your patterns, predicts your crashes, backs off during
-flow, and tells you when to stop before you burn out. Built on USD composition
-semantics for persistent, local-first cognitive state management.
+Your AI coach. Watches your patterns — and now your body — predicts your
+crashes, backs off during flow, and tells you when to stop before you burn out.
+Built on USD composition semantics for persistent, local-first cognitive state
+management.
 
 Your memory, your device. Harlo stores all state locally as composable USD
 layers — no cloud dependency, no data mining, no rented access to your own mind.
