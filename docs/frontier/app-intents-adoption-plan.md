@@ -131,3 +131,37 @@ hurt us done early.
 - **Constitutional differentiation extends to Siri:** "the coach Siri
   can ask but never override" is a *feature claim* competitors without
   an inhibition-default architecture cannot copy.
+
+---
+
+## 7 · ADDENDUM (2026-06-10): Siri code-along learnings
+
+The code-along session refines four §1 verdicts; two became code the same
+day (PR #15, verified with a signed device build):
+
+- **`system.*` schemas are not domain-locked** — `system.open` applies to
+  any app with entities. Adopted as plain `OpenIntent` (iOS 16+, fits our
+  17.0 target without assistant-schema availability): Siri/Spotlight
+  entity results now tap-through into Pulse. ✅ shipped
+- **Onscreen awareness is literally two modifiers** —
+  `.appEntityIdentifier()` for lists, `.userActivity` + `EntityIdentifier`
+  for a primary entity. Pulse's status screen now annotates under
+  `#available(iOS 18.2)` (`AppEntityAnnotatable` availability per the
+  iOS 27 SDK). Pattern #10's "P1" status → shipped for Pulse; Glance/OTTO
+  inherit the recipe. ✅ shipped
+- **`TransientAppEntity`** — the protocol for momentary, non-queryable,
+  non-indexed entities. This is the privacy-aligned shape for the P2
+  `BiometricTrendEntity` (derived, momentary, must never be indexed):
+  the platform now has a first-class way to say "this entity has no
+  lookup path," which is exactly Rule 9's posture.
+- **`valueState` (.set(value) / .set(nil) / .unset)** — the idiom for
+  optional parameters in update-style intents ("don't change" vs
+  "clear"). Required reading for any future Harlo update-intent.
+- **AppIntentsTesting framework** — new automated-testing surface for
+  intents. Roadmap change: P1's exit criteria gain "Pulse intent tests
+  via AppIntentsTesting" (test target + simulator runtime needed; the
+  Pulse project currently ships no test target).
+- The code-along's centerpiece — `IndexedEntity` + semantic Spotlight
+  donation — remains **GATED/REJECTED per §1 #7**: it is precisely the
+  content-into-system-index mechanism the privacy gates exist to stop.
+  The session demonstrates its power; the power is the problem.
