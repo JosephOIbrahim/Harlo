@@ -185,6 +185,36 @@ Authoritative state (git + gh):
   v8/v9 tags, the 9.0.0→0.1.0 version-reset optics) is the architect's
   representation decision.
 
+## REPAIR SPRINT — Phase 1: Δ9 decay fix (Option A + ADR-0003)
+RULED: dt→days (/86_400), test-first.
+- REGRESSION FIRST (the proof the 1,140 never had): realistic Unix epochs
+  (created=1.7e9, now=+1/+14/+90 days), assert ≈ e^(-0.05·days). Pre-fix both
+  FAILED hard — Rust decay::tests::test_decay_unit_is_days → "1 day -> 0"
+  (panic); Python tests/test_decay_units.py → "1 day -> 0.0" (wanted 0.951).
+- FIX (one commit), dt=(now-created_at)/86_400 at TWO implementations — NOT
+  three: store.rs apoptosis DELEGATES to compute_lazy_decay, so fixing decay.rs
+  fixes recall AND apoptosis with one change (they now provably share one decay,
+  cannot drift):
+    · crates/hippocampus/src/decay.rs (base + boost dt) → query.rs recall +
+      store.rs microglia_apoptosis.
+    · python/harlo/encoder/__init__.py _compute_lazy_decay (base + boost dt).
+- GREEN: cargo test -p hippocampus 43/43 (+1 regression). pytest 1383 passed /
+  5 skipped — identical 39 ML-stack env failures as baseline (anthropic /
+  sentence_transformers / onnx), ZERO new regressions. Updated 3 tests that
+  hard-coded seconds (decay test_decay_over_time → 100 days; store
+  test_apoptosis_deletes_weak_traces + test_apoptosis_chunked_path → 200-day
+  now). Rebuilt the PyO3 extension (maturin develop) so the FFI carries the fix.
+- NO ROW MIGRATION (confirmed): no persisted `strength` column anywhere;
+  strength is computed read-side from (initial_strength, decay_lambda,
+  created_at, boosts_json). Only the interpretation changed.
+- ADR-0003 written; CLAUDE.md Rule 4 formula now carries the unit (dt in days,
+  λ=0.05/day, 13.9-day half-life), coherent with S5/S7/S3.
+- Δ11 (flagged, NOT fixed — scope): compaction/__init__.py:211 variant
+  weighting shares the seconds-dt shape; separate USD-Lite subsystem,
+  composer-adjacent → architect's call.
+- Effective decay now: 1d→0.951, 14d→0.497, 90d→0.011 (just above ε=0.01). A
+  trace stored today survives a simulated day. PHASE 1 CONTRACT: MET.
+
 ## Open items
 - P2: KILL FIRED (Cycle 4) — VERIFIED pool 0. Rescope: accumulate verified
   material via real sessions, or redefine the probe source. Re-run inventory.py.

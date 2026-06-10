@@ -222,9 +222,12 @@ def _compute_lazy_decay(
 
     strength = initial * e^(-lambda * dt) + sum(boost_amount * e^(-lambda * dt_boost))
 
+    dt is in DAYS (Δ9 / ADR-0003): now/created_at are Unix seconds, scaled by
+    86_400; lambda is a per-day rate (default 0.05/day → 13.9-day half-life).
+
     Rule 4: No polling. Pure math on retrieval.
     """
-    dt = max(0, now - created_at)
+    dt = max(0, now - created_at) / 86400.0
     strength = initial * math.exp(-decay_lambda * dt)
 
     for boost in boosts:
@@ -233,7 +236,7 @@ def _compute_lazy_decay(
             b_amount = boost.get("amount", 0.0)
         else:
             continue
-        dt_boost = max(0, now - b_time)
+        dt_boost = max(0, now - b_time) / 86400.0
         strength += b_amount * math.exp(-decay_lambda * dt_boost)
 
     return strength

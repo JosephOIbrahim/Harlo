@@ -50,6 +50,8 @@ pytest tests/test_integration/ -v  # Integration tests
 
 4.  LAZY DECAY: Timestamp math on retrieval only. No polling.
     strength = initial * e^(-lambda * dt) + sum(retrieval_boosts)
+    dt in DAYS (Unix seconds / 86_400); lambda = 0.05/day → 13.9-day
+    half-life. See docs/adr/0003-decay-units.md.
 
 5.  APOPTOSIS: twin consolidate physically DELETEs traces below
     epsilon. Runs VACUUM. Database file size decreases.
