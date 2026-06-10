@@ -76,8 +76,9 @@ def persist_current_brain(db_path: str, stage_dir) -> dict:
     """
     # Lazy imports: keep module-level imports pxr-only per the layer's
     # Constitution Law 3 — runtime tier must not pull pxr through us.
-    from pathlib import Path
+    import hashlib
     import sqlite3
+    from pathlib import Path
 
     from harlo.session.manager import SessionManager
     from harlo.brainstem.stage_builder import full_stage
@@ -113,9 +114,14 @@ def persist_current_brain(db_path: str, stage_dir) -> dict:
             except sqlite3.OperationalError:
                 rows = []  # hot_traces table not yet created
             for trace_id, message in rows:
+                # D54: a real digest — the previous (message or "")[:16]
+                # leaked raw message content into a field whose name
+                # promises content-free derived data.
                 traces_for_recall.append({
                     "trace_id": trace_id,
-                    "content_hash": (message or "")[:16],
+                    "content_hash": hashlib.sha256(
+                        (message or "").encode()
+                    ).hexdigest()[:16],
                     "strength": 1.0,
                     "sdr": [0] * 2048,
                 })

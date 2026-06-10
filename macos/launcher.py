@@ -16,6 +16,7 @@ calling the daemon doesn't re-trigger setup.
 
 from __future__ import annotations
 
+import os
 import sys
 from typing import Sequence
 
@@ -62,12 +63,74 @@ def _run_mcp() -> int:
     return 0
 
 
+_BUNDLE_ID = "com.josephibrahim.harlo"
+
+
+def _is_finder_launch(residual: list[str]) -> bool:
+    """True ONLY for a LaunchServices (Finder double-click) launch.
+
+    LaunchServices sets __CFBundleIdentifier to the launched bundle's
+    id; terminal children inherit com.apple.Terminal instead, and
+    pytest/scripts have neither. Matching OUR id exactly keeps piped
+    scripted invocations and test harnesses on the CLI path.
+    """
+    return (
+        sys.platform == "darwin"
+        and not residual
+        and not sys.stdin.isatty()
+        and os.environ.get("__CFBundleIdentifier") == _BUNDLE_ID
+    )
+
+
+def _show_finder_dialog() -> None:
+    """Give the double-click user actual feedback (CTO review D55).
+
+    Native dialog via osascript — no UI framework in the bundle.
+    Failure is swallowed: a broken dialog must never break the CLI.
+    """
+    import subprocess
+
+    text = (
+        "Harlo is running.\\n\\n"
+        "Harlo works through Claude Desktop (as an MCP server) "
+        "or from Terminal:\\n\\n"
+        "  /Applications/Harlo.app/Contents/MacOS/Harlo --help\\n\\n"
+        "To install the on-demand background services, run that "
+        "command in Terminal and follow the setup prompt."
+    )
+    script = (
+        f'display dialog "{text}" with title "Harlo" '
+        'buttons {"OK"} default button "OK" giving up after 120'
+    )
+    try:
+        subprocess.run(
+            ["/usr/bin/osascript", "-e", script],
+            capture_output=True, timeout=130, check=False,
+        )
+    except Exception:
+        pass
+
+
 def _run_cli(residual: list[str]) -> int:
     from harlo.session.first_run import prompt_install_launchd, run_first_run
 
     result = run_first_run()
-    if result.fresh_install:
-        prompt_install_launchd()
+
+    # D55: a Finder double-click previously fell through to Click with
+    # no TTY — zero visible feedback — while the launchd offer stamped
+    # itself "no-tty" forever. Now: show a real dialog and return;
+    # the onboarding offer stays available for an interactive launch.
+    if _is_finder_launch(residual):
+        _show_finder_dialog()
+        return 0
+
+    # D55 (review catch): prompt unconditionally on interactive launches,
+    # not only when fresh_install — a silent Finder first launch consumes
+    # the one-shot fresh_install flag via run_first_run(), which would
+    # otherwise re-suppress the offer through a different marker. The
+    # prompt is idempotent (gated internally by .launchd_offered).
+    del result  # first-run result no longer gates the offer
+    prompt_install_launchd()
 
     from harlo.cli.main import main as cli_main
 

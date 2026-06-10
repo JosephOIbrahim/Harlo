@@ -23,6 +23,7 @@ import os
 import select
 import subprocess
 import sys
+import tempfile
 import time
 
 # ---- config (edit only if your path / flag differ) -------------------------
@@ -37,6 +38,12 @@ class MCPError(Exception):
     pass
 
 
+# Shared throwaway data root for every server this harness spawns —
+# isolates verifier writes (twin.db, stages/, trial/) from the user's
+# real ~/Library/Application Support/Harlo.
+_HARNESS_DATA_DIR = tempfile.mkdtemp(prefix="harlo-wave1-")
+
+
 class MCPStdioClient:
     """Minimal MCP stdio client: spawn server, JSON-RPC over newline-delimited pipes."""
 
@@ -44,6 +51,14 @@ class MCPStdioClient:
         env = os.environ.copy()
         if extra_env:
             env.update(extra_env)
+        # D53: trial/verifier tools are gated off the production MCP
+        # surface; this harness IS the verifier, so it opts in.
+        env["HARLO_TRIAL_TOOLS"] = "1"
+        # D53 (review catch): verifier runs must never write probe
+        # traces / sessions / MotorPrims into the PRODUCTION data dir.
+        # One throwaway root per harness run; config.py honors the
+        # HARLO_DATA_DIR override.
+        env.setdefault("HARLO_DATA_DIR", _HARNESS_DATA_DIR)
         self.proc = subprocess.Popen(
             [HARLO_BIN],
             stdin=subprocess.PIPE,

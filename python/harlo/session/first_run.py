@@ -141,6 +141,14 @@ def prompt_install_launchd(
     if _LAUNCHD_MARKER.exists():
         return False
 
+    if auto_accept is None and not sys.stdin.isatty():
+        # Non-interactive (Finder launch, piped, MCP child): do NOT
+        # stamp ANY marker — a silent launch must never permanently
+        # suppress the onboarding offer (CTO review D55). This check
+        # runs before the script lookup so the missing-script stamp
+        # below can only happen in an interactive context.
+        return False
+
     script = _find_install_script()
     if script is None:
         _LOGGER.warning("first-run: macos_install_daemon.py not found; skipping")
@@ -148,11 +156,6 @@ def prompt_install_launchd(
         return False
 
     if auto_accept is None:
-        if not sys.stdin.isatty():
-            # Non-interactive: don't prompt silently, but stamp so
-            # we don't re-evaluate every boot.
-            _LAUNCHD_MARKER.write_text("no-tty\n", encoding="utf-8")
-            return False
         out.write(
             "\nHarlo can install two background services so the CLI and "
             "agent harness wake on-demand:\n"

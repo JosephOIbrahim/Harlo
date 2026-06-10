@@ -15,6 +15,7 @@ from __future__ import annotations
 import atexit
 import json
 import logging
+import os
 import threading
 import time
 import uuid
@@ -28,6 +29,13 @@ from harlo.daemon.config import DATA_DIR, DB_PATH as _DB_PATH, PROJECT_ROOT
 DB_PATH = str(_DB_PATH)
 TRUST_DELTA_VERIFIED = 0.02
 TRUST_DELTA_REJECTED = -0.05
+
+# CTO review D53: the USD-proof-trial verifier tools (compose_demo,
+# lossless_demo, anchor_demo, p5_state_demo, persist_stage, decision)
+# are NOT registered on the production MCP surface unless explicitly
+# enabled. wave1_harness sets this; Claude Desktop should not see
+# verifier surface in its tool list.
+_TRIAL_TOOLS = os.environ.get("HARLO_TRIAL_TOOLS") == "1"
 
 # ─── v9 cognitive engine bridge ─────────────────────────────────────────
 # Lazy singleton; first tool call initializes. Init failure → False
@@ -307,7 +315,6 @@ def query_past_experience(query: str, limit: int = 10) -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@server.tool(name="p5_state_demo")
 def p5_state_demo() -> str:
     """Author the SPEC P5 customData state-tracking scene on the live stage.
 
@@ -323,7 +330,8 @@ def p5_state_demo() -> str:
     enrichment = _enrich("p5_state_demo", {})
     try:
         from harlo.usd_lite.state_tracking_demo import author_p5_state_demo
-        base_dir = str(DATA_DIR / "stages")
+        # D53: demo scenes live under trial/, never beside production stages/.
+        base_dir = str(DATA_DIR / "trial")
         result = author_p5_state_demo(base_dir)
         response = {"status": "ok", **result}
         response.update(_v9_block(enrichment))
@@ -335,7 +343,6 @@ def p5_state_demo() -> str:
         })
 
 
-@server.tool(name="anchor_demo")
 def anchor_demo() -> str:
     """Author the SPEC §F2 anchor structural-immunity scene on the live stage.
 
@@ -357,7 +364,8 @@ def anchor_demo() -> str:
     enrichment = _enrich("anchor_demo", {})
     try:
         from harlo.usd_lite.anchor_demo import author_anchor_immunity_demo
-        base_dir = str(DATA_DIR / "stages")
+        # D53: demo scenes live under trial/, never beside production stages/.
+        base_dir = str(DATA_DIR / "trial")
         result = author_anchor_immunity_demo(base_dir)
         response = {"status": "ok", **result}
         response.update(_v9_block(enrichment))
@@ -369,7 +377,6 @@ def anchor_demo() -> str:
         })
 
 
-@server.tool(name="lossless_demo")
 def lossless_demo() -> str:
     """Author the SPEC §F2 thesis-test scene on the live `real_usd` stage.
 
@@ -386,7 +393,8 @@ def lossless_demo() -> str:
     enrichment = _enrich("lossless_demo", {})
     try:
         from harlo.usd_lite.lossless_demo import author_lossless_demo
-        base_dir = str(DATA_DIR / "stages")
+        # D53: demo scenes live under trial/, never beside production stages/.
+        base_dir = str(DATA_DIR / "trial")
         result = author_lossless_demo(base_dir)
         response = {"status": "ok", **result}
         response.update(_v9_block(enrichment))
@@ -398,7 +406,6 @@ def lossless_demo() -> str:
         })
 
 
-@server.tool(name="compose_demo")
 def compose_demo() -> str:
     """Author the SPEC §F1 thesis-test scene on the live `real_usd` stage.
 
@@ -418,7 +425,8 @@ def compose_demo() -> str:
     enrichment = _enrich("compose_demo", {})
     try:
         from harlo.usd_lite.composition_demo import author_native_composition_demo
-        stage_path = str(DATA_DIR / "stages" / "composition_demo.usda")
+        # D53: demo scenes live under trial/, never beside production stages/.
+        stage_path = str(DATA_DIR / "trial" / "composition_demo.usda")
         result = author_native_composition_demo(stage_path)
         response = {"status": "ok", **result}
         response.update(_v9_block(enrichment))
@@ -430,7 +438,6 @@ def compose_demo() -> str:
         })
 
 
-@server.tool(name="decision")
 def decision(action: str, gate_status: str = "inhibited") -> str:
     """Record an Actor-driven decision; queues a MotorPrim for the next
     persist_stage. Cycle 6 — Path C motor-surface wire-up.
@@ -440,10 +447,20 @@ def decision(action: str, gate_status: str = "inhibited") -> str:
     The MotorPrim is queued module-locally; the next `persist_stage` call
     drains the queue and authors the MotorPrims under /Brain/Motor/.
 
-    Basal_ganglia execution gating is a separate parked decision —
-    MotorPrims author at the requested gate_status without invoking
-    gating logic.
+    Basal_ganglia execution gating is a separate parked decision.
+    Until it lands, gate_status is CLAMPED to "inhibited" (CTO review
+    D52; Rule 23 inhibition-default / Rule 26): requests for any other
+    gate_status are rejected, never silently authored.
     """
+    if gate_status != "inhibited":
+        return json.dumps({
+            "status": "error",
+            "error": (
+                f"gate_status={gate_status!r} rejected: gate_status is "
+                "clamped to 'inhibited' until Basal Ganglia gating is "
+                "wired (Rule 23 inhibition-default; CTO review D52)"
+            ),
+        })
     _ensure_data_dir()
     enrichment = _enrich("decision",
                          {"action": action, "gate_status": gate_status})
@@ -460,7 +477,6 @@ def decision(action: str, gate_status: str = "inhibited") -> str:
         })
 
 
-@server.tool(name="persist_stage")
 def persist_stage() -> str:
     """Persist the current cognitive state to a USD .usda file.
 
@@ -487,6 +503,17 @@ def persist_stage() -> str:
             "status": "error",
             "error": f"{type(e).__name__}: {e}",
         })
+
+
+# D53: trial/verifier tools register ONLY when HARLO_TRIAL_TOOLS=1.
+# Production MCP clients (Claude Desktop) never see this surface.
+if _TRIAL_TOOLS:
+    server.tool(name="p5_state_demo")(p5_state_demo)
+    server.tool(name="anchor_demo")(anchor_demo)
+    server.tool(name="lossless_demo")(lossless_demo)
+    server.tool(name="compose_demo")(compose_demo)
+    server.tool(name="decision")(decision)
+    server.tool(name="persist_stage")(persist_stage)
 
 
 _hot_store = None

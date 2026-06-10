@@ -121,7 +121,44 @@ class TestDispatch:
             launcher.main([])
         assert calls == {"first_run": 1, "prompt": 1, "cli": 1}
 
-    def test_cli_path_skips_prompt_when_not_fresh(self, monkeypatch, tmp_path):
+    def test_finder_launch_shows_dialog_not_cli(self, monkeypatch, tmp_path):
+        """D55: a LaunchServices (double-click) launch shows feedback and
+        returns — it does not fall through to Click with no TTY, and it
+        does not trigger the launchd prompt."""
+        monkeypatch.setenv("HARLO_DATA_DIR", str(tmp_path))
+        monkeypatch.setenv("__CFBundleIdentifier", "com.josephibrahim.harlo")
+        import importlib
+        import harlo.daemon.config as cfg
+
+        importlib.reload(cfg)
+        import harlo.session.first_run as first_run
+
+        importlib.reload(first_run)
+
+        calls = {"dialog": 0, "cli": 0, "prompt": 0}
+
+        def fake_run_first_run():
+            return first_run.FirstRunResult(
+                fresh_install=True, migrated_from=None, migrated_paths=()
+            )
+
+        with patch("harlo.session.first_run.run_first_run", fake_run_first_run), \
+             patch("harlo.session.first_run.prompt_install_launchd",
+                   lambda **k: calls.__setitem__("prompt", calls["prompt"] + 1)), \
+             patch.object(launcher, "_show_finder_dialog",
+                          lambda: calls.__setitem__("dialog", calls["dialog"] + 1)), \
+             patch("harlo.cli.main.main",
+                   lambda: calls.__setitem__("cli", calls["cli"] + 1)), \
+             patch.object(launcher.sys.stdin, "isatty", return_value=False):
+            rc = launcher.main([])
+        assert rc == 0
+        assert calls == {"dialog": 1, "cli": 0, "prompt": 0}
+
+    def test_cli_path_prompts_even_when_not_fresh(self, monkeypatch, tmp_path):
+        """D55: the launchd offer is no longer gated on fresh_install —
+        a silent Finder first launch consumes the one-shot flag, so the
+        prompt must run on every interactive launch (it short-circuits
+        internally via .launchd_offered)."""
         monkeypatch.setenv("HARLO_DATA_DIR", str(tmp_path))
         import importlib
         import harlo.daemon.config as cfg
@@ -139,4 +176,4 @@ class TestDispatch:
             lambda **k: prompt_called.append(1),
         ), patch("harlo.cli.main.main", lambda: None):
             launcher.main([])
-        assert prompt_called == []  # not fresh, no prompt
+        assert prompt_called == [1]  # offer survives a consumed first-run

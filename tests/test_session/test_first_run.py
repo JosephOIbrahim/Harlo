@@ -115,7 +115,10 @@ class TestLaunchdPrompt:
         with patch.object(sys, "platform", "darwin"):
             assert first_run.prompt_install_launchd() is False
 
-    def test_no_tty_stamps_marker_and_returns_false(self, isolated_data_dir):
+    def test_no_tty_returns_false_without_stamping(self, isolated_data_dir):
+        """D55: a silent (no-TTY) launch must NOT permanently suppress
+        the onboarding offer. The marker stays absent so the next
+        interactive launch still prompts."""
         tmp_path, first_run = isolated_data_dir
         out = io.StringIO()
         with patch.object(sys, "platform", "darwin"), \
@@ -123,8 +126,7 @@ class TestLaunchdPrompt:
             result = first_run.prompt_install_launchd(out=out)
         assert result is False
         marker = tmp_path / ".launchd_offered"
-        assert marker.exists()
-        assert "no-tty" in marker.read_text()
+        assert not marker.exists()
 
     def test_auto_accept_false_records_decline(self, isolated_data_dir):
         tmp_path, first_run = isolated_data_dir

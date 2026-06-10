@@ -740,37 +740,42 @@ def _handle_mode(args: dict) -> dict:
     return {"status": "ok", "result": {"mode": target}}
 
 
+# CTO review D51: these handlers previously returned fabricated
+# success-shaped responses ("plan-stub", state "pending"/"undone")
+# while the motor system (python/harlo/motor/) has zero production
+# wiring. An LLM Actor would trust those lies. Until the motor
+# system is wired to the daemon, the honest answer is an error.
+
+_D51_MSG = (
+    "not implemented: the motor system is not wired to the daemon "
+    "(python/harlo/motor exists but has no production callers — "
+    "see docs/CTO_REVIEW_2026-06-09.md D51)"
+)
+
+
 def _handle_plan(args: dict) -> dict:
-    """Handle plan command: generate action plan."""
-    intent = args.get("intent", "")
-    return {"status": "ok", "result": {"plan_id": "plan-stub", "intent": intent, "steps": []}}
+    """Motor planning is not wired to the daemon (D51)."""
+    return {"status": "error", "message": _D51_MSG}
 
 
 def _handle_consent(args: dict) -> dict:
-    """Handle consent command: manage motor consent."""
-    action = args.get("action", "show")
-    return {"status": "ok", "result": {"level": action if action != "show" else "none", "action": action}}
+    """Motor consent is not wired to the daemon (D51)."""
+    return {"status": "error", "message": _D51_MSG}
 
 
 def _handle_execute(args: dict) -> dict:
-    """Handle execute command: execute an action plan."""
-    plan_id = args.get("plan_id", "")
-    step = args.get("step")
-    return {"status": "ok", "result": {"plan_id": plan_id, "state": "pending", "executed_steps": []}}
+    """Motor execution is not wired to the daemon (D51)."""
+    return {"status": "error", "message": _D51_MSG}
 
 
 def _handle_undo(args: dict) -> dict:
-    """Handle undo command: undo a previous action."""
-    action_id = args.get("action_id", "")
-    return {"status": "ok", "result": {"action_id": action_id, "state": "undone"}}
+    """Motor undo is not wired to the daemon (D51)."""
+    return {"status": "error", "message": _D51_MSG}
 
 
 def _handle_motor_reflexes(args: dict) -> dict:
-    """Handle motor-reflexes command: list or invalidate motor reflexes."""
-    action = args.get("action", "list")
-    if action == "invalidate":
-        return {"status": "ok", "result": {"invalidated": args.get("hash", "")}}
-    return {"status": "ok", "result": {"reflexes": []}}
+    """Motor reflexes are not wired to the daemon (D51)."""
+    return {"status": "error", "message": _D51_MSG}
 
 
 def _handle_reflexes(args: dict) -> dict:
@@ -790,6 +795,18 @@ def _handle_export(args: dict) -> dict:
         path = args.get("path", "")
         if not path:
             return {"status": "error", "message": "path is required"}
+        # D50 defense-in-depth: stale pre-D50 clients still send
+        # encrypted=True expecting the old silent-plaintext behavior.
+        # Refuse server-side too — no encrypted format exists.
+        if args.get("encrypted"):
+            return {
+                "status": "error",
+                "message": (
+                    "encryption is not implemented — refusing to write a "
+                    "plaintext dump for an encrypted=True request (CTO "
+                    "review D50). Re-export with encrypted=False/--plaintext."
+                ),
+            }
 
         from ..session.manager import SessionManager
         import sqlite3
@@ -847,9 +864,14 @@ def _handle_export(args: dict) -> dict:
         finally:
             conn.close()
 
-        # Write to file
-        from pathlib import Path
-        Path(path).write_text(json.dumps(export_data, indent=2), encoding="utf-8")
+        # Write with 0600 from the first byte (CTO review D50/D80) —
+        # create-then-chmod leaves the full plaintext dump world-readable
+        # for the gap (and never tightens a pre-existing wider mode).
+        import os
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(export_data, indent=2))
+        os.chmod(path, 0o600)  # tighten pre-existing files too
 
         return {
             "status": "ok",
