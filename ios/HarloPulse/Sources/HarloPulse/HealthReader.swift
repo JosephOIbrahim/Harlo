@@ -122,7 +122,7 @@ final class HealthReader {
         }
     }
 
-    private func fetchDelta(for type: PulseType, done: @escaping () -> Void) {
+    func fetchDelta(for type: PulseType, done: @escaping () -> Void) {
         let sampleType = type.sampleType
         let anchor = loadAnchor(for: type)
         let query = HKAnchoredObjectQuery(
