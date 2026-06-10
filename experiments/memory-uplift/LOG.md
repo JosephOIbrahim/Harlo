@@ -262,6 +262,28 @@ HALT — promotion fix + verification surface NOT authorized this sprint (both
 change what the daemon does unprompted). Δ12: warm tier empty = promotion
 WIRING-GAP, orthogonal to Δ9.
 
+## REPAIR SPRINT — Phase 3: organic-lifecycle test (TI-002)
+tests/test_organic_lifecycle.py — permanent closure of the
+store→promote→survive→recall→verify lifecycle. Result: 3 passed, 1 xfailed.
+- test_day_old_trace_survives_apoptosis — PASS. Real FFI apoptosis
+  (py_microglia, rebuilt .so): 1-day trace survives (≈0.95), 200-day reaped.
+  The permanent Δ9 regression guard at the INTEGRATION level (pre-fix it
+  deleted the day-old trace).
+- test_survivor_is_recallable — PASS. Day-old survivor recalled via py_recall.
+- test_verify_path_surface_reachable — PASS. ElenchusQueue enumerate/resolve
+  surface present (NOT wired to organic traces — Cycle 6 HALT; surface only).
+- test_organic_promotion_is_wired — XFAIL (strict). Asserts a production caller
+  of run_promotion_cycle exists; none does (Cycle 6 WIRING-GAP). strict=True →
+  it fails loudly the moment promotion is wired (XPASS), forcing removal.
+  Removing this xfail IS the acceptance test for the promotion fix.
+
+SPRINT CONTRACT: a trace stored today SURVIVES a simulated day ✓ and is
+RECALLABLE ✓; it does NOT promote to warm — blocked at the promotion stage by
+the WIRING-GAP (Cycle 6 / Δ12), precisely diagnosed, fix not authorized. The
+LOG names the blocking stage and why, per the contract's escape clause.
+Δ13: TI-002 lifecycle test landed; decay + recall green, the promotion xfail is
+the single remaining gate to "memory is real."
+
 ## Open items
 - P2: KILL FIRED (Cycle 4) — VERIFIED pool 0. Rescope: accumulate verified
   material via real sessions, or redefine the probe source. Re-run inventory.py.
