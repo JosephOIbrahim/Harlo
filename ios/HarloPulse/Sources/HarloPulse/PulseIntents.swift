@@ -245,6 +245,23 @@ struct TogglePulseTypeIntent: AppIntent, ForegroundContinuableIntent {
     }
 }
 
+// MARK: - Open intent (code-along pattern: tap-to-open from Siri/Spotlight)
+
+/// Bridges entity results back into the app: when the status entity
+/// appears in Siri or Spotlight and the user taps it (or says "open
+/// it"), the system runs this. Single-screen app — opening IS the
+/// navigation. OpenIntent is iOS 16+, no availability guard needed.
+struct OpenPulseIntent: OpenIntent {
+    static var title: LocalizedStringResource = "Open HarloPulse"
+
+    @Parameter(title: "Status")
+    var target: PulseStatusEntity
+
+    func perform() async throws -> some IntentResult {
+        .result()
+    }
+}
+
 // MARK: - Shortcuts vocabulary
 
 struct PulseShortcuts: AppShortcutsProvider {
