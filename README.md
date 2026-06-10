@@ -6,6 +6,14 @@
   <strong>Patent Pending</strong> | <a href="LICENSE">Apache 2.0</a> | <a href="PATENTS.md">Patent Details</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/JosephOIbrahim/Harlo/releases"><img src="https://img.shields.io/github/v/release/JosephOIbrahim/Harlo?include_prereleases&label=release&color=d4895e" alt="Release"></a>
+  <img src="https://img.shields.io/badge/tests-1381%20passing-e6c466" alt="Tests">
+  <img src="https://img.shields.io/badge/hot%20recall-0.84ms%20%40%20100k%20traces-d4895e" alt="Hot recall">
+  <img src="https://img.shields.io/badge/idle-0%20resident%20processes-e6c466" alt="Idle">
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20iOS-lightgrey" alt="Platform">
+</p>
+
 ---
 
 Your AI coach. Watches your patterns, predicts your crashes, backs off during
@@ -21,12 +29,13 @@ layers — no cloud dependency, no data mining, no rented access to your own min
 
 ```
 PRODUCTION LIVE — Harlo v6.1-MOTOR
-1,365 passing · 11 skipped · Real OpenUSD canonical persistence · USD-Lite runtime tier
-8/8 phase gates passed · 19 D-block decisions clean (D1-D19)
-Substrate-unified with sister project Moneta · P1 CIP defensible
-458 organic observations collected · 5 sprints shipped · Path C closed (Step 3)
+1,381 passing · 5 skipped (lean bundle) · Real OpenUSD canonical persistence · USD-Lite runtime tier
+8/8 phase gates passed · Substrate-unified with sister project Moneta · P1 CIP defensible
+1,390+ organic observations collected · Path C closed (Step 3)
 Phase 5A landed: macOS bundle · intake calibration · biometric barrier · Motor Cortex with Basal Ganglia gating
 v0.1.2: USD-proof trial — §F1 native composition · §F2 structural lossless · anchor immunity · P5 customData · P1 decision-tier — CONFIRMED on live pxr stage (verifier-first, 4 cycles)
+v0.1.6: HarloPulse loop LIVE — Apple Watch → HealthKit → push-on-arrival → launchd socket → biometric barrier → coach
+        first organic biometrics through the barrier · Siri/Shortcuts/Spotlight surface · Xcode 27 / iOS 27 SDK
 ```
 
 | Sprint | Tests | What Shipped |
@@ -39,6 +48,29 @@ v0.1.2: USD-proof trial — §F1 native composition · §F2 structural lossless 
 | **Path C** Step 3 v3.4.0 | +39 | Real OpenUSD as canonical persistence (codeless schema, 21 prim types under `harlo` plugin separate from Moneta); USD-Lite engine preserved as fast in-memory runtime tier (Fabric pattern); sync layer per D4 policy table; migration script for USD-Lite v1 → real USD; substrate-unified with sister project Moneta. P1 CIP framing now defensible. |
 | **Phase 5A** macOS + Operator | +51 | macOS app bundle (Harlo.app + launchd socket activation), intake calibration CLI emitting three INTAKE_CALIBRATED Merkle layers, biometric barrier per ADR-0001 (opt-in HealthKit signals, freshness window, never enter trace pipeline), Motor Cortex with Basal Ganglia inhibition-default gating, `harlo doctor --strict` operator readiness, signing-readiness pre-flight (27 checks) |
 | **USD Trial** v0.1.2 | +verifier | SOLO trial-harness loop (`docs/trial-harness.md` + `docs/usd-proof-trial.md`); 4 engine cycles verifier-first against `wave1_harness.py`; native USD-composition theses CONFIRMED on the live `pxr`-backed stage: §F1 `LOCAL > VARIANT > SPECIALIZE` resolution, §F2 `reconstruct_clean` bit-identical, anchor structural immunity (adversarial probe), P5 customData state tracking; new MCP tools — `compose_demo`, `lossless_demo`, `anchor_demo`, `p5_state_demo`, `persist_stage`, `decision`. P1 closed via Path C Actor-driven motor surface. |
+| **Pulse Loop** v0.1.6 | +13 | HarloPulse iPhone sidecar deployed to hardware (Xcode 27 / iOS 27 SDK): 6-word HMAC pairing, per-type opt-in HealthKit reads (ADR-0001/D65), HKObserverQuery + background delivery for push-on-arrival, 48h lookback + chunked frames; Mac side `pulse listen` adopts a launchd-held TCP socket (Rule 1 — 0W between Watch syncs); App Intents surface (sync, status snippet, type toggles with clarification, OpenIntent, onscreen awareness); field-debugged end-to-end — first organic Apple Watch biometrics through the barrier into the coach. Four WWDC26 frontier docs: App Intents adoption plan, Foundation Models provider review (+ live-verified Python SDK addendum), code-along addendum, HealthKit collaboration report. |
+
+---
+
+## Benchmarks
+
+Measured 2026-06-10 on the reference machine (Mac Studio M1 Ultra, 128 GB,
+macOS 27). Reproduce the search rows with `cargo bench -p hippocampus`
+(criterion, `crates/hippocampus/benches/recall.rs`).
+
+| Path | Constitutional budget | Measured | Headroom |
+|------|----------------------|----------|----------|
+| SDR search, 10k traces (k=5) | — | **0.084 ms** median | — |
+| SDR search, 100k traces (k=5) | < 2 ms (Rule 3) | **0.844 ms** median | 2.4× |
+| PyO3 module import | — | 2.4 ms | — |
+| Cold start — import + first recall over FFI | < 5 ms (Rule 3) | **3.4 ms** | 1.5× |
+| Hot recall round trip (Python → Rust → SQLite) | < 2 ms (Rule 3) | **0.66 ms** p50 · 0.94 ms p95 | 3.0× |
+| Resident processes between sessions | 0 (Rule 1) | **0** — launchd holds the sockets, PID column reads `-` | — |
+| Full Python suite (lean bundle) | — | 1,381 passed in 17 s | — |
+
+1-bit SDR vectors with Hamming distance (no float32, no cosine — Rule 2) keep
+the search path pure integer XOR + popcount: a full 100k-trace scan completes
+in less time than a single localhost HTTP round trip.
 
 ---
 
@@ -115,6 +147,51 @@ The inert motor system (`premotor`, `basal_ganglia`, `executor`) remains
 disconnected — Path C creates the **smallest honest motor surface**.
 Consent escalation, basal-ganglia gating, and executor wiring are parked
 for future cycles.
+
+---
+
+## HarloPulse — The Push-on-Arrival Biometric Loop (v0.1.6)
+
+The iPhone sidecar shipped to hardware. Apple Watch biometrics now reach the
+Modulation Layer with zero resident processes on either side of the wire:
+
+```mermaid
+flowchart LR
+    W["Apple Watch<br/>HR · HRV · sleep · workouts"]:::runtime --> HK["iPhone HealthKit<br/>background delivery"]:::runtime
+    HK --> APP["HarloPulse app<br/>HKObserverQuery wakes it"]:::runtime
+    APP --> PUSH["delta push<br/>HMAC auth · 48h window · chunked frames"]:::runtime
+    PUSH --> LD["Mac launchd<br/>holds TCP 48653 · spawns on SYN"]:::substrate
+    LD --> LIS["pulse listen<br/>adopts socket · whitelist only"]:::substrate
+    LIS --> BB["biometric barrier<br/>ADR-0001 · freshness window"]:::substrate
+    BB --> MOD["modulation layer<br/>derived verdict only — D60"]:::substrate
+    MOD --> COACH["coach · status<br/>Claude Desktop / Claude Code"]:::substrate
+
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
+```
+
+Properties, all field-verified on real hardware (iPhone → Mac Studio, June 2026):
+
+- **Push-on-arrival, not polling** — the Watch syncs, HealthKit wakes the app
+  in the background, the app pushes the delta. No schedule, no daemon on the
+  phone, no polling loop anywhere.
+- **0 W on the Mac** (Rule 1) — launchd holds port 48653; `pulse listen` is
+  spawned by the first SYN, drains the connection, exits. KeepAlive is
+  structurally forbidden by the plist tests.
+- **6-word pairing, HMAC-authenticated frames** — the raw token never
+  persists; both sides keep only the derived key (iOS Keychain / 0600 file).
+  Single-command whitelist (`biometric_ingest`), 1 MiB frame cap, 5-minute
+  auth window.
+- **Raw samples never touch disk on the Mac** (Rule 9) — the barrier consumes
+  them in memory and stores only the derived modulation verdict (load,
+  depleted, stale).
+- **Per-type opt-in, default OFF** (ADR-0001 / D65) — nine HealthKit types,
+  each with its own toggle and its own permission sheet.
+- **Siri surface** — "Sync HarloPulse," status snippet, type toggles with
+  clarification dialogs, OpenIntent, onscreen awareness on iOS 18.2+.
+
+Design history: `docs/adr/0002-iphone-sidecar.md` · WWDC26 adoption analyses
+in `docs/frontier/`.
 
 ---
 
