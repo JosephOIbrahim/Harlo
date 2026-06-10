@@ -222,7 +222,8 @@ def test_listen_adopts_launchd_socket(tmp_data, monkeypatch) -> None:
     import harlo.cli.commands.pulse as p
     from click.testing import CliRunner
 
-    _write_token(tmp_data)  # paired state
+    runner = CliRunner()
+    assert runner.invoke(p.pulse, ["pair"]).exit_code == 0  # paired state
 
     # A real listening TCP socket stands in for launchd's fd.
     held = socket_mod.socket(socket_mod.AF_INET, socket_mod.SOCK_STREAM)
@@ -234,7 +235,6 @@ def test_listen_adopts_launchd_socket(tmp_data, monkeypatch) -> None:
     monkeypatch.setattr(sa, "adopt_launchd_socket",
                         lambda name: [fd] if name == "HarloPulse" else None)
 
-    runner = CliRunner()
     res = runner.invoke(p.pulse, ["listen", "--timeout", "1"])
     out = _combined_output(res)
     assert res.exit_code == 0, out
