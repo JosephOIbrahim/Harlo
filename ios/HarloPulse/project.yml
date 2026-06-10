@@ -46,9 +46,17 @@ targets:
         excludes:
           - "HarloPulse.entitlements"
           - "*.md"
-    info:
-      path: Info.plist
-      properties: {}                  # on-disk Info.plist is the source of truth (HealthBridge pattern)
+    dependencies:
+      # Explicit link so appintentsmetadataprocessor extracts the intent
+      # metadata (autolink alone makes it skip — Siri/Shortcuts would
+      # never discover the intents).
+      - sdk: AppIntents.framework
+    # NO `info:` block on purpose: xcodegen REGENERATES (overwrites) the
+    # file named there on every `xcodegen generate`, silently destroying
+    # hand-maintained keys (we lost the HealthKit usage strings to this
+    # once). INFOPLIST_FILE below points at the checked-in plist, which
+    # xcodegen then leaves alone — the on-disk file really is the source
+    # of truth this way.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.josephibrahim.harlo.pulse

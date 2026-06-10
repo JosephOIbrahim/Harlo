@@ -21,7 +21,12 @@ struct HarloPulseApp: App {
 
 // MARK: - Coordinator
 
+/// Singleton: App Intents run outside the view hierarchy and must share
+/// the ONE HealthReader (a second instance would double-register
+/// HKObserverQuery callbacks). Views observe the same object.
 final class PulseModel: ObservableObject {
+    static let shared = PulseModel()
+
     @Published var lastPush: Date?
     @Published var lastResult: String = "—"
     @Published var paired: Bool
@@ -29,8 +34,15 @@ final class PulseModel: ObservableObject {
     let reader = HealthReader()
     private let link = PulseLink()
 
-    init() {
+    // Persisted mirrors so App Intents (and the status snippet) can
+    // report the last outcome even on a cold background launch.
+    private static let lastPushKey = "pulse.status.lastPush"
+    private static let lastResultKey = "pulse.status.lastResult"
+
+    private init() {
         paired = PairingStore.load() != nil
+        lastPush = UserDefaults.standard.object(forKey: Self.lastPushKey) as? Date
+        lastResult = UserDefaults.standard.string(forKey: Self.lastResultKey) ?? "—"
 
         reader.push = { [weak self] samples, done in
             guard let self = self else {
@@ -39,8 +51,12 @@ final class PulseModel: ObservableObject {
             }
             self.link.push(samples: samples) { ok, message in
                 DispatchQueue.main.async {
-                    if ok { self.lastPush = Date() }
+                    if ok {
+                        self.lastPush = Date()
+                        UserDefaults.standard.set(self.lastPush, forKey: Self.lastPushKey)
+                    }
                     self.lastResult = message
+                    UserDefaults.standard.set(message, forKey: Self.lastResultKey)
                 }
                 // This callback is the anchor-commit signal inside
                 // HealthReader.
@@ -54,6 +70,34 @@ final class PulseModel: ObservableObject {
         where UserDefaults.standard.bool(forKey: type.storageKey) {
             reader.enable(type)
         }
+    }
+
+    var enabledTypeCount: Int {
+        PulseType.allCases.filter {
+            UserDefaults.standard.bool(forKey: $0.storageKey)
+        }.count
+    }
+
+    /// Awaitable sync for App Intents: triggers a delta fetch+push for
+    /// every enabled type and resolves when all per-type cycles call
+    /// back (push success or failure both count as completion).
+    func syncNow() async -> (typesSynced: Int, lastResult: String) {
+        let enabled = PulseType.allCases.filter {
+            UserDefaults.standard.bool(forKey: $0.storageKey)
+        }
+        guard paired, !enabled.isEmpty else {
+            return (0, paired ? "no data types enabled" : "not paired")
+        }
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            let group = DispatchGroup()
+            for type in enabled {
+                group.enter()
+                reader.fetchDelta(for: type) { group.leave() }
+            }
+            group.notify(queue: .main) { cont.resume() }
+        }
+        let result = UserDefaults.standard.string(forKey: Self.lastResultKey) ?? "—"
+        return (enabled.count, result)
     }
 
     func setEnabled(_ type: PulseType, _ on: Bool) {
@@ -94,7 +138,7 @@ final class PulseModel: ObservableObject {
 // MARK: - UI
 
 struct ContentView: View {
-    @StateObject private var model = PulseModel()
+    @ObservedObject private var model = PulseModel.shared
     @State private var tokenWords = ""
     @State private var host = ""
     @State private var portText = "48653"
