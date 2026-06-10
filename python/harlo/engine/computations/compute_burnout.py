@@ -7,7 +7,7 @@ INV-14 exception: exogenous_red=True bypasses sequential rule.
 
 from __future__ import annotations
 
-from src.schemas import (
+from harlo.engine.schemas import (
     Burnout,
     CognitiveObservation,
     StateBlock,

@@ -6,7 +6,7 @@ The DAG says WHAT is needed. The registry decides WHO fulfills it.
 
 from __future__ import annotations
 
-from src.schemas import (
+from harlo.engine.schemas import (
     Burnout,
     BurstPhase,
     CognitiveObservation,

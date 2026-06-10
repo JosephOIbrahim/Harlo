@@ -24,13 +24,13 @@ PYTHON_ROOT = PROJECT_ROOT / "python"
 if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
-from src.cognitive_engine import CognitiveEngine
-from src.schedule import (
+from harlo.engine.cognitive_engine import CognitiveEngine
+from harlo.engine.schedule import (
     DayWindow,
     Schedule,
     author_schedule_to_stage,
 )
-from src.schemas import ScheduleKind
+from harlo.engine.schemas import ScheduleKind
 
 NY = ZoneInfo("America/New_York")
 

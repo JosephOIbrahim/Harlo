@@ -19,8 +19,8 @@ import pytest
 
 pxr = pytest.importorskip("pxr", reason="USD pxr bindings not available for this Python version")
 
-from src.cognitive_stage import CognitiveStage
-from src.schemas import (
+from harlo.engine.cognitive_stage import CognitiveStage
+from harlo.engine.schemas import (
     CognitiveObservation,
     DynamicsBlock,
     Momentum,

@@ -83,8 +83,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install maturin py2app
-          # Match runtime deps from pyproject.toml
-          python -m pip install click jsonschema numpy mcp pyyaml pydantic
+          # Match runtime deps from pyproject.toml.
+          # networkx: hard runtime dep of harlo.engine (mock_cogexec DAG),
+          # which ships in the bundle since D56 promoted src/ into the package.
+          python -m pip install click jsonschema numpy mcp pyyaml pydantic networkx
 
       - name: Build Rust hot path (universal2)
         # Non-editable install (no -e) on purpose: py2app's modulegraph

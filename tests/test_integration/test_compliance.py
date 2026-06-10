@@ -28,7 +28,7 @@ CRATES = ROOT / "crates"
 
 
 # ===================================================================
-# Rule 1 — 0W Idle: No sleep(), no while True in src/
+# Rule 1 — 0W Idle: No sleep(), no while True in python/harlo/engine/
 # ===================================================================
 
 class TestRule01_ZeroWattIdle:
@@ -55,12 +55,12 @@ class TestRule01_ZeroWattIdle:
     def test_no_sleep(self):
         """sleep() must not appear in production source (Rule 1)."""
         hits = self._grep("sleep(", SRC)
-        assert hits == [], f"sleep() found in src/:\n" + "\n".join(hits)
+        assert hits == [], f"sleep() found in python/harlo/engine/:\n" + "\n".join(hits)
 
     def test_no_while_true(self):
         """while True must not appear in production source (Rule 1)."""
         hits = self._grep("while True", SRC)
-        assert hits == [], f"while True found in src/:\n" + "\n".join(hits)
+        assert hits == [], f"while True found in python/harlo/engine/:\n" + "\n".join(hits)
 
 
 # ===================================================================

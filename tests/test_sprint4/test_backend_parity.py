@@ -8,10 +8,10 @@ import pytest
 
 pxr = pytest.importorskip("pxr", reason="USD pxr bindings not available for this Python version")
 
-from src.cognitive_stage import CognitiveStage
-from src.mock_usd_stage import MockUsdStage
-from src.mock_cogexec import evaluate_dag
-from src.schemas import (
+from harlo.engine.cognitive_stage import CognitiveStage
+from harlo.engine.mock_usd_stage import MockUsdStage
+from harlo.engine.mock_cogexec import evaluate_dag
+from harlo.engine.schemas import (
     CognitiveObservation,
     DynamicsBlock,
     Burnout,
@@ -19,7 +19,7 @@ from src.schemas import (
     Momentum,
     StateBlock,
 )
-from src.stage_factory import create_stage
+from harlo.engine.stage_factory import create_stage
 
 
 # -------------------------------------------------------------------

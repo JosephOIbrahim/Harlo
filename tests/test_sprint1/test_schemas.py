@@ -9,7 +9,7 @@ Covers:
 
 import pytest
 
-from src.schemas import (
+from harlo.engine.schemas import (
     ActionType,
     Altitude,
     AllostasisBlock,
@@ -30,7 +30,7 @@ from src.schemas import (
     SleepQuality,
     StateBlock,
 )
-from src.mock_usd_stage import MockUsdStage
+from harlo.engine.mock_usd_stage import MockUsdStage
 
 
 # -------------------------------------------------------------------

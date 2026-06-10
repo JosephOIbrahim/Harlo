@@ -13,10 +13,10 @@ import pytest
 
 pxr = pytest.importorskip("pxr", reason="USD pxr bindings not available for this Python version")
 
-from src.cognitive_stage import CognitiveStage
-from src.cognitive_engine import CognitiveEngine
-from src.mock_cogexec import evaluate_dag
-from src.schemas import (
+from harlo.engine.cognitive_stage import CognitiveStage
+from harlo.engine.cognitive_engine import CognitiveEngine
+from harlo.engine.mock_cogexec import evaluate_dag
+from harlo.engine.schemas import (
     CognitiveObservation,
     DynamicsBlock,
     Momentum,
@@ -143,8 +143,8 @@ class TestLiveUSDA:
 
     def test_engine_with_real_usd(self, tmp_path):
         """CognitiveEngine works with CognitiveStage backend."""
-        from src.cognitive_engine import CognitiveEngine
-        from src.cognitive_stage import CognitiveStage
+        from harlo.engine.cognitive_engine import CognitiveEngine
+        from harlo.engine.cognitive_stage import CognitiveStage
 
         # Monkey-patch stage into engine
         engine = CognitiveEngine()

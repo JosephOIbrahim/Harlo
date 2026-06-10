@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.computations.compute_routing import compute_routing
-from src.schemas import (
+from harlo.engine.computations.compute_routing import compute_routing
+from harlo.engine.schemas import (
     Burnout,
     BurstPhase,
     CognitiveObservation,

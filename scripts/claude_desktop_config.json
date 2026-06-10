@@ -1,8 +1,15 @@
 {
+  "_comment": "Example Claude Desktop config for Harlo (macOS). The `harlo` console script IS the MCP stdio server.",
   "mcpServers": {
     "harlo": {
-      "command": "python",
-      "args": ["C:\\Users\\User\\Harlo\\src\\mcp_server.py"]
+      "command": "/Users/YOU/Code/Harlo/.venv312/bin/harlo",
+      "args": [],
+      "env": {
+        "ENGINE_ENABLED": "1",
+        "USE_REAL_USD": "1",
+        "OBSERVATION_LOGGING": "1",
+        "PREDICTION_ENABLED": "0"
+      }
     }
   }
 }

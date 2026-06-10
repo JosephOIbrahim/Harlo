@@ -13,9 +13,9 @@ Simulates 20 MCP tool calls in sequence with all systems connected:
 
 import pytest
 
-from src.cognitive_engine import CognitiveEngine
-from src.consent import ConsentManager
-from src.schemas import Burnout, Momentum
+from harlo.engine.cognitive_engine import CognitiveEngine
+from harlo.engine.consent import ConsentManager
+from harlo.engine.schemas import Burnout, Momentum
 
 
 class TestLiveE2E:
@@ -133,7 +133,7 @@ class TestLiveE2E:
         engine = CognitiveEngine(use_real_usd=False, in_memory=True)
 
         # Seed anchors
-        from src.schemas import CognitiveObservation
+        from harlo.engine.schemas import CognitiveObservation
         anchors = [CognitiveObservation() for _ in range(5)]
         engine._buffer.add_anchor_batch(anchors)
 

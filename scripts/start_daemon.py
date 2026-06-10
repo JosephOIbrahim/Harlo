@@ -52,7 +52,6 @@ def _start_background() -> int:
     """Start daemon as a background process."""
     # Use pythonw on Windows if available, else python with nohup-like behavior
     python = sys.executable
-    script = str(Path(__file__).parent.parent / "src" / "daemon" / "main.py")
 
     if os.name == "nt":
         # Windows: use CREATE_NO_WINDOW flag
@@ -61,7 +60,7 @@ def _start_background() -> int:
         startupinfo.wShowWindow = 0  # SW_HIDE
 
         proc = subprocess.Popen(
-            [python, script],
+            [python, "-m", "harlo.daemon.main"],
             startupinfo=startupinfo,
             creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,
             stdout=subprocess.DEVNULL,
@@ -70,7 +69,7 @@ def _start_background() -> int:
     else:
         # Unix: standard daemonization
         proc = subprocess.Popen(
-            [python, script],
+            [python, "-m", "harlo.daemon.main"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,

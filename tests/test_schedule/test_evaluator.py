@@ -11,13 +11,13 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from src.schedule import (
+from harlo.engine.schedule import (
     DayWindow,
     Override,
     Schedule,
     evaluate_schedule,
 )
-from src.schemas import ScheduleKind
+from harlo.engine.schemas import ScheduleKind
 
 NY = ZoneInfo("America/New_York")
 

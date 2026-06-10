@@ -9,7 +9,7 @@ Verifies:
 import json
 import pytest
 
-from src.cognitive_engine import CognitiveEngine
+from harlo.engine.cognitive_engine import CognitiveEngine
 
 
 class TestMCPIntegration:

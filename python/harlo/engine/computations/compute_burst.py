@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.schemas import (
+from harlo.engine.schemas import (
     BurstPhase,
     CognitiveObservation,
     DynamicsBlock,

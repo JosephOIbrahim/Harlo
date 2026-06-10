@@ -11,7 +11,7 @@ import pytest
 
 from pxr import Usd
 
-from src.schedule import (
+from harlo.engine.schedule import (
     DayWindow,
     Override,
     Schedule,
@@ -19,7 +19,7 @@ from src.schedule import (
     author_schedule_to_stage,
     load_schedule_from_stage,
 )
-from src.schemas import ScheduleKind
+from harlo.engine.schemas import ScheduleKind
 
 
 @pytest.fixture
@@ -171,7 +171,7 @@ class TestSublayerPersistence:
 
         from pxr import Sdf
 
-        from src.cognitive_stage import CognitiveStage
+        from harlo.engine.cognitive_stage import CognitiveStage
 
         cog = CognitiveStage(stage_dir=str(tmp_path))
         sched_path = str(tmp_path / "schedule.usda")

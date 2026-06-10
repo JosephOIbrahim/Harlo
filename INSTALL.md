@@ -151,7 +151,7 @@ pytest tests/ -q
 ```
 
 (`pyproject.toml`'s `[tool.pytest.ini_options] pythonpath = ["."]` puts the
-in-tree `src/` and `python/` packages on `sys.path` automatically.)
+in-tree `python/` package (incl. `harlo.engine`) on `sys.path` automatically.)
 
 Expected outcome on a fresh clone (no `models/cognitive_predictor_v1.joblib`):
 
@@ -236,7 +236,7 @@ data/stages/harlo.usda    Your cognitive state (real USD)
 data/stages/delegates/             Per-delegate opinion sublayers
 data/observations.db               Organic observation buffer
 models/cognitive_predictor_v1.joblib  XGBoost predictor (trained on 10K sessions)
-src/                               The cognitive engine (Python)
+python/harlo/engine/               The cognitive engine (Python, packaged since D56)
 crates/hippocampus/                The fast memory engine (Rust)
 ```
 

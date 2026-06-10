@@ -50,11 +50,79 @@ def already_completed() -> bool:
     return _MARKER.exists()
 
 
+_OBS_MERGE_MARKER = DATA_DIR / ".obs_merge_v1"
+
+
+def _merge_legacy_observations() -> int:
+    """D56/B2: one-shot merge of the legacy repo-tree observation buffer.
+
+    Pre-D56, engine_config defaulted BUFFER_DB_PATH into the source
+    checkout (PROJECT_ROOT/data/observations.db), so dogfood installs
+    forked their observation history when first-run copied a snapshot
+    to DATA_DIR and both copies kept growing. INSERT OR IGNORE keyed on
+    obs_id (the buffer PK) merges the legacy rows losslessly into the
+    DATA_DIR buffer. Versioned by its own marker, independent of the
+    first-run marker (which is typically already stamped on the
+    machines this fixes).
+
+    Returns the number of rows merged (0 when nothing to do).
+    """
+    if _OBS_MERGE_MARKER.exists():
+        return 0
+    legacy = _LEGACY_DATA / "observations.db"
+    target = DATA_DIR / "observations.db"
+    if not legacy.exists() or legacy.resolve() == target.resolve():
+        _OBS_MERGE_MARKER.write_text("no-legacy\n", encoding="utf-8")
+        return 0
+
+    import sqlite3
+
+    merged = 0
+    try:
+        conn = sqlite3.connect(str(target))
+        try:
+            conn.execute("ATTACH DATABASE ? AS legacy", (str(legacy),))
+            # Ensure the table exists on a fresh target before merging.
+            row = conn.execute(
+                "SELECT sql FROM legacy.sqlite_master "
+                "WHERE type='table' AND name='observation_buffer'"
+            ).fetchone()
+            if row is None:
+                _OBS_MERGE_MARKER.write_text("no-legacy-table\n", encoding="utf-8")
+                return 0
+            conn.execute(row[0].replace(
+                "CREATE TABLE observation_buffer",
+                "CREATE TABLE IF NOT EXISTS observation_buffer", 1))
+            before = conn.execute(
+                "SELECT COUNT(*) FROM observation_buffer").fetchone()[0]
+            conn.execute(
+                "INSERT OR IGNORE INTO observation_buffer "
+                "SELECT * FROM legacy.observation_buffer")
+            after = conn.execute(
+                "SELECT COUNT(*) FROM observation_buffer").fetchone()[0]
+            conn.commit()
+            merged = after - before
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        _LOGGER.warning("obs-merge: failed, will retry next boot: %s", exc)
+        return 0  # no marker — retry on a later boot
+
+    _OBS_MERGE_MARKER.write_text(f"merged {merged}\n", encoding="utf-8")
+    _LOGGER.info("obs-merge: merged %d legacy observation rows", merged)
+    return merged
+
+
 def run_first_run() -> FirstRunResult:
     """Idempotent setup. Returns description of what happened.
 
     Safe to call on every boot — short-circuits when the marker exists.
     """
+    # Versioned migrations run regardless of the first-run marker —
+    # they fix installs whose first-run predates the migration.
+    ensure_data_dirs()
+    _merge_legacy_observations()
+
     if already_completed():
         return FirstRunResult(fresh_install=False, migrated_from=None, migrated_paths=())
 

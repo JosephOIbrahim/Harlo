@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.mock_usd_stage import MockUsdStage
+from harlo.engine.mock_usd_stage import MockUsdStage
 
 
 class TestSublayerConcurrency:

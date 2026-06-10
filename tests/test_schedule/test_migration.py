@@ -14,13 +14,13 @@ import pytest
 
 from pxr import Sdf, Usd
 
-from src.schedule import (
+from harlo.engine.schedule import (
     DayWindow,
     Schedule,
     author_schedule_to_stage,
     load_schedule_from_stage,
 )
-from src.schedule_migrate import migrate_inline
+from harlo.engine.schedule_migrate import migrate_inline
 
 
 def _craft_pre_migration_root(stage_dir: str) -> str:

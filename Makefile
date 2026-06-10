@@ -14,14 +14,16 @@ DMG_PATH ?= dist/Harlo.dmg
 # Python resolution order:
 #   1. Explicit override on the command line (PYTHON=...)
 #   2. Currently-activated venv ($VIRTUAL_ENV)
-#   3. Project venv at .venv314/bin/python (the convention used in
-#      the dev runbook — see CLAUDE.md "single venv" note)
-#   4. System python3
-# Lets `make verify` work without manual override on a fresh shell
-# in the project root.
+#   3. Project venv at .venv312/bin/python — the CANONICAL dev venv
+#      (D74: has the cp312 hippocampus .so, pxr 26.5, and the editable
+#      install; .venv314's `import harlo` is broken pending a 3.14
+#      .so rebuild and is a fallback only)
+#   4. Legacy .venv314, then system python3
 ifndef PYTHON
   ifdef VIRTUAL_ENV
     PYTHON := $(VIRTUAL_ENV)/bin/python
+  else ifneq (,$(wildcard .venv312/bin/python))
+    PYTHON := .venv312/bin/python
   else ifneq (,$(wildcard .venv314/bin/python))
     PYTHON := .venv314/bin/python
   else
@@ -131,7 +133,7 @@ verify: test compliance-greps doctor signing-readiness
 # sim from src/trajectory_generator.py — 10K sessions seeded for repro.
 # Gitignored due to size (~229 MB); regenerate locally as needed.
 data/trajectories_10k.jsonl regen-trajectories:
-	$(PYTHON) -m src.trajectory_generator \
+	$(PYTHON) -m harlo.engine.trajectory_generator \
 	    --count 10000 --seed 42 --validate \
 	    --output data/trajectories_10k.jsonl
 
@@ -141,7 +143,7 @@ data/trajectories_10k.jsonl regen-trajectories:
 # this artifact — they `pytest.skip` cleanly when it's missing, so the
 # regen is opt-in.
 models/cognitive_predictor_v1.joblib regen-predictor: data/trajectories_10k.jsonl
-	$(PYTHON) -m src.train_predictor \
+	$(PYTHON) -m harlo.engine.train_predictor \
 	    --data data/trajectories_10k.jsonl \
 	    --output models/cognitive_predictor_v1.joblib \
 	    --seed 42

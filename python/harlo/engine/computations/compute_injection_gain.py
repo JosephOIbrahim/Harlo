@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 
-from src.schemas import (
+from harlo.engine.schemas import (
     CognitiveObservation,
     InjectionPhase,
     InjectionProfile,

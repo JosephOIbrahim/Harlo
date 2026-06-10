@@ -11,7 +11,7 @@ import math
 import networkx as nx
 import pytest
 
-from src.schemas import (
+from harlo.engine.schemas import (
     ActionBlock,
     ActionType,
     AllostasisBlock,
@@ -29,15 +29,15 @@ from src.schemas import (
     SleepQuality,
     StateBlock,
 )
-from src.mock_usd_stage import MockUsdStage
-from src.mock_cogexec import build_dag, evaluate_dag
-from src.computations.compute_momentum import compute_momentum
-from src.computations.compute_burnout import compute_burnout
-from src.computations.compute_energy import compute_energy
-from src.computations.compute_injection_gain import compute_injection_gain, compute_anchor_gain
-from src.computations.compute_context_budget import compute_context_budget
-from src.computations.compute_burst import compute_burst
-from src.computations.compute_allostasis import compute_allostasis
+from harlo.engine.mock_usd_stage import MockUsdStage
+from harlo.engine.mock_cogexec import build_dag, evaluate_dag
+from harlo.engine.computations.compute_momentum import compute_momentum
+from harlo.engine.computations.compute_burnout import compute_burnout
+from harlo.engine.computations.compute_energy import compute_energy
+from harlo.engine.computations.compute_injection_gain import compute_injection_gain, compute_anchor_gain
+from harlo.engine.computations.compute_context_budget import compute_context_budget
+from harlo.engine.computations.compute_burst import compute_burst
+from harlo.engine.computations.compute_allostasis import compute_allostasis
 
 
 # -------------------------------------------------------------------

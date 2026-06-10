@@ -6,7 +6,7 @@ Promote Payload→Reference at >4.2x, demote at <3.8x.
 
 from __future__ import annotations
 
-from src.schemas import (
+from harlo.engine.schemas import (
     ContextLevel,
     CognitiveObservation,
     StateBlock,

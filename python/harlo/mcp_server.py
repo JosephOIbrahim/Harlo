@@ -4,7 +4,7 @@ Wraps the Twin's core functions (recall, store, coach, patterns, session)
 as MCP tools over stdio transport. v8.0: No LLM client code — the Actor
 (Claude) reasons, the Twin (Observer) stores and projects.
 
-Bridges into the v9 cognitive_engine (src/) via a lazy singleton: every
+Bridges into the v9 cognitive engine (harlo.engine) via a lazy singleton: every
 tool call runs through process_exchange to keep exchange_index monotonic
 and the schedule state up to date. Engine failures degrade gracefully
 to v8-only behavior — every tool body still works without the engine.
@@ -24,7 +24,7 @@ from mcp.server import FastMCP
 
 # Resolve paths via the single source of truth (Rule: no divergent
 # state directories between CLI and MCP entry points).
-from harlo.daemon.config import DATA_DIR, DB_PATH as _DB_PATH, PROJECT_ROOT
+from harlo.daemon.config import DATA_DIR, DB_PATH as _DB_PATH
 
 DB_PATH = str(_DB_PATH)
 TRUST_DELTA_VERIFIED = 0.02
@@ -62,11 +62,7 @@ def _consume_banner() -> str:
         if _banner_shown:
             return ""
         try:
-            import sys as _sys
-            _root = str(PROJECT_ROOT)
-            if _root not in _sys.path:
-                _sys.path.insert(0, _root)
-            from src.branding import HARLO_BANNER
+            from harlo.engine.branding import HARLO_BANNER
             _banner_shown = True
             return HARLO_BANNER
         except Exception:
@@ -86,14 +82,15 @@ def _get_engine():
     with _engine_lock:
         if _engine is None:
             try:
-                # src/ is not pip-installed; ensure it's importable
-                import sys as _sys
-                _root = str(PROJECT_ROOT)
-                if _root not in _sys.path:
-                    _sys.path.insert(0, _root)
-                from src.cognitive_engine import CognitiveEngine
+                # D56: the engine is a packaged harlo submodule now —
+                # no sys.path surgery, ships in wheels and the bundle.
+                # stage_dir comes from engine_config so the
+                # HARLO_STAGE_DIR override is honored end-to-end
+                # (default is identical: DATA_DIR / "stages").
+                from harlo.engine import engine_config
+                from harlo.engine.cognitive_engine import CognitiveEngine
                 _engine = CognitiveEngine(
-                    stage_dir=str(DATA_DIR / "stages"),
+                    stage_dir=engine_config.STAGE_DIR,
                 )
                 atexit.register(_engine.close)
                 logging.getLogger(__name__).info(
@@ -854,10 +851,7 @@ def _print_version() -> None:
     """Print the colored HARLO banner + version on stdout. CLI --version path."""
     import sys as _sys
     try:
-        _root = str(PROJECT_ROOT)
-        if _root not in _sys.path:
-            _sys.path.insert(0, _root)
-        from src.branding import HARLO_BANNER
+        from harlo.engine.branding import HARLO_BANNER
     except Exception:
         HARLO_BANNER = "HARLO"
     try:

@@ -6,7 +6,7 @@
 
 Harlo computes some things from integer counters, some from monotonic deltas, some from wall-clock timestamps. Each model has a job. Mixing them silently — using wall-clock for in-process velocity, or monotonic for cross-session decay — produces correctness bugs that look like flaky tests. This doc names the three models and the rule for each, so future code lands in the right one.
 
-This is a **project-wide invariant**. It applies to both the v9 cognitive engine in `src/` and the v8 memory/modulation/inquiry layer in `python/harlo/`.
+This is a **project-wide invariant**. It applies to both the v9 cognitive engine in `python/harlo/engine/` and the v8 memory/modulation/inquiry layer in `python/harlo/`.
 
 ---
 
@@ -27,17 +27,17 @@ This is a **project-wide invariant**. It applies to both the v9 cognitive engine
 
 ## Rule by layer
 
-### v9 — `src/` (Cognitive State Machine)
+### v9 — `python/harlo/engine/` (Cognitive State Machine)
 
 **T1 only in the math layer.** Codified as **Commandment 3**: *exchange_index is the only temporal key.*
 
-- All `src/computations/*.py` are pure functions of the authored observation + previous state. Zero `import time`, zero `import datetime`.
+- All `python/harlo/engine/computations/*.py` are pure functions of the authored observation + previous state. Zero `import time`, zero `import datetime`.
 - "Decay-like" behavior (energy decrement, burnout escalation) runs on integer modulo of `exchanges_without_break`, not seconds.
 - Accumulators (`session_exchange_count`, `tasks_completed`, `adrenaline_debt`) are authored externally onto the observation; the math layer never increments them.
 
 **T3 only at the persistence boundary.** Two surfaces:
-- `src/observation_buffer.py` — SQLite `created_at` column. **Pin to UTC ISO 8601 microseconds** (currently SQLite default, server-local).
-- `src/cognitive_stage.py` — USD save. The stage time axis is `Usd.TimeCode(exchange_index)` (T1, not T3). If calendar timestamps ever need to live in `.usda`, follow the **USD persistence rule** below.
+- `python/harlo/engine/observation_buffer.py` — SQLite `created_at` column. **Pin to UTC ISO 8601 microseconds** (currently SQLite default, server-local).
+- `python/harlo/engine/cognitive_stage.py` — USD save. The stage time axis is `Usd.TimeCode(exchange_index)` (T1, not T3). If calendar timestamps ever need to live in `.usda`, follow the **USD persistence rule** below.
 
 ### v8 — `python/harlo/` (Memory / Modulation / Inquiry / Brainstem)
 
@@ -127,9 +127,9 @@ Empirically verified by `harness/usd_precision_probe.py` (one-shot probe in `/tm
 
 ### `wall_clock_delta` removed from `CognitiveObservation` (2026-05-08)
 
-The field was authored in `src/trajectory_generator.py` for synthetic training data but never authored in `src/cognitive_engine.py._build_authored_observation` for live observations. Verification showed `_encode_observation` in `src/train_predictor.py` did not reference the field, so the trained predictor never actually used it — but its presence on the schema invited future drift.
+The field was authored in `python/harlo/engine/trajectory_generator.py` for synthetic training data but never authored in `python/harlo/engine/cognitive_engine.py._build_authored_observation` for live observations. Verification showed `_encode_observation` in `python/harlo/engine/train_predictor.py` did not reference the field, so the trained predictor never actually used it — but its presence on the schema invited future drift.
 
-**Action taken:** field removed from `src/schemas.py` and `src/trajectory_generator.py`. Folds into the queued `cognitive_predictor_v1.joblib` regeneration so synthetic data and predictor stay in sync.
+**Action taken:** field removed from `src/schemas.py` and `python/harlo/engine/trajectory_generator.py`. Folds into the queued `cognitive_predictor_v1.joblib` regeneration so synthetic data and predictor stay in sync.
 
 **Restored invariant:** `CognitiveObservation` is now wall-clock-free, fully consistent with Commandment 3.
 
@@ -146,8 +146,8 @@ The field was authored in `src/trajectory_generator.py` for synthetic training d
 ## Compliance check
 
 ```bash
-# Forbidden in src/computations/
-grep -rE "import\s+(time|datetime)" src/computations/   # MUST return 0 results
+# Forbidden in python/harlo/engine/computations/
+grep -rE "import\s+(time|datetime)" python/harlo/engine/computations/   # MUST return 0 results
 
 # Forbidden anywhere new
 grep -rE "datetime\.utcnow\(\s*\)" src/ python/harlo/   # SHOULD return 0 results

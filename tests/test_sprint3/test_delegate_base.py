@@ -2,13 +2,13 @@
 
 import pytest
 
-from src.delegate_base import (
+from harlo.engine.delegate_base import (
     DelegateCapabilities,
     DelegateResult,
     HdCognitiveDelegate,
     TaskContext,
 )
-from src.delegate_registry import DelegateRegistry
+from harlo.engine.delegate_registry import DelegateRegistry
 
 
 # -------------------------------------------------------------------

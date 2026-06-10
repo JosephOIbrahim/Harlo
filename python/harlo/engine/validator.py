@@ -6,7 +6,7 @@ INV-14 amended for RED exception (Commandment 7).
 
 from __future__ import annotations
 
-from src.schemas import (
+from harlo.engine.schemas import (
     Burnout,
     BurstPhase,
     CognitiveObservation,

@@ -6,8 +6,8 @@ Engine crash mid-call → MCP tool still responds.
 
 import pytest
 
-from src.cognitive_engine import CognitiveEngine
-from src import engine_config
+from harlo.engine.cognitive_engine import CognitiveEngine
+from harlo.engine import engine_config
 
 
 def _make_engine():
