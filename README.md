@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/harlo-logo.jpg" alt="HARLO — An AI-Assisted OS that is aware of your physical state" width="720">
+  <img src="./assets/harlo-logo.jpg" alt="HARLO — An A.I. assistant that is aware of your physical state and works with macOS" width="720">
 </p>
 
 <p align="center">
