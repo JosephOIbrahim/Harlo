@@ -108,3 +108,52 @@ can refuse because *you* need it to."**
 response with an inline `CognitiveStateSegment`, and receives a typed
 `.refusal` when the modulation state is RED — demonstrated end-to-end
 on this Mac.
+
+---
+
+## 4 · ADDENDUM (2026-06-10, same day): "What's new in Foundation Models" — the Python SDK changes everything
+
+The companion what's-new session contains the single most codebase-relevant
+line of all four WWDC docs: **`import apple_fm_sdk` — Apple ships a Python
+SDK for Foundation Models.**
+
+### Empirically verified on this Mac, same hour
+
+```
+pip install apple_fm_sdk            # 0.2.0 on PyPI — builds Swift C-bindings
+                                    # at install; REQUIRES DEVELOPER_DIR →
+                                    # Xcode 27 (fails on CLT/Xcode 26.5)
+is_available: (True, None)
+RESPONSE: "A cognitive twin is a mental counterpart."
+```
+
+The on-device model answered a Harlo-domain prompt from Python, locally,
+zero network. Consequence: **§1A is superseded — `HdAppleFM` does NOT need
+the Swift shim.** It becomes a first-class v9 delegate
+(`harlo.engine.delegate_apple_fm`) in the existing capability-matched
+registry, pulled forward from "P1, inside Glance" to "P1, this week, pure
+Python." Dependency discipline: `apple_fm_sdk` enters as an optional
+`[applefm]` extra (Law 3 / D75 pattern), never a core dep.
+
+### The rest of the what's-new doc, mapped
+
+| New API | Harlo mapping |
+|---|---|
+| `model.contextSize` + `tokenCount(for:)` | `compute_context_budget` upgrades from heuristics to **exact counts**; Rule 9 token-velocity telemetry gains precision |
+| `response.usage` (input/cached/output/**reasoning** tokens) | Allostatic load fed from real usage on the consumer side — the provider review's "Rule 9 as a by-product" now holds in both directions |
+| `ContextOptions(reasoningLevel: .light/.deep)` | **The System 1/System 2 dial, literally.** Rule 9's "High = DEPLETED = refuse to wake System 2" becomes enforceable API: `compute_routing` sets reasoningLevel from cognitive state — DEPLETED clamps to `.light`, RED refuses the call entirely (Rule 18) |
+| Session routing (`SwitchModeTool`, `transcript.dropFirstInstructions()`, rebuild session per mode) | Apple's pattern for what the expert router (restorer/scaffolder/validator…) already does — adopt as the delegate-side session-management idiom |
+| `DynamicProfile` (declarative `Profile { Instructions; Tools }` with per-branch `.model()` / `.reasoningLevel()`) | **Expert profiles as code**: one DynamicProfile per cognitive state, with `.model(PrivateCloudCompute)` + `.reasoningLevel(.deep)` as the System-2 escalation branch — and, post-P2, `.model(HarloLanguageModel)` closes the loop: Harlo's own provider as a profile branch |
+| `Attachment(UIImage…)` image input | Parked — future visual-context play (screenshot-of-work burst analysis), no current consumer |
+
+### Sequencing delta
+
+- **P1 gains a new first item, decoupled from Glance:** `delegate_apple_fm`
+  spike — register the on-device model in the v9 registry, route advisory
+  phrasing through it, wire `reasoningLevel` to the cognitive state. Pure
+  Python; the probe above is its proof of feasibility.
+- The Glance/OTTO Swift consumer remains P1 for the UI surfaces; it now
+  shares semantics with the Python delegate rather than owning them.
+- Install gotcha worth a line in any setup doc: the SDK's Swift-binding
+  build needs `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer`
+  until Xcode 27 is the selected toolchain.
