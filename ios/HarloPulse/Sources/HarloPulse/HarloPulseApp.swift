@@ -173,7 +173,12 @@ struct ContentView: View {
                 TextField("6 pairing words", text: $tokenWords)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                TextField("Host (e.g. mac-studio.local)", text: $host)
+                // Field lesson 2026-06-10: the old placeholder showed a
+                // plausible-looking example hostname and a user typed it
+                // verbatim -> NWError -65554 NoSuchRecord at the resolver.
+                // Point at the authoritative source instead; the IP it
+                // prints needs no DNS at all.
+                TextField("Host — the IP shown by `harlo pulse pair`", text: $host)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                 TextField("Port", text: $portText)
