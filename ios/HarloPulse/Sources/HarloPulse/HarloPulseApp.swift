@@ -88,6 +88,7 @@ final class PulseModel: ObservableObject {
         guard paired, !enabled.isEmpty else {
             return (0, paired ? "no data types enabled" : "not paired")
         }
+        let pushBefore = UserDefaults.standard.object(forKey: Self.lastPushKey) as? Date
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
             let group = DispatchGroup()
             for type in enabled {
@@ -95,6 +96,13 @@ final class PulseModel: ObservableObject {
                 reader.fetchDelta(for: type) { group.leave() }
             }
             group.notify(queue: .main) { cont.resume() }
+        }
+        // Stale-result guard (PR #13 review): empty-delta cycles never
+        // write lastResult, so without this check Siri could speak
+        // yesterday's ack as if it were this run's.
+        let pushAfter = UserDefaults.standard.object(forKey: Self.lastPushKey) as? Date
+        if pushBefore == pushAfter {
+            return (enabled.count, "no new samples since last push")
         }
         let result = UserDefaults.standard.string(forKey: Self.lastResultKey) ?? "—"
         return (enabled.count, result)

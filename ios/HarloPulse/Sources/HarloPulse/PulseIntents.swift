@@ -213,6 +213,16 @@ struct TogglePulseTypeIntent: AppIntent, ForegroundContinuableIntent {
         let type = resolved.pulseType
         let alreadyOn = UserDefaults.standard.bool(forKey: type.storageKey)
 
+        // No-op fast path: better Siri UX than silently re-running the
+        // enable/disable machinery, and removes the re-enable trigger
+        // for the (now-guarded) duplicate-observer path.
+        if enabled == alreadyOn {
+            return .result(dialog: IntentDialog(
+                full: "\(type.displayName) is already \(enabled ? "on" : "off").",
+                supporting: enabled ? "Already on" : "Already off"
+            ))
+        }
+
         if enabled && !alreadyOn {
             // First-time enable needs the HealthKit consent sheet, which
             // requires the foreground app — be honest about it rather
