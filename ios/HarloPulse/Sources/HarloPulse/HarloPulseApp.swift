@@ -8,6 +8,7 @@
 // One coordinator (PulseModel) owns HealthReader + PulseLink and wires
 // the push pipeline so anchor commits ride on push success.
 
+import AppIntents
 import SwiftUI
 
 @main
@@ -159,6 +160,19 @@ struct ContentView: View {
                 statusSection
             }
             .navigationTitle("HarloPulse")
+            // Onscreen awareness (code-along pattern 10a): the status
+            // singleton is the app's one primary entity — annotating it
+            // lets Siri resolve "sync this" / "is this paired" against
+            // what's on screen. Identifier only; no content leaves the
+            // app (adoption-plan privacy gate holds).
+            .userActivity("com.josephibrahim.harlo.pulse.status") { activity in
+                activity.title = "HarloPulse Status"
+                if #available(iOS 18.2, *) {
+                    activity.appEntityIdentifier = EntityIdentifier(
+                        for: PulseStatusEntity.self, identifier: "status"
+                    )
+                }
+            }
         }
     }
 

@@ -28,6 +28,13 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>HarloPulse talks directly to Harlo on your Mac over your home network. No cloud, no third parties.</string>
 
+	<!-- Onscreen-awareness activity type (registered for the
+	     .userActivity annotation on the status screen). -->
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.josephibrahim.harlo.pulse.status</string>
+	</array>
+
 	<!-- SwiftUI launch screen + portrait-only settings app. -->
 	<key>UILaunchScreen</key>
 	<dict/>
