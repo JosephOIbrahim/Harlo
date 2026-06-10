@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/harlo-logo.jpg" alt="Harlo — Your AI Coach" width="600">
+  <img src="./assets/harlo-logo.jpg" alt="HARLO — An AI-Assisted OS that is aware of your physical state" width="720">
 </p>
 
 <p align="center">
