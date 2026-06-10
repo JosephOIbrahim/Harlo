@@ -51,3 +51,6 @@ files/
 # Phase 5B — xcodegen output (regenerated each build)
 macos/HarloHealthBridge/HarloHealthBridge.xcodeproj/
 macos/HarloHealthBridge/.build/
+
+# HarloPulse (ADR-0002) — xcodegen output (regenerated each build)
+ios/HarloPulse/HarloPulse.xcodeproj/

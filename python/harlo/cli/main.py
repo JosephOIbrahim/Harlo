@@ -25,6 +25,7 @@ from .commands.motor_reflexes import motor_reflexes
 from .commands.park import park
 from .commands.plan import plan
 from .commands.profile import profile
+from .commands.pulse import pulse
 from .commands.recall import recall
 from .commands.reflect import reflect
 from .commands.session import session
@@ -66,6 +67,7 @@ cli.add_command(motor_reflexes)
 cli.add_command(park)
 cli.add_command(plan)
 cli.add_command(profile)
+cli.add_command(pulse)
 cli.add_command(recall)
 cli.add_command(reflect)
 cli.add_command(reflexes)

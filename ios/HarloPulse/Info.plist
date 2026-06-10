@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>HarloPulse</string>
+
+    <key>CFBundleExecutable</key>
+    <string>HarloPulse</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>com.josephibrahim.harlo.pulse</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <key>CFBundleName</key>
+    <string>HarloPulse</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <!--
+        HealthKit usage string — this is what the consent sheet shows.
+        Plain honest language, no jargon. Read-only app: there is
+        deliberately NO NSHealthUpdateUsageDescription (D66 lesson —
+        no bogus keys; iOS review actually checks them).
+    -->
+    <key>NSHealthShareUsageDescription</key>
+    <string>HarloPulse reads the health data types you switch on below — like heart rate, HRV, sleep, and activity — and sends trends to Harlo on your Mac over your home network, so Harlo can notice when you are tired or stressed. Nothing leaves your devices. Every data type is off until you turn it on.</string>
+
+    <!--
+        Required on iOS 14+ for ANY local-network TCP, not just
+        Bonjour. Without it the connection silently fails.
+    -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>HarloPulse connects to Harlo on your Mac over your local network to deliver health trends. No internet or cloud is involved.</string>
+
+    <!--
+        Bonjour service for the dormant v2 NWBrowser discovery path.
+        The Mac listener does not advertise in v1 (manual host:port).
+    -->
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_harlo-pulse._tcp</string>
+    </array>
+
+    <!--
+        Storyboard-less SwiftUI app: empty launch-screen dict avoids
+        letterboxing.
+    -->
+    <key>UILaunchScreen</key>
+    <dict/>
+</dict>
+</plist>
