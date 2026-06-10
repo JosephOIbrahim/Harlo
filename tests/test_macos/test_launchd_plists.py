@@ -84,6 +84,18 @@ class TestDaemonAndAgents:
                 f"{label}/{sock_name}: SockPathName must be a path"
 
 
+class TestSocketsContract:
+    """D69: launch_activate_socket(3) looks up the plist Sockets key by
+    name — drift between the plist and the code constant is an instant
+    silent activation failure."""
+
+    def test_daemon_sockets_key_matches_code_constant(self):
+        from harlo.daemon.config import LAUNCHD_SOCKET_NAME
+        plist = plistlib.loads(ALL_PLISTS["com.harlo.daemon"].read_bytes())
+        sockets = plist["Sockets"]
+        assert list(sockets.keys()) == [LAUNCHD_SOCKET_NAME]
+
+
 class TestBundlePathInvariant:
     """ProgramArguments[0] must point at a real bundle path so that
     macos_install_daemon.py can plistlib-rewrite it on install."""

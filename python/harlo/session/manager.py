@@ -10,11 +10,14 @@ Storage: SQLite sessions table in the shared twin.db database.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import time
 import uuid
 from dataclasses import dataclass
 from typing import Optional
+
+_LOGGER = logging.getLogger(__name__)
 
 # Maximum conversation history entries (messages, not exchanges)
 _MAX_HISTORY_MESSAGES = 100
@@ -378,6 +381,10 @@ class SessionManager:
 
             def _synthesis(ctx, abort_check=None):
                 """Placeholder synthesis — returns context for potential DMN processing."""
+                _LOGGER.info(
+                    "DMN synthesis PLACEHOLDER for session %s — no real "
+                    "synthesis implemented yet; context passed through "
+                    "unprocessed (D73 honesty marker)", ctx.get("session_id"))
                 return ctx
 
             teardown.start(_synthesis, context)

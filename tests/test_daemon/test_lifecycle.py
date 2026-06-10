@@ -25,6 +25,7 @@ from harlo.daemon.lifecycle import (
     is_daemon_running,
     startup_cleanup,
     graceful_shutdown,
+    idle_shutdown,
     get_health,
     install_signal_handlers,
 )
@@ -205,6 +206,48 @@ class TestGracefulShutdown:
             report = graceful_shutdown()
             assert report["closed_sessions"] == []
             assert report["dmn_triggered"] == 0
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Idle Shutdown (D72)
+# ─────────────────────────────────────────────────────────────────────
+
+class TestIdleShutdown:
+    """D72: the idle path expires stale sessions but PRESERVES active
+    ones — session state lives in SQLite and survives activations."""
+
+    def test_idle_shutdown_preserves_active_sessions(self, db_path, tmp_pid_file):
+        """Stale sessions expire; fresh sessions stay open."""
+        from harlo.session import SessionManager
+        mgr = SessionManager(db_path=db_path, timeout_s=60)
+        stale = mgr.create(now=1000)
+        fresh = mgr.create()
+
+        write_pid_file()
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(db_path)):
+            with patch("harlo.daemon.lifecycle.SESSION_TIMEOUT_S", 60):
+                report = idle_shutdown()
+
+        assert stale.session_id in report["expired_sessions"]
+        assert mgr.get(fresh.session_id).closed is False
+        assert report["active_preserved"] == 1
+
+    def test_idle_shutdown_removes_pid_file(self, db_path, tmp_pid_file):
+        """idle_shutdown() should remove the PID file."""
+        write_pid_file()
+        assert tmp_pid_file.exists()
+
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path(db_path)):
+            idle_shutdown()
+
+        assert not tmp_pid_file.exists()
+
+    def test_idle_shutdown_handles_missing_db(self, tmp_pid_file):
+        """idle_shutdown() should not fail when the DB is unreachable."""
+        with patch("harlo.daemon.lifecycle.DB_PATH", Path("/nonexistent/path.db")):
+            report = idle_shutdown()
+            assert report["expired_sessions"] == []
+            assert report["active_preserved"] == 0
 
 
 # ─────────────────────────────────────────────────────────────────────

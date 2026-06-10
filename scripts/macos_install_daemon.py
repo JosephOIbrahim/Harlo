@@ -30,7 +30,30 @@ from pathlib import Path
 from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PLIST_DIR = REPO_ROOT / "macos" / "launchd"
+
+
+def _plist_dir_candidates() -> list[Path]:
+    """Candidate locations for the launchd plists, in priority order."""
+    candidates = [
+        REPO_ROOT / "macos" / "launchd",                       # dev tree
+        Path(__file__).resolve().parent.parent / "launchd",    # Resources/scripts/../launchd
+    ]
+    bundle_resources = Path(sys.executable).resolve().parent.parent / "Resources"
+    if bundle_resources.exists():
+        candidates.append(bundle_resources / "launchd")        # first_run pattern
+    return candidates
+
+
+def _find_plist_dir() -> Path | None:
+    """Find the launchd plists in the dev tree or inside a py2app
+    bundle. setup_py2app.py DATA_FILES places them at
+    Contents/Resources/launchd/ and this script itself at
+    Contents/Resources/scripts/ (so __file__-relative '../launchd'
+    is the bundle location)."""
+    for c in _plist_dir_candidates():
+        if (c / "com.harlo.daemon.plist").exists():
+            return c
+    return None
 
 # Canonical install path the bundled plists reference. Override at
 # install time via HARLO_APP_PATH (e.g. for dev runs, homebrew cask
@@ -56,6 +79,47 @@ def _executable_for(unit_key: str) -> Path:
     return _resolved_app_path() / "Contents" / "MacOS" / "Harlo"
 
 
+_TILDE_KEYS = ("StandardOutPath", "StandardErrorPath")
+
+
+def _expand_tildes(plist: dict, home: Path | None = None) -> dict:
+    """Expand leading '~' in path-bearing plist values.
+
+    launchd NEVER expands '~' (D70): a literal-~ SockPathName means the
+    socket can never bind where clients look. Repo plists keep '~' as
+    the template marker; this rewrites them with the real $HOME at
+    install time. `home` is injectable for tests.
+    """
+    home_s = str(home or Path.home())
+
+    def _x(v: str) -> str:
+        if v == "~":
+            return home_s
+        if v.startswith("~/"):
+            return home_s + v[1:]
+        return v
+
+    out = dict(plist)
+    for key in _TILDE_KEYS:
+        if isinstance(out.get(key), str):
+            out[key] = _x(out[key])
+    env = out.get("EnvironmentVariables")
+    if isinstance(env, dict):                      # covers HARLO_DATA_DIR
+        out["EnvironmentVariables"] = {
+            k: (_x(v) if isinstance(v, str) else v) for k, v in env.items()
+        }
+    socks = out.get("Sockets")
+    if isinstance(socks, dict):
+        new_socks = {}
+        for name, sdef in socks.items():
+            sdef = dict(sdef)
+            if isinstance(sdef.get("SockPathName"), str):
+                sdef["SockPathName"] = _x(sdef["SockPathName"])
+            new_socks[name] = sdef
+        out["Sockets"] = new_socks
+    return out
+
+
 def _retemplate_plist(src: Path, unit_key: str) -> dict:
     """Load the source plist and substitute ProgramArguments[0] with
     the actual bundle executable path on this host.
@@ -63,6 +127,7 @@ def _retemplate_plist(src: Path, unit_key: str) -> dict:
     Plists shipped in the repo reference /Applications/...; this
     function rewrites the path when the bundle is somewhere else
     (HARLO_APP_PATH / HARLO_BRIDGE_APP_PATH set, or dev install).
+    It then expands the '~' template markers (D70).
     """
     with src.open("rb") as fh:
         plist = plistlib.load(fh)
@@ -71,7 +136,7 @@ def _retemplate_plist(src: Path, unit_key: str) -> dict:
         raise ValueError(f"{src}: ProgramArguments is empty")
     args[0] = str(_executable_for(unit_key))
     plist["ProgramArguments"] = args
-    return plist
+    return _expand_tildes(plist)
 
 UNITS = {
     "daemon": "com.harlo.daemon",
@@ -100,7 +165,12 @@ def _run(cmd: list[str]) -> int:
 
 def _install_one(unit_key: str) -> None:
     label = UNITS[unit_key]
-    src = PLIST_DIR / f"{label}.plist"
+    plist_dir = _find_plist_dir()
+    if plist_dir is None:
+        raise FileNotFoundError(
+            "launchd plists not found in dev tree or bundle Resources"
+        )
+    src = plist_dir / f"{label}.plist"
     if not src.exists():
         raise FileNotFoundError(f"missing plist: {src}")
     dst_dir = _user_launch_agents_dir()
@@ -118,6 +188,10 @@ def _install_one(unit_key: str) -> None:
     templated = _retemplate_plist(src, unit_key)
     with dst.open("wb") as fh:
         plistlib.dump(templated, fh)
+
+    # launchd does not create intermediate directories for
+    # StandardOutPath/StandardErrorPath — make the log dir ourselves.
+    (Path.home() / "Library" / "Logs" / "Harlo").mkdir(parents=True, exist_ok=True)
 
     if unit_key == "healthbridge":
         # Bootstrap but do not enable — the user toggles this from

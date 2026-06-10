@@ -6,13 +6,17 @@ Rule S6: CLI released in <50ms. Background synthesis up to 30s.
 """
 
 import json
+import logging
 import os
 import tempfile
 import threading
+import time
 from pathlib import Path
 from typing import Optional
 
-from .config import TEMP_DIR
+from .config import DMN_BUDGET_S, TEMP_DIR
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class DMNTeardown:
@@ -32,11 +36,12 @@ class DMNTeardown:
     def is_running(self) -> bool:
         return self._thread is not None and self._thread.is_alive()
 
-    def start(self, synthesis_fn, context: dict):
+    def start(self, synthesis_fn, context: dict, budget_s: float | None = None):
         """Start asynchronous teardown.
 
         Returns immediately (CLI released in <50ms).
-        synthesis_fn runs in background for up to 30s.
+        synthesis_fn runs in background for up to budget_s seconds
+        (default DMN_BUDGET_S = 30, Rule S6).
         """
         with self._state_lock:
             if self._thread is not None and self._thread.is_alive():
@@ -45,10 +50,17 @@ class DMNTeardown:
                 self._abort_event.set()
                 self._thread.join(timeout=0.01)
 
-            self._abort_event.clear()
+            # Fresh event per thread: if the old thread outlived the
+            # 10ms join above, its (still-set) event keeps signalling
+            # abort — clearing a SHARED event here would strand it
+            # spinning until its deadline.
+            self._abort_event = threading.Event()
+            deadline = time.monotonic() + (
+                budget_s if budget_s is not None else float(DMN_BUDGET_S)
+            )
             self._thread = threading.Thread(
                 target=self._run_synthesis,
-                args=(synthesis_fn, context),
+                args=(synthesis_fn, context, deadline, self._abort_event),
                 daemon=True,
             )
             self._thread.start()
@@ -63,18 +75,49 @@ class DMNTeardown:
             if self._thread is not None and self._thread.is_alive():
                 self._thread.join(timeout=0.01)  # 10ms max wait
 
-    def _run_synthesis(self, synthesis_fn, context: dict):
-        """Background synthesis with abort checking."""
+    def _run_synthesis(
+        self,
+        synthesis_fn,
+        context: dict,
+        deadline: float,
+        abort_event: threading.Event,
+    ):
+        """Background synthesis with abort + budget checking (S6).
+
+        `abort_event` is THIS thread's event (captured at start());
+        reading self._abort_event here would race with a subsequent
+        start() replacing it.
+        """
+        def _abort_check() -> bool:
+            return abort_event.is_set() or time.monotonic() >= deadline
+
         try:
-            result = synthesis_fn(context, abort_check=self._abort_event.is_set)
-            if self._abort_event.is_set():
-                # Rule 30: Dump to temp file on abort
+            result = synthesis_fn(context, abort_check=_abort_check)
+            if abort_event.is_set():
+                self._dump_to_temp(result)          # Rule 30: preempted
+            elif time.monotonic() >= deadline:
+                _LOGGER.warning("DMN synthesis exceeded %ss budget — partial dumped (Rule 30)", DMN_BUDGET_S)
                 self._dump_to_temp(result)
-            # If not aborted, result was committed by synthesis_fn
-        except Exception as e:
-            # Log synthesis failure but exit cleanly (background thread)
-            import sys
-            print(f"DMN synthesis error: {e}", file=sys.stderr)
+            # else: committed by synthesis_fn (today: placeholder, commits nothing)
+        except Exception:
+            _LOGGER.exception("DMN synthesis error")   # replaces print(...stderr)
+
+    def join_with_budget(self, timeout: float) -> bool:
+        """Give background synthesis up to `timeout`s (Rule S6: 'daemon
+        runs background synthesis up to 30 seconds. Then process
+        exits'). Previously the daemon exited immediately, killing the
+        daemon-thread at ~0s (D73). Returns True if synthesis finished,
+        False if abandoned."""
+        t = self._thread
+        if t is None or not t.is_alive():
+            return True
+        t.join(timeout=timeout)
+        if t.is_alive():
+            _LOGGER.warning(
+                "DMN synthesis still running after %.0fs budget — "
+                "abandoning (daemon thread dies with process exit)", timeout)
+            return False
+        return True
 
     def _dump_to_temp(self, data):
         """Write partial results to temp file. Rule 30."""

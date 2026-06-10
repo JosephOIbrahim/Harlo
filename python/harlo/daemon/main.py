@@ -6,14 +6,18 @@ Daemon exits when idle. 0W between sessions.
 """
 
 import json
-import os
+import logging
 import socket
-import sys
-from pathlib import Path
 
-from .config import SOCKET_PATH, ensure_data_dirs
+from .config import (
+    DAEMON_IDLE_TIMEOUT_S, DMN_BUDGET_S, LAUNCHD_SOCKET_NAME,
+    SOCKET_PATH, ensure_data_dirs,
+)
 from .router import route_command
+from .socket_activation import acquire_listening_socket
 
+
+_LOGGER = logging.getLogger(__name__)
 
 _MAX_FRAME = 16 * 1024 * 1024  # 16 MiB upper bound on a single frame
 
@@ -60,78 +64,109 @@ def _recv_request(conn: socket.socket) -> bytes:
 
 
 def handle_client(conn: socket.socket):
-    """Handle a single client connection."""
-    data = _recv_request(conn)
+    """Handle a single client connection.
 
-    if not data:
-        conn.close()
-        return
-
+    Socket-level failures (peer closed early, reset) propagate as
+    OSError to serve(), which logs and keeps accepting — a rude client
+    must never kill the accept loop (D72). conn is ALWAYS closed here.
+    """
     try:
-        request = json.loads(data.strip())
-        command = request.get("command", "")
-        args = request.get("args", {})
-        result = route_command(command, args)
-    except json.JSONDecodeError:
-        result = {"status": "error", "message": "Invalid JSON"}
-    except Exception as e:
-        result = {"status": "error", "message": str(e)}
+        data = _recv_request(conn)
+        if not data:
+            return
 
-    response = json.dumps(result) + "\n"
-    conn.sendall(response.encode("utf-8"))
-    conn.close()
+        try:
+            request = json.loads(data.strip())
+            command = request.get("command", "")
+            args = request.get("args", {})
+            result = route_command(command, args)
+        except json.JSONDecodeError:
+            result = {"status": "error", "message": "Invalid JSON"}
+        except Exception as e:
+            result = {"status": "error", "message": str(e)}
+
+        response = json.dumps(result) + "\n"
+        conn.sendall(response.encode("utf-8"))
+    finally:
+        conn.close()
+
+
+def serve(sock: socket.socket, idle_timeout: float) -> int:
+    """Accept-loop: handle connections serially until idle.
+
+    Rule 1 compliance: this is NOT a poll loop. accept() blocks at 0%
+    CPU inside the kernel; the loop is bounded by the idle timeout —
+    socket.timeout flips `serving` and the process exits 0. One
+    connection at a time, no threads (Rule-1 simplicity; Rule 24 spirit).
+    Returns the number of connections handled (testability).
+    """
+    from .dmn_teardown import get_teardown
+
+    sock.settimeout(idle_timeout)
+    handled = 0
+    serving = True
+    while serving:                      # bounded — ends on idle timeout
+        try:
+            conn, _ = sock.accept()
+        except socket.timeout:
+            serving = False             # Rule 1: idle → exit 0
+            continue
+        teardown = get_teardown()
+        if teardown.is_running:
+            teardown.abort()            # Rule 19: human presence wins (<10ms)
+        try:
+            handle_client(conn)
+        except OSError:
+            # One misbehaving client (closed before reading the reply —
+            # the CLI does exactly this on its 5s timeout, cli/ipc.py;
+            # or reset mid-recv) must never kill the loop: surviving
+            # the burst IS the D72 deliverable.
+            _LOGGER.warning("client connection error — dropped, loop continues",
+                            exc_info=True)
+        handled += 1
+    return handled
 
 
 def run_socket_activated():
-    """Run with systemd socket activation (fd inheritance).
-
-    On systems without socket activation, falls back to creating
-    the socket directly. Exits after handling one batch of commands.
-    Performs startup cleanup and installs signal handlers.
+    """Acquire the listening socket (launchd → systemd → dev), serve
+    until idle, then exit 0. Signature unchanged for launcher.py /
+    start_daemon.py.
     """
     ensure_data_dirs()
-
-    # Lifecycle: startup
     from .lifecycle import (
-        write_pid_file,
-        startup_cleanup,
-        graceful_shutdown,
-        install_signal_handlers,
+        write_pid_file, startup_cleanup, graceful_shutdown,
+        idle_shutdown, install_signal_handlers,
     )
 
     write_pid_file()
     startup_cleanup()
+    # Signal path (SIGTERM/SIGINT = bootout/system shutdown/user stop):
+    # full graceful_shutdown — close ALL sessions, fire DMN (Rule S6).
     install_signal_handlers(shutdown_fn=graceful_shutdown)
 
-    # Check for systemd socket activation (LISTEN_FDS)
-    listen_fds = os.environ.get("LISTEN_FDS")
-    if listen_fds and int(listen_fds) > 0:
-        # Inherited file descriptor 3 from systemd
-        sock = socket.fromfd(3, socket.AF_UNIX, socket.SOCK_STREAM)
-    else:
-        # Fallback: create socket directly (dev mode)
-        sock_path = str(SOCKET_PATH)
-        if os.path.exists(sock_path):
-            os.unlink(sock_path)
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.bind(sock_path)
-        sock.listen(5)
-
-    # Set timeout so we exit if idle (Rule 1: 0W idle)
-    sock.settimeout(30.0)
-
+    sock, owns_node = acquire_listening_socket(str(SOCKET_PATH), LAUNCHD_SOCKET_NAME)
     try:
-        conn, _ = sock.accept()
-        handle_client(conn)
-    except socket.timeout:
-        pass  # Idle timeout, exit cleanly
+        serve(sock, float(DAEMON_IDLE_TIMEOUT_S))
     finally:
+        # On SIGTERM during accept(), the handler runs graceful_shutdown()
+        # then sys.exit(0); the SystemExit unwinds through here too. The
+        # resulting double-shutdown is harmless: close_expired on
+        # already-closed sessions is a no-op and remove_pid_file is
+        # idempotent.
         sock.close()
-        # Clean up socket file
-        if SOCKET_PATH.exists():
+        if owns_node:
+            # Dev mode only. Under launchd/systemd the OS owns the node;
+            # unlinking it would break the next activation (D69).
             SOCKET_PATH.unlink(missing_ok=True)
-        # Lifecycle: shutdown
-        graceful_shutdown()
+        # D73/S6: give in-flight DMN synthesis its budget, then abandon.
+        try:
+            from .dmn_teardown import get_teardown
+            get_teardown().join_with_budget(timeout=float(DMN_BUDGET_S))
+        except Exception:
+            pass
+        # Idle path: expire stale sessions only — active sessions
+        # survive across activations (state lives in SQLite).
+        idle_shutdown()
 
 
 def run_direct(command: str, args: dict) -> dict:

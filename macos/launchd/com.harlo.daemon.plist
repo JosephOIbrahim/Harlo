@@ -7,14 +7,16 @@
         Socket-activated daemon for Harlo's CLI.
 
         Rule 1 (0W idle): no KeepAlive. launchd holds the listening
-        socket; the daemon process is spawned only on first connect,
-        inherits the listening FD via LISTEN_FDS, and exits after
-        30s idle (see python/harlo/daemon/main.py:48–97).
+        socket node; the daemon process is spawned on first connect
+        and adopts the listening fd via launch_activate_socket(3)
+        with the Sockets key "HarloCommand". It serves connections
+        until DAEMON_IDLE_TIMEOUT_S of idle, then exits 0. The node
+        survives the exit — launchd owns it.
 
-        ProgramArguments[0] is the canonical installed bundle path.
-        scripts/macos_install_daemon.py rewrites it on install when
-        Harlo.app lives somewhere else (dev tree, custom prefix,
-        homebrew cask, etc.).
+        Paths use '~' as a template marker; launchd never expands '~'.
+        scripts/macos_install_daemon.py rewrites them — and
+        ProgramArguments[0] when Harlo.app lives somewhere else (dev
+        tree, custom prefix, homebrew cask, etc.) — at install time.
     -->
     <key>Label</key>
     <string>com.harlo.daemon</string>
@@ -52,5 +54,12 @@
 
     <key>ThrottleInterval</key>
     <integer>5</integer>
+
+    <!-- The SIGTERM path may legitimately spend up to DMN_BUDGET_S
+         (30s) finishing synthesis (Rule S6); launchd's default
+         SIGTERM-to-SIGKILL window (20s) would truncate the Rule-30
+         dump. -->
+    <key>ExitTimeOut</key>
+    <integer>35</integer>
 </dict>
 </plist>
