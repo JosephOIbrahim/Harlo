@@ -1,0 +1,166 @@
+{
+  "snapshot_id": "20260610-181809",
+  "now_frozen": 1781129889,
+  "definition": "Hot/Warm trace whose trace_id is in source_traces of a VERIFIED elenchus_pending claim",
+  "tier_criterion": "table residency: hot_traces=Hot, traces=Warm",
+  "epsilon": 0.01,
+  "kill_floor": 12,
+  "schema": {
+    "graph_edges": {
+      "rows": 0,
+      "columns": [
+        "source_id",
+        "target_id",
+        "weight",
+        "edge_type",
+        "created_at"
+      ]
+    },
+    "hot_traces": {
+      "rows": 16,
+      "columns": [
+        "trace_id",
+        "message",
+        "tags",
+        "domain",
+        "timestamp",
+        "encoded"
+      ]
+    },
+    "hot_traces_fts": {
+      "rows": 16,
+      "columns": [
+        "message",
+        "tags",
+        "domain"
+      ]
+    },
+    "hot_traces_fts_config": {
+      "rows": 1,
+      "columns": [
+        "k",
+        "v"
+      ]
+    },
+    "hot_traces_fts_data": {
+      "rows": 3,
+      "columns": [
+        "id",
+        "block"
+      ]
+    },
+    "hot_traces_fts_docsize": {
+      "rows": 16,
+      "columns": [
+        "id",
+        "sz"
+      ]
+    },
+    "hot_traces_fts_idx": {
+      "rows": 1,
+      "columns": [
+        "segid",
+        "term",
+        "pgno"
+      ]
+    },
+    "modulation_state": {
+      "rows": 1,
+      "columns": [
+        "id",
+        "biometric_load",
+        "depleted",
+        "force_red",
+        "samples_accepted",
+        "updated_at"
+      ]
+    },
+    "patterns": {
+      "rows": 0,
+      "columns": [
+        "pattern_id",
+        "pattern_type",
+        "description",
+        "trace_ids_json",
+        "messages_json",
+        "confidence",
+        "detected_at",
+        "topic_key"
+      ]
+    },
+    "reflexes": {
+      "rows": 0,
+      "columns": [
+        "pattern_hash",
+        "response_json",
+        "merkle_root",
+        "verification_state",
+        "is_permanent",
+        "hit_count",
+        "compiled",
+        "success_count",
+        "created_at"
+      ]
+    },
+    "sessions": {
+      "rows": 282,
+      "columns": [
+        "session_id",
+        "started_at",
+        "last_active",
+        "exchange_count",
+        "domain",
+        "encoder_type",
+        "closed",
+        "history_json",
+        "allostatic_tokens"
+      ]
+    },
+    "traces": {
+      "rows": 0,
+      "columns": [
+        "id",
+        "message",
+        "sdr_blob",
+        "initial_strength",
+        "decay_lambda",
+        "created_at",
+        "last_accessed",
+        "boosts_json",
+        "tags_json",
+        "domain",
+        "source"
+      ]
+    }
+  },
+  "pool": [],
+  "kill": {
+    "fired": true,
+    "reason": "No Elenchus-verified material in the snapshot: reflexes_verified=0, elenchus_verified=0, elenchus_pending table ABSENT. hot_traces/warm traces carry no verification column, so no probe-eligible VERIFIED trace can exist."
+  },
+  "summary": {
+    "store": {
+      "hot_traces": 16,
+      "warm_traces": 0,
+      "reflexes_total": 0,
+      "reflexes_verified": 0,
+      "elenchus_pending": 0,
+      "elenchus_verified": 0
+    },
+    "verified_eligible": 0,
+    "screened_out": 0,
+    "pool": 0,
+    "grid": {
+      "Hot": {
+        "fresh": 0,
+        "mid": 0,
+        "near-apoptosis": 0
+      },
+      "Warm": {
+        "fresh": 0,
+        "mid": 0,
+        "near-apoptosis": 0
+      }
+    }
+  }
+}

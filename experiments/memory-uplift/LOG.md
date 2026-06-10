@@ -48,8 +48,37 @@ P1 ACCEPTANCE PASSED on real data (282 sessions, integrity ok, no corruption).
 Substitution logged honestly: shellcheck unavailable arm64 → bash -n (clean ×3).
 Launchd pulse unit unloaded for test, re-armed and confirmed.
 
+## Cycle 4 — INVENTORY / KILL (Claude Code, read-only vs snapshot)
+Snapshot 20260610-181809 (daemon down, pulse unloaded for capture, re-armed).
+inventory.py (temp-copy-checkpoint open, never live). Result: **KILL CONDITION
+FIRED — VERIFIED probe pool = 0 < 12.**
+- Store at snapshot: hot_traces=16, warm traces=0, reflexes=0, elenchus_pending
+  table ABSENT, patterns=0, graph_edges=0. observations.db=1437 behavioral
+  records (not memory traces, no verification).
+- The 16 hot traces are all tagged `wave1-trial` ("wave1 trial probe entity")
+  — synthetic USD-proof-harness placeholders, NOT organic verified memory.
+- Tier criterion used: table residency (hot_traces=Hot, traces=Warm). Neither
+  carries a verification column → a trace is probe-eligible only when its id is
+  in source_traces of a VERIFIED elenchus_pending claim (or is a verified
+  reflex). Zero of either exist → pool 0 by construction.
+- ADVERSARIAL VERIFY (3 independent lenses, Workflow wf_c6820ec7-995):
+  schema-exhaustion / architecture-intent / raw-SQL all returned
+  max_verified_probeable=0, can_reach_floor_12=false. KILL robust, not a
+  definitional artifact.
+- Δ9 OBSERVATION (root cause, out-of-scope per SPEC): decay is wall-clock
+  SECONDS with λ=0.05 (query.rs now=as_secs, created_at=Unix s). Any warm
+  trace older than ~92 s falls below epsilon=0.01 and is apoptosis-eligible →
+  the warm tier cannot accumulate. Likely a λ-unit mismatch (per-day intended,
+  per-second applied) OR boost-sustained-only by design. Filed as Harlo
+  worklist candidate; NOT this experiment's to fix.
+- CONSEQUENCE: P2 cannot be satisfied from this store. Before any cell runs,
+  the store must accumulate ≥12 Elenchus-VERIFIED traces (real coaching
+  sessions through the verify path), or the probe definition must be rescoped.
+  No padding with marginal/unverified traces (SPEC falsification clause).
+
 ## Open items
-- P2: probe construction (Cycle 4). Kill condition: pool < 12 after exclusion.
+- P2: KILL FIRED (Cycle 4) — VERIFIED pool 0. Rescope: accumulate verified
+  material via real sessions, or redefine the probe source. Re-run inventory.py.
 - Representation decision parked for architect: wordmark "AI-Assisted OS"
   vs README/repo/release "local-first AI coach" — four surfaces must agree.
 - Worklist candidates (NOT this experiment): utility-mode stub wiring;
