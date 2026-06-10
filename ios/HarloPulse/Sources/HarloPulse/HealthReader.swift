@@ -92,6 +92,16 @@ final class HealthReader {
     // MARK: - Observation (Bridge.swift shape)
 
     private func installObserver(for type: PulseType) {
+        // Idempotency guard (PR #13 review): callers can race (Siri
+        // re-enable of an already-on type; the foreground continuation
+        // vs the @AppStorage onChange) — a plain dict overwrite would
+        // orphan a still-executing observer that store.stop() could
+        // never reach again, double-firing pushes and, after a later
+        // toggle-off, re-pushing FULL history for a disabled type
+        // (D65 violation). Stop any existing query before replacing.
+        if let old = activeQueries.removeValue(forKey: type.rawValue) {
+            store.stop(old)
+        }
         let sampleType = type.sampleType
         let observer = HKObserverQuery(sampleType: sampleType, predicate: nil) { [weak self] _, completion, error in
             guard let self = self else {
