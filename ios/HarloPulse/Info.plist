@@ -1,65 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
 
-    <key>CFBundleDisplayName</key>
-    <string>HarloPulse</string>
+	<!-- Required before any HealthKit authorization request — missing
+	     string crashes the app at requestAuthorization on device. -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>HarloPulse reads only the health types you switch on (each is off by default) and sends trend batches to Harlo on your Mac over your home network. Raw readings never leave your devices and are never stored on the Mac.</string>
 
-    <key>CFBundleExecutable</key>
-    <string>HarloPulse</string>
+	<!-- Required for the LAN push to the Mac (NWConnection). -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>HarloPulse talks directly to Harlo on your Mac over your home network. No cloud, no third parties.</string>
 
-    <key>CFBundleIdentifier</key>
-    <string>com.josephibrahim.harlo.pulse</string>
-
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-
-    <key>CFBundleName</key>
-    <string>HarloPulse</string>
-
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-
-    <key>CFBundleShortVersionString</key>
-    <string>0.1.0</string>
-
-    <key>CFBundleVersion</key>
-    <string>1</string>
-
-    <!--
-        HealthKit usage string — this is what the consent sheet shows.
-        Plain honest language, no jargon. Read-only app: there is
-        deliberately NO NSHealthUpdateUsageDescription (D66 lesson —
-        no bogus keys; iOS review actually checks them).
-    -->
-    <key>NSHealthShareUsageDescription</key>
-    <string>HarloPulse reads the health data types you switch on below — like heart rate, HRV, sleep, and activity — and sends trends to Harlo on your Mac over your home network, so Harlo can notice when you are tired or stressed. Nothing leaves your devices. Every data type is off until you turn it on.</string>
-
-    <!--
-        Required on iOS 14+ for ANY local-network TCP, not just
-        Bonjour. Without it the connection silently fails.
-    -->
-    <key>NSLocalNetworkUsageDescription</key>
-    <string>HarloPulse connects to Harlo on your Mac over your local network to deliver health trends. No internet or cloud is involved.</string>
-
-    <!--
-        Bonjour service for the dormant v2 NWBrowser discovery path.
-        The Mac listener does not advertise in v1 (manual host:port).
-    -->
-    <key>NSBonjourServices</key>
-    <array>
-        <string>_harlo-pulse._tcp</string>
-    </array>
-
-    <!--
-        Storyboard-less SwiftUI app: empty launch-screen dict avoids
-        letterboxing.
-    -->
-    <key>UILaunchScreen</key>
-    <dict/>
+	<!-- SwiftUI launch screen + portrait-only settings app. -->
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 </dict>
 </plist>

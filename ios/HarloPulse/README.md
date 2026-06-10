@@ -10,11 +10,20 @@ nothing biometric ever touches disk, only the derived verdict.
 
 ## Build
 
-This Mac (CommandLineTools only) cannot compile iOS sources — the
-first ground truth is Xcode on the architect's machine.
+**Verified 2026-06-10:** the full app typechecks AND builds unsigned
+(`xcodebuild … CODE_SIGNING_ALLOWED=NO`) against the iOS 26.5 SDK on
+the dev Mac. What remains is signing + the device trust dialog —
+Xcode-interactive by nature.
+
+> macOS 27 gotcha: `brew install xcodegen` refuses (no bottle, and the
+> formula rejects Xcode 26.5 as "too outdated"). A source-built binary
+> is already installed at `/opt/homebrew/bin/xcodegen` (SPM build of
+> v2.45.4). To rebuild it: `git clone --depth 1
+> https://github.com/yonaskolb/XcodeGen && cd XcodeGen &&
+> DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift build
+> -c release`.
 
 ```sh
-brew install xcodegen
 cd ios/HarloPulse
 xcodegen generate
 open HarloPulse.xcodeproj
