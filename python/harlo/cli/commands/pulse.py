@@ -43,6 +43,7 @@ import json
 import os
 import secrets
 import socket
+import subprocess
 import struct
 import time
 from datetime import datetime, timezone
@@ -264,11 +265,18 @@ def _token_path() -> Path:
 
 
 def _host_candidates() -> list[str]:
-    """Hostname, .local form, and best-effort LAN IPv4."""
-    hostname = socket.gethostname()
-    candidates = [hostname]
-    if not hostname.endswith(".local"):
-        candidates.append(hostname.split(".")[0] + ".local")
+    """LAN IPv4 FIRST, then the real Bonjour name.
+
+    Field lesson (2026-06-10): socket.gethostname() can return a
+    generic 'Mac', whose '.local' form resolves to NOTHING — the phone
+    fails with NWError -65554 NoSuchRecord before any packet is sent
+    (which also means iOS's Local Network permission prompt never
+    fires, compounding the confusion). The numeric IP involves no
+    resolver at all, so it leads. The mDNS name comes from scutil's
+    LocalHostName — the name Bonjour actually advertises — never from
+    gethostname().
+    """
+    candidates: list[str] = []
     # UDP-connect trick: routes a socket without sending any packet,
     # then reads the local address the OS picked.
     try:
@@ -282,6 +290,22 @@ def _host_candidates() -> list[str]:
             probe.close()
     except OSError:
         pass
+    # Bonjour name (macOS): scutil --get LocalHostName + ".local".
+    try:
+        out = subprocess.run(
+            ["scutil", "--get", "LocalHostName"],
+            capture_output=True, text=True, timeout=5,
+        )
+        name = out.stdout.strip()
+        if out.returncode == 0 and name:
+            candidates.append(f"{name}.local")
+    except (OSError, subprocess.SubprocessError):
+        pass
+    # Last-resort fallback when both probes fail (non-mac dev boxes).
+    if not candidates:
+        hostname = socket.gethostname()
+        candidates.append(hostname if hostname.endswith(".local")
+                          else hostname.split(".")[0] + ".local")
     deduped: list[str] = []
     for c in candidates:
         if c not in deduped:
