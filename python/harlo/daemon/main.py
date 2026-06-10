@@ -15,16 +15,53 @@ from .config import SOCKET_PATH, ensure_data_dirs
 from .router import route_command
 
 
-def handle_client(conn: socket.socket):
-    """Handle a single client connection."""
-    data = b""
+_MAX_FRAME = 16 * 1024 * 1024  # 16 MiB upper bound on a single frame
+
+
+def _recv_request(conn: socket.socket) -> bytes:
+    """Read one request, supporting BOTH wire framings (D61).
+
+    The CLI sends newline-delimited JSON; HarloHealthBridge sends a
+    4-byte big-endian length prefix + payload (DaemonWriter.swift).
+    The two are sniffable from the first byte: JSON starts with '{'
+    (or whitespace/'['), while a length prefix for any sane payload
+    (< 16 MiB) starts with 0x00.
+    """
+    head = b""
+    while len(head) < 4:
+        chunk = conn.recv(4 - len(head))
+        if not chunk:
+            return head  # short/empty — caller treats as legacy data
+        head += chunk
+
+    if head[0] == 0x00:
+        # Length-prefixed frame (HealthBridge).
+        length = int.from_bytes(head, "big")
+        if length <= 0 or length > _MAX_FRAME:
+            return b""
+        data = b""
+        while len(data) < length:
+            chunk = conn.recv(min(65536, length - len(data)))
+            if not chunk:
+                break
+            data += chunk
+        return data
+
+    # Legacy newline-delimited JSON (CLI).
+    data = head
     for _ in range(1024):  # bounded recv loop
+        if b"\n" in data:
+            break
         chunk = conn.recv(4096)
         if not chunk:
             break
         data += chunk
-        if b"\n" in data:
-            break
+    return data
+
+
+def handle_client(conn: socket.socket):
+    """Handle a single client connection."""
+    data = _recv_request(conn)
 
     if not data:
         conn.close()

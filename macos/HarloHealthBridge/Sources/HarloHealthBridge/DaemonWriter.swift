@@ -30,9 +30,13 @@ final class DaemonWriter {
     }
 
     private func send(data: Data) throws {
-        let socketPath = (FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Harlo/twind.sock")).path
+        // D62: group-container path (sandbox-reachable), with the
+        // legacy App Support path as the unsandboxed fallback.
+        let socketPath = SharedPaths.socketURL.path
+        guard SharedPaths.validateSocketPathLength(socketPath) else {
+            log.error("socket path exceeds sun_path limit (\(socketPath.utf8.count) bytes): \(socketPath)")
+            throw BridgeError.socketPathTooLong
+        }
 
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { throw BridgeError.socketCreate }
@@ -73,5 +77,6 @@ final class DaemonWriter {
         case socketCreate
         case socketConnect
         case socketWrite
+        case socketPathTooLong
     }
 }

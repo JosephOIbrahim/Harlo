@@ -76,6 +76,18 @@ is clean, but it is **broken at every seam** and rests on a strategic bet. Decis
 | **D65** | **Implement ADR-0001 constraint 1: per-data-type opt-in, default OFF.** The bridge requests **all 9 types unconditionally**; no toggle exists anywhere. Add a config block (read by the bridge) + a settings surface. | `main.swift:25-37`, `config/default_profile.yaml` (no biometric block) |
 | **D66 — manifest** | **macOS-27 manifest readiness.** Add `PrivacyInfo.xcprivacy` (absent repo-wide — required for App Store and increasingly for notarization-era trust). HealthKit usage strings currently sit on Harlo.app's Info.plist but the entitlement is on the **bridge** — move the strings to where the entitlement lives. Drop the bogus `NSUserNotificationUsageDescription` (not a real key). Decide `LSMinimumSystemVersion` (13.0 today). | `Harlo.app/Info.plist:52-67`, `*.xcprivacy` (none) |
 | **D67 — STRATEGIC** | **Is HealthKit-on-Mac viable for this product, or is the iPhone sidecar now required?** HealthKit-on-Mac needs the user's Health data **on the Mac**. The code bets on macOS-27 Health sync that does not exist on any current Mac (hence D63's crash loop). ADR-0001 "deferred" the iPhone-sidecar streaming. **This decision gates whether the entire bridge is shippable** — resolve it before investing in D60–D66. If macOS 27 does not sync Health to Mac, the sidecar moves from "deferred" to "required." |
+
+> **D67 RESOLVED (2026-06-10, empirical).** Probed on the target machine itself (Darwin 27.0.0):
+> `HKHealthStore.isHealthDataAvailable()` → **false**; no Health.app; no local Health store.
+> The API surface exists (HealthKit links; `enableBackgroundDelivery` is `macos(13.0)+` in the
+> local SDK) but the **data layer is absent on macOS 27**. Verdict: the Mac-native bet fails
+> today → **the iPhone sidecar moves from "deferred" to "required"** for real biometric signal
+> (needs its own ADR — it was explicitly rejected-deferred in ADR-0001 and reopening is an
+> architect call). Consequences taken: D60–D63 implemented anyway (they are signal-source-
+> agnostic — a sidecar pushes the same JSON through the same socket/barrier/tracker pipeline),
+> and the bridge stays in-tree as a **dormant** Mac-native path: D63's clean-exit means it
+> sleeps harmlessly until some future macOS ships Health-on-Mac, at which point it lights up
+> with zero code change. D68 (build/sign/CI for the bridge) stays gated until the sidecar ADR.
 | **D68** | **Bring HealthBridge into the build/sign/CI pipeline** (Phase 5B): add to `setup_py2app.py` DATA_FILES (plist), add the xcodegen+xcodebuild+sign job to `macos-build.yml`, ship in the DMG, fix bundle-ID drift (`com.harlo.healthbridge` vs app's `com.josephibrahim.harlo`). Do this **after** D67 says "go." |
 
 ---

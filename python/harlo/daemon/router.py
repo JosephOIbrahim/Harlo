@@ -1033,13 +1033,36 @@ def _handle_biometric_ingest(args: dict) -> dict:
         tracker.record_biometric(sample)
         accepted += 1
 
+    depleted = tracker.is_depleted()
+    force_red = tracker.should_force_red()
+    biometric_load = tracker.get_biometric_load()
+
+    # D60: persist the DERIVED verdict (never raw samples — Rule 9) so
+    # the coach/status surface can read it after this short-lived
+    # process exits. Best-effort: a failed persist must not reject the
+    # ingest itself.
+    if accepted:
+        try:
+            from ..daemon.config import DB_PATH
+            from ..modulation.state_store import write_modulation_state
+
+            write_modulation_state(
+                str(DB_PATH),
+                biometric_load=biometric_load,
+                depleted=depleted,
+                force_red=force_red,
+                samples_accepted=accepted,
+            )
+        except Exception:  # noqa: BLE001 — persistence is advisory
+            pass
+
     return {
         "status": "ok",
         "result": {
             "accepted": accepted,
             "rejected": rejected,
-            "depleted": tracker.is_depleted(),
-            "force_red": tracker.should_force_red(),
-            "biometric_load": tracker.get_biometric_load(),
+            "depleted": depleted,
+            "force_red": force_red,
+            "biometric_load": biometric_load,
         },
     }

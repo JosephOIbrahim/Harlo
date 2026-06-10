@@ -146,6 +146,21 @@ def _v9_block(enrichment) -> dict:
     }
 
 
+def _modulation_block() -> dict:
+    """D60: surface the persisted biometric modulation verdict to MCP
+    consumers (coach/status). Empty dict when no bridge has ever pushed
+    — absence of the block means 'no biometric signal', not an error."""
+    try:
+        from harlo.modulation.state_store import read_modulation_state
+
+        state = read_modulation_state(DB_PATH)
+    except Exception:
+        return {}
+    if state is None:
+        return {}
+    return {"modulation": state}
+
+
 def _v9_status_block(enrichment) -> dict:
     """Rich v9 view used by twin_session_status: engine health + last
     observation state + schedule + routing.
@@ -655,6 +670,7 @@ def twin_coach(session_id: str | None = None) -> str:
             ctx = enrichment.get("cognitive_context") or ""
             if ctx:
                 response["cognitive_context"] = ctx
+        response.update(_modulation_block())
         response.update(_v9_status_block(enrichment))
         return json.dumps(response, default=str)
     except Exception as e:
@@ -723,6 +739,7 @@ def twin_session_status() -> str:
         response["status"] = "ok"
         response["active_sessions"] = [s.to_dict() for s in active]
         response["count"] = len(active)
+        response.update(_modulation_block())
         response.update(_v9_status_block(enrichment))
         return json.dumps(response, default=str)
     except Exception as e:

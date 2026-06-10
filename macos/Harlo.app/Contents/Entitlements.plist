@@ -4,7 +4,7 @@
 <plist version="1.0">
 <dict>
     <!--
-        Harlo.app entitlements for Phase 5A (hardened runtime).
+        Harlo.app entitlements (hardened runtime).
 
         Start strict. Add exceptions ONLY when a specific runtime
         failure forces it, and document the failing log in
@@ -15,5 +15,16 @@
         The HealthBridge (Phase 5B) IS sandboxed because it only
         needs HealthKit + the daemon socket.
     -->
+
+    <!--
+        App Group shared with HarloHealthBridge (D62). The sandboxed
+        bridge can only reach the daemon socket + HealthKit anchor
+        through the group container, so the daemon side needs the
+        matching entitlement to share that surface.
+    -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>233JSS4X69.com.harlo.shared</string>
+    </array>
 </dict>
 </plist>
