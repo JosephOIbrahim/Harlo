@@ -135,9 +135,19 @@ final class HealthReader {
     func fetchDelta(for type: PulseType, done: @escaping () -> Void) {
         let sampleType = type.sampleType
         let anchor = loadAnchor(for: type)
+        // 48h lookback (field lesson 2026-06-10): a fresh anchor used to
+        // fetch the user's ENTIRE HealthKit history, producing a first
+        // sync far past the listener's 1 MiB frame cap — and deep
+        // history is useless anyway: AllostasisTracker only keeps a
+        // rolling trend window (ADR-0002 constraint 1). Bounding the
+        // query also means old history never leaves the phone at all —
+        // a strict privacy improvement. Ongoing deltas are unaffected
+        // (new samples are by definition recent).
+        let lookback = Calendar.current.date(byAdding: .hour, value: -48, to: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: lookback, end: nil, options: [])
         let query = HKAnchoredObjectQuery(
             type: sampleType,
-            predicate: nil,
+            predicate: predicate,
             anchor: anchor,
             limit: HKObjectQueryNoLimit
         ) { [weak self] _, newSamples, _, newAnchor, error in

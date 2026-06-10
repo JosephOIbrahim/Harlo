@@ -131,30 +131,63 @@ final class PulseLink {
         }
     }
 
+    /// 500 samples ≈ 100 KB of JSON — an order of magnitude under the
+    /// listener's 1 MiB frame cap (field lesson 2026-06-10: a fresh
+    /// anchor's first sync blew the cap in a single frame; the listener
+    /// drops oversize silently from the client's perspective).
+    private static let chunkSize = 500
+
     private func sendSamples(
         _ connection: NWConnection,
         samples: [[String: Any]],
         finish: @escaping (Bool, String) -> Void
     ) {
+        var chunks: [[[String: Any]]] = []
+        var index = 0
+        while index < samples.count {
+            let end = min(index + Self.chunkSize, samples.count)
+            chunks.append(Array(samples[index..<end]))
+            index = end
+        }
+        sendChunk(connection, chunks: chunks, at: 0, acceptedSoFar: 0,
+                  total: samples.count, finish: finish)
+    }
+
+    /// Sequential chunk sends on one session — the listener loops
+    /// frames until EOF and acks each one.
+    private func sendChunk(
+        _ connection: NWConnection,
+        chunks: [[[String: Any]]],
+        at chunkIndex: Int,
+        acceptedSoFar: Int,
+        total: Int,
+        finish: @escaping (Bool, String) -> Void
+    ) {
+        guard chunkIndex < chunks.count else {
+            finish(true, "accepted \(acceptedSoFar) of \(total)")
+            return
+        }
         // The EXACT existing DaemonWriter payload, unchanged
         // (ADR-0002 point 2 — zero new Mac ingest code).
         let payload: [String: Any] = [
             "command": "biometric_ingest",
-            "args": ["samples": samples],
+            "args": ["samples": chunks[chunkIndex]],
         ]
         sendFrame(connection, obj: payload) { [weak self] error in
             if let error = error {
                 finish(false, "sample send failed: \(error.localizedDescription)")
                 return
             }
-            self?.receiveFrame(connection) { obj, errorMessage in
+            self?.receiveFrame(connection) { [weak self] obj, errorMessage in
                 guard let obj = obj else {
                     finish(false, errorMessage ?? "no ack")
                     return
                 }
                 let result = obj["result"] as? [String: Any]
                 let accepted = (result?["accepted"] as? Int) ?? 0
-                finish(true, "accepted \(accepted) of \(samples.count)")
+                self?.sendChunk(connection, chunks: chunks, at: chunkIndex + 1,
+                                acceptedSoFar: acceptedSoFar + accepted,
+                                total: total, finish: finish)
             }
         }
     }
