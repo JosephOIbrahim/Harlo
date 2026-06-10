@@ -1,0 +1,12 @@
+# Snapshots and run outputs are COPIES OF THE LIVE STORE — real cognitive
+# and biometric-derived data. They must never be committed.
+snapshots/
+runs/
+
+# Experiment pin artifact (generated on the live stage dir, not here, but
+# guard anyway in case someone runs with --stage-dir .).
+experiment_schedule.usda
+
+# Operator's local probe set may contain private trace content.
+probes.json
+probes.local.json
