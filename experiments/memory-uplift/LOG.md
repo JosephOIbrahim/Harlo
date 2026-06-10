@@ -158,6 +158,33 @@ tier — promotion never runs (Thread 4). Δ9 fix is necessary-not-sufficient.
 semantics), NOT the cause of pool=0. HALT for architect review — λ semantics
 is a representation decision about what "memory" means in Harlo.
 
+## REPAIR SPRINT — Phase 0: repo topology (read-only, report-only)
+Premise ("public github.com/JosephOIbrahim/Harlo = 2 commits, v3.3.1 README,
+cognitive_twin layout, Latest=v9.0.0 Mar 30") is STALE, not a different repo.
+Authoritative state (git + gh):
+- origin = https://github.com/JosephOIbrahim/Harlo.git (single remote, https).
+  gh active account = JosephOIbrahim (joe002 also keyring-authed, INACTIVE;
+  scopes gist/read:org/repo — no `workflow`, known).
+- Remote default branch = master (ls-remote --symref HEAD → refs/heads/master),
+  tip=0250db3 (current). Repo PUBLIC, created 2026-03-15, pushed today. README
+  on master = current ("Local first AI Coach" logo).
+- ALL this week's pushes + gh ops (v0.1.6 = Latest, topics healthkit/ios,
+  description, 4 logos, positioning) landed HERE. gh release list shows
+  v0.1.6=Latest AND orphaned legacy v8.0.0/v9.0.0 (Mar) tags coexisting.
+- Topology: ONE repo, rewritten in place. Created Mar 15 on the v3.x→v9.0.0
+  line (python/cognitive_twin/, v3.3.1 README); later replaced by the v0.1.x
+  line (python/harlo/, current). Fingerprints: version reset 9.0.0→0.1.0,
+  orphaned v8/v9 release tags, layout swap. The architect's "2-commit/v3.3.1"
+  view is the PRE-REWRITE state — a cached/stale browser view of the SAME repo.
+- Siblings (NOT where this lives): JosephOIbrahim/Harlo_OS (private),
+  JosephOIbrahim/Hanna (public).
+- CONSEQUENCE (logo): the 4 logo pushes DID land on master (default branch).
+  "Logo isn't updating" = stale/cached view, NOT a push failure. Hard refresh
+  / cache-bust shows the current logo.
+- Per mandate: PROPOSE nothing, FIX nothing. Public-surface fate (orphaned
+  v8/v9 tags, the 9.0.0→0.1.0 version-reset optics) is the architect's
+  representation decision.
+
 ## Open items
 - P2: KILL FIRED (Cycle 4) — VERIFIED pool 0. Rescope: accumulate verified
   material via real sessions, or redefine the probe source. Re-run inventory.py.
