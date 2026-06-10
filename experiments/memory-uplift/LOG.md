@@ -215,6 +215,53 @@ RULED: dt→days (/86_400), test-first.
 - Effective decay now: 1d→0.951, 14d→0.497, 90d→0.011 (just above ε=0.01). A
   trace stored today survives a simulated day. PHASE 1 CONTRACT: MET.
 
+## Cycle 6 — REPAIR SPRINT Phase 2: promotion diagnosis (read-only, HARD HALT)
+Q: why has promote_batch never produced a hot_promotion (warm) row?
+
+TRIGGER CHAIN (built, tested, ORPHANED):
+- Observer.run_promotion_cycle(batch_size=50) (observer/__init__.py:52) →
+  PromotionPipeline.promote_batch (hot_store/promotion.py:48): get_pending
+  (encoded=0) → OnnxEncoder.encode_batch → write warm `traces` → mark_encoded.
+- CALLERS of run_promotion_cycle / promote_batch / Observer( ) across the WHOLE
+  repo: ONLY tests (tests/test_hot_store/test_promotion.py,
+  tests/test_observer/). ZERO production callers — not daemon (router /
+  lifecycle), not CLI, not engine, not scripts. Fully built + unit-tested,
+  wired to nothing.
+
+NOT a secondary blocker:
+- onnxruntime imports OK; Observer imports OK in the lean venv → the ONNX
+  encoder is NOT the gate.
+- Empirical (snapshot 20260610-181809): all 16 hot_traces have encoded=0 → they
+  MEET get_pending's criteria (promotable NOW). Criteria REACHABLE; 16 traces
+  sit ready. The only missing thing is an invocation.
+
+CLASSIFY: **WIRING-GAP** (primary) / NOT-SCHEDULED (consequence). Observer +
+PromotionPipeline are orphaned components — tests prove they work, no production
+path calls them, so no cadence exists. THIS is why warm `traces`=0 across 282
+sessions: nothing ever promoted — independent of the Δ9 decay bug.
+
+VERIFICATION FLOW (cheap quantify): elenchus_pending table ABSENT → 0 pending
+claims, no oldest age (never written). No MCP tool enumerates pending (only
+resolve_verifications submits verdicts; coach injects ≤5 into the prompt).
+PROPOSE: smallest viable enumeration = a read-only SQL helper or a tiny CLI
+subcommand (`harlo verifications --pending`) that SELECTs elenchus_pending; an
+MCP list-tool is heavier and expands the assistant surface.
+
+FIX SKETCHES (NOT authorized — HALT):
+1. Daemon-teardown wiring: call run_promotion_cycle in the async DMN/idle
+   teardown (lifecycle.py idle_shutdown / dmn_teardown, S6 window), gated by
+   hot-pending count. Rides the existing 0W teardown — no resident loop
+   (Rule 1). Changes daemon teardown behavior → architect's domain.
+2. Explicit CLI: `harlo promote` (or fold into `twin consolidate`, which today
+   only apoptoses). Operator/cron-triggered, zero daemon-behavior change,
+   deterministic, smallest footprint; needs manual/scheduled invocation.
+3. Session-close wiring: promote in manager.close alongside the DMN trigger.
+   Natural per-session cadence; couples promotion to session lifecycle.
+
+HALT — promotion fix + verification surface NOT authorized this sprint (both
+change what the daemon does unprompted). Δ12: warm tier empty = promotion
+WIRING-GAP, orthogonal to Δ9.
+
 ## Open items
 - P2: KILL FIRED (Cycle 4) — VERIFIED pool 0. Rescope: accumulate verified
   material via real sessions, or redefine the probe source. Re-run inventory.py.
