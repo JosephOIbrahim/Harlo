@@ -54,7 +54,7 @@ daemon + HealthKit stack as Phase-5x that must earn "shipped" one working seam a
 
 | ID | Decision | Fork |
 |----|----------|------|
-| **D56** | **Dual-engine resolution.** `src/` (v9: the USD twin, predictor, schemas) is the real engine but is **never packaged** (maturin `python-source="python"`; reached only via a `sys.path` hack that works solely from a source checkout — `mcp_server.py:81-86`). `python/harlo` (v8 stack) is what ships. **Fork:** (A) promote `src/` into a real `harlo.engine` namespace and package it; (B) formally retire v9 from the shipped path and own that the bundle is the v8 stack. This is THE central architecture decision — everything downstream (USD-in-bundle, predictor, "cognitive twin" claim) depends on it. |
+| **D56 — IMPLEMENTED (A), 2026-06-10** | **Dual-engine resolution.** `src/` (v9: the USD twin, predictor, schemas) is the real engine but is **never packaged** (maturin `python-source="python"`; reached only via a `sys.path` hack that works solely from a source checkout — `mcp_server.py:81-86`). `python/harlo` (v8 stack) is what ships. **Fork:** (A) promote `src/` into a real `harlo.engine` namespace and package it; (B) formally retire v9 from the shipped path and own that the bundle is the v8 stack. This is THE central architecture decision — everything downstream (USD-in-bundle, predictor, "cognitive twin" claim) depends on it. |
 | **D57** | **Composition engines: 3 → 1.** `usd_lite/composer.py` is fully dead (only test + `__init__` import it) → **delete**. `composition/resolver.py` is legacy-live via the v8 daemon → keep only if D56 keeps the v8 daemon. Native `pxr` `subLayerPaths` is the real, load-bearing one (proven by the v0.1.2 trial). Consolidate to native pxr as the single composition story. |
 | **D58** | **Encoder triplication.** `sentence_transformers` (dev/test only), `onnx_encoder` (aspirational — its only consumers `Observer`/`PromotionPipeline` are never instantiated outside tests), Rust lexical (the real, shipped path). **Decision:** either wire ONNX-BGE for real or **cut `onnxruntime`+`transformers` from runtime deps** and mark the semantic path dev-only. Right now they're mandatory pip deps for an unwired path — and a silent HuggingFace phone-home (`onnx_encoder.py:30,57`) in a "no cloud" product. |
 | **D59** | **`harlo` console-script identity.** The installed `harlo` script is the **MCP stdio server** (`pyproject.toml:25`), but README/docs advertise `harlo doctor`/`intake`/`audit` as if it were the CLI. Decide: `harlo` = MCP server (rename CLI to `harlo-cli`), or `harlo` = CLI with an `--mcp` subcommand. Align docs to the choice. |
@@ -127,6 +127,30 @@ is clean, but it is **broken at every seam** and rests on a strategic bet. Decis
 4. **D60** (biometric→coach keystone) + **D61/D62/D63** — the seams that make HealthKit *do something*.
 5. **TIER 3** (Rule 1) — the 0W-idle headline; meaningful effort, do as a focused sprint.
 6. **TIER 4** — fold into each PR opportunistically; D74 (dev env) first so contributors aren't blocked.
+
+## Device-evidence addendum (2026-06-10) — D82/D83
+
+Architect connected hardware during the D67 follow-up; relevance reviewed under
+delegated CTO authority:
+
+- **D82 — iPhone (USB-connected, not data-enumerable).** The phone is the real home of
+  the Health data the Mac lacks (D67). USB data access is currently blocked by missing
+  trust pairing + tooling (no Xcode `devicectl`; CommandLineTools only) — so the sidecar's
+  v1 transport is **LAN/Bonjour token-paired push**, with **USB via usbmuxd as the
+  preferred v2** once pairing is set up (zero-radio, privacy-maximal). Full decision:
+  `docs/adr/0002-iphone-sidecar.md`.
+- **D83 — Apple Watch Ultra (v1) on unsupported watchOS.** No impact on the chosen
+  architecture: Watch→iPhone Health sync continues on old watchOS. It DOES rule out any
+  watch-app dependency (real-time HR streaming needs a current-SDK watch target) — which
+  ADR-0001's trend-based analysis already rejected. Hardware constraint and product
+  analysis agree; recorded in ADR-0002 as a binding "no watch app" scope line.
+
+**D56 executed as fork (A)** the same day: `src/` → packaged `harlo.engine`
+(git-mv with history), all imports rewritten, `sys.path` hacks deleted,
+`engine_config` paths re-rooted to DATA_DIR (closing most of D81), compliance greps
+repointed. Full-suite failure set byte-identical to the pre-move baseline; engine boots
+`stage_type=real_usd`, `predictor=yes` from the packaged module; predictor joblib
+unpickle verified post-move.
 
 ## Risk register
 - **Highest:** D50 (plaintext "encrypted" export) — privacy exposure shipping today.
