@@ -192,11 +192,16 @@ def generate_session(
     rng: random.Random,
     profile: Optional[SessionProfile] = None,
     session_id: Optional[str] = None,
+    seed_energy: Optional[Energy] = None,
 ) -> list[CognitiveObservation]:
     """Generate a single session trajectory using forward-chaining simulation.
 
     Commandment 2: Bridge/Generator maintains and authors accumulators per exchange.
     Commandment 11: Profile-Driven Markov Biasing.
+
+    seed_energy: if set, the session's FIRST exchange starts at this Energy and
+    transitions from it — the biometric deep-seed (mirrors the production engine's
+    post-DAG override). None → the usual MEDIUM-baseline start.
     """
     if profile is None:
         profile = _pick_profile(rng)
@@ -310,6 +315,13 @@ def generate_session(
             token_ratio=rng.uniform(2.0, 6.0),
         )
 
+        # Biometric deep-seed mirror: a seeded session starts its FIRST exchange
+        # at seed_energy (then transitions), re-authored to /state so i==1 reads
+        # it — the same post-DAG override the engine applies in production.
+        if i == 0 and seed_energy is not None:
+            resolved.state.energy = seed_energy
+            stage.author("/state", 0, resolved)
+
         # Track burst for adrenaline debt
         prev_burst = resolved.dynamics.burst_phase
         if resolved.dynamics.burst_phase == BurstPhase.NONE and adrenaline_debt > 0:
@@ -330,6 +342,7 @@ class GenerationReport:
     violations: list[str] = field(default_factory=list)
     profile_distribution: dict[str, int] = field(default_factory=dict)
     edge_cases: dict[str, int] = field(default_factory=dict)
+    seeded_start_sessions: int = 0
 
     def to_dict(self) -> dict:
         """Serialize to dict."""
@@ -342,6 +355,7 @@ class GenerationReport:
             "violations_sample": self.violations[:20],
             "profile_distribution": self.profile_distribution,
             "edge_cases": self.edge_cases,
+            "seeded_start_sessions": self.seeded_start_sessions,
         }
 
 
@@ -390,6 +404,7 @@ def generate_trajectories(
     seed: int = 42,
     validate: bool = True,
     output_path: Optional[str] = None,
+    seed_start_fraction: float = 0.0,
 ) -> GenerationReport:
     """Generate multiple session trajectories.
 
@@ -398,6 +413,10 @@ def generate_trajectories(
         seed: Random seed for reproducibility.
         validate: Whether to run invariant validation.
         output_path: Optional JSONL output file path.
+        seed_start_fraction: fraction of sessions whose first exchange is
+            biometric-seeded to a random Energy in {LOW, MEDIUM, HIGH} (the rest
+            keep the MEDIUM-baseline start). Calibrates the predictor for seeded
+            session starts. 0.0 → all MEDIUM-baseline (legacy behavior).
     """
     rng = random.Random(seed)
     report = GenerationReport()
@@ -407,7 +426,18 @@ def generate_trajectories(
         profile = _pick_profile(rng)
         session_id = f"s{session_idx:05d}"
 
-        trajectory = generate_session(rng, profile=profile, session_id=session_id)
+        # Seed non-crisis sessions only: a HIGH start on a force_red session
+        # degrades to LOW one exchange slower than INV-12's soft check allows
+        # (and starting a crisis at HIGH energy is unrealistic anyway).
+        seed_energy = None
+        if (seed_start_fraction > 0.0 and not profile.force_red
+                and rng.random() < seed_start_fraction):
+            seed_energy = rng.choice([Energy.LOW, Energy.MEDIUM, Energy.HIGH])
+            report.seeded_start_sessions += 1
+
+        trajectory = generate_session(
+            rng, profile=profile, session_id=session_id, seed_energy=seed_energy
+        )
         report.total_sessions += 1
         report.total_exchanges += len(trajectory)
 
@@ -423,9 +453,11 @@ def generate_trajectories(
                 report.edge_cases[case_name] = report.edge_cases.get(case_name, 0) + 1
 
         # Validate
+        is_valid = True
         if validate:
             violations = validate_trajectory(trajectory)
             if violations:
+                is_valid = False
                 report.invalid_sessions += 1
                 report.violations.extend(violations[:5])
             else:
@@ -433,8 +465,11 @@ def generate_trajectories(
         else:
             report.valid_sessions += 1
 
-        # Serialize
-        all_trajectories.append([obs.model_dump() for obs in trajectory])
+        # Serialize — when validating, write VALID trajectories only so the
+        # training set stays invariant-clean. (Seeding occasionally trips the
+        # soft INV-12 RED/burst-masking check on a HIGH start; drop those.)
+        if is_valid:
+            all_trajectories.append([obs.model_dump() for obs in trajectory])
 
     # Write JSONL
     if output_path:
@@ -455,6 +490,8 @@ def main():
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--validate", action="store_true", help="Run validation")
     parser.add_argument("--output", type=str, default=None, help="JSONL output path")
+    parser.add_argument("--seed-start-fraction", type=float, default=0.0,
+                        help="Fraction of sessions biometric-seeded at a random start Energy")
     args = parser.parse_args()
 
     report = generate_trajectories(
@@ -462,6 +499,7 @@ def main():
         seed=args.seed,
         validate=args.validate,
         output_path=args.output,
+        seed_start_fraction=args.seed_start_fraction,
     )
 
     print(json.dumps(report.to_dict(), indent=2))

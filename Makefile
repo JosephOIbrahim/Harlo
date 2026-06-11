@@ -130,11 +130,13 @@ signing-readiness:
 verify: test compliance-greps doctor signing-readiness
 
 # Synthetic training data for the cognitive predictor. Profile-driven Markov
-# sim from src/trajectory_generator.py — 10K sessions seeded for repro.
-# Gitignored due to size (~229 MB); regenerate locally as needed.
+# sim from trajectory_generator.py — 10K sessions, seed 42 for repro. LFS-tracked
+# (~229 MB). --seed-start-fraction 0.3 biometric-seeds 30% of (non-crisis)
+# sessions at a random start Energy so the predictor is calibrated for the
+# deep-seed (see biometric_prior). Valid-only output when --validate.
 data/trajectories_10k.jsonl regen-trajectories:
 	$(PYTHON) -m harlo.engine.trajectory_generator \
-	    --count 10000 --seed 42 --validate \
+	    --count 10000 --seed 42 --validate --seed-start-fraction 0.3 \
 	    --output data/trajectories_10k.jsonl
 
 # XGBoost MultiOutputRegressor trained on the trajectories. Gitignored
