@@ -19,7 +19,7 @@ from __future__ import annotations
 import hmac
 import json
 import os
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Optional, Protocol
 
 from pydantic import ValidationError
@@ -130,8 +130,10 @@ class BioHandler(BaseHTTPRequestHandler):
         pass
 
 
-class BioServer(ThreadingHTTPServer):
-    daemon_threads = True
+class BioServer(HTTPServer):
+    # Single-threaded on purpose: a ~1/day endpoint whose store holds a
+    # thread-bound SQLite connection. No per-request threads → no cross-thread
+    # connection use.
     allow_reuse_address = True
 
     def __init__(self, server_address, *, enabled: bool, token: Optional[str],

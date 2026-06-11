@@ -738,6 +738,16 @@ def twin_session_status() -> str:
         response["count"] = len(active)
         response.update(_modulation_block())
         response.update(_v9_status_block(enrichment))
+        # biometric_prior Energy seed (Phase 4). A missing prior must NEVER
+        # block session startup — default behavior is unchanged when absent.
+        try:
+            from harlo.biometric_prior.readpath import seed_block
+
+            seed = seed_block()
+            if seed is not None:
+                response["biometric_seed"] = seed
+        except Exception:
+            pass
         return json.dumps(response, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
