@@ -2,7 +2,7 @@
 
 Severity-first evaluation. The spec lists the rows best-to-worst for
 readability, but they MUST be evaluated worst-to-best: the `low` row
-(sleep<330) is a superset of `depleted` (sleep<270), so depleted is checked
+(sleep<=330) is a superset of `depleted` (sleep<270), so depleted is checked
 first or it never fires. `medium` is the else/default — which mirrors the
 spec's own "missing prior → default MEDIUM" rule. `low` is also checked before
 `high` so an elevated resting HR (strain) overrides good sleep.
@@ -18,7 +18,7 @@ from .baseline import Baseline
 from .schema import BiometricPrior, Capacity, CapacityVerdict
 
 SLEEP_HIGH = 420
-SLEEP_MEDIUM_FLOOR = 330
+SLEEP_LOW_CEILING = 330  # sleep <= 330 → low; medium is 330 < sleep < 420
 SLEEP_DEPLETED = 270
 RHR_STRAIN_DELTA = 5.0
 HRV_DEPLETED_FACTOR = 0.85
@@ -41,8 +41,8 @@ def classify(prior: BiometricPrior, baseline: Optional[Baseline]) -> CapacityVer
     if sleep < SLEEP_DEPLETED and have_hrv_base and hrv < baseline.hrv * HRV_DEPLETED_FACTOR:
         return CapacityVerdict(Capacity.DEPLETED, Energy.LOW, True, pre_baseline)
 
-    # 2. low — short sleep, or resting HR elevated vs baseline (strain)
-    if sleep < SLEEP_MEDIUM_FLOOR or (have_rhr_base and rhr >= baseline.rhr + RHR_STRAIN_DELTA):
+    # 2. low — short sleep (<=330), or resting HR elevated vs baseline (strain)
+    if sleep <= SLEEP_LOW_CEILING or (have_rhr_base and rhr >= baseline.rhr + RHR_STRAIN_DELTA):
         return CapacityVerdict(Capacity.LOW, Energy.LOW, False, pre_baseline)
 
     # 3. high — long sleep AND (HRV >= baseline, or HRV unavailable → sleep-only)

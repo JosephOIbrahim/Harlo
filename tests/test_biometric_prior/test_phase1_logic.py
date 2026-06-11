@@ -38,8 +38,9 @@ CASES = [
     ("high",              _prior(450, hrv=55, rhr=58), BASE, Capacity.HIGH,     Energy.HIGH,   False),
     ("high_boundary_420", _prior(420, hrv=50, rhr=58), BASE, Capacity.HIGH,     Energy.HIGH,   False),
     ("medium",            _prior(375, hrv=55, rhr=58), BASE, Capacity.MEDIUM,   Energy.MEDIUM, False),
-    ("medium_floor_330",  _prior(330, hrv=55, rhr=58), BASE, Capacity.MEDIUM,   Energy.MEDIUM, False),
+    ("medium_floor_331",  _prior(331, hrv=55, rhr=58), BASE, Capacity.MEDIUM,   Energy.MEDIUM, False),
     ("medium_ceil_419",   _prior(419, hrv=55, rhr=58), BASE, Capacity.MEDIUM,   Energy.MEDIUM, False),
+    ("low_ceiling_330",   _prior(330, hrv=55, rhr=58), BASE, Capacity.LOW,      Energy.LOW,    False),
     ("low_sleep",         _prior(300, hrv=55, rhr=58), BASE, Capacity.LOW,      Energy.LOW,    False),
     ("low_sleep_bnd_329", _prior(329, hrv=55, rhr=58), BASE, Capacity.LOW,      Energy.LOW,    False),
     ("low_rhr_strain",    _prior(450, hrv=55, rhr=65), BASE, Capacity.LOW,      Energy.LOW,    False),  # rhr>=base+5 overrides high

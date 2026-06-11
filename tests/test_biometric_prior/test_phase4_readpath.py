@@ -35,13 +35,11 @@ def test_seed_low_for_short_sleep():
     assert seed["pre_baseline"] is True
 
 
-def test_seed_medium_at_330_boundary():
-    # Gate-1-approved mapping: 330<=sleep<420 → medium. (Note: Gate 4's
-    # round-trip text says 330→LOW, which contradicts this boundary — surfaced
-    # for the architect, not auto-resolved.)
+def test_seed_low_at_330_boundary():
+    # Boundary (architect ruling): sleep <= 330 → LOW; medium is 330 < sleep < 420.
     store = _store()
     store.upsert(_prior(TODAY, sleep=330))
-    assert seed_block(today=TODAY, store=store)["energy"] == "MEDIUM"
+    assert seed_block(today=TODAY, store=store)["energy"] == "LOW"
 
 
 def test_seed_high_for_long_sleep():
