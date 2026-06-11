@@ -56,6 +56,12 @@ class ObservationBuffer:
             CREATE INDEX IF NOT EXISTS idx_buffer_priority
             ON observation_buffer(partition, priority DESC)
         """)
+        # biometric_prior tag: a nullable `kind`. NULL = behavioral
+        # CognitiveObservation (existing rows / feature windows); non-NULL kinds
+        # (e.g. 'biometric_prior') are excluded from sample() and eviction.
+        cols = {r[1] for r in self._conn.execute("PRAGMA table_info(observation_buffer)")}
+        if "kind" not in cols:
+            self._conn.execute("ALTER TABLE observation_buffer ADD COLUMN kind TEXT")
         self._conn.commit()
 
     def add(
@@ -90,6 +96,46 @@ class ObservationBuffer:
             count += 1
         return count
 
+    def add_biometric_prior(self, observation_json: str, calendar_date: str) -> tuple[str, bool]:
+        """Store a biometric_prior in the organic partition, tagged
+        kind='biometric_prior' (excluded from behavioral feature windows).
+
+        Idempotent on calendar date: obs_id = 'bio-<date>', so a re-POST for the
+        same date REPLACEs the row rather than appending. Returns (obs_id,
+        created) where created is True only if no row existed for that date.
+        """
+        obs_id = f"bio-{calendar_date}"
+        existed = self._conn.execute(
+            "SELECT 1 FROM observation_buffer WHERE obs_id = ?", (obs_id,)
+        ).fetchone() is not None
+        self._conn.execute(
+            """INSERT OR REPLACE INTO observation_buffer
+               (obs_id, observation_json, priority, partition, surprise_score, kind)
+               VALUES (?, ?, 0.0, 'organic', 0.0, 'biometric_prior')""",
+            (obs_id, observation_json),
+        )
+        self._conn.commit()
+        return obs_id, (not existed)
+
+    def biometric_prior_json(self, calendar_date: str) -> str | None:
+        """The stored biometric_prior JSON for a calendar date, or None."""
+        row = self._conn.execute(
+            "SELECT observation_json FROM observation_buffer WHERE obs_id = ?",
+            (f"bio-{calendar_date}",),
+        ).fetchone()
+        return row[0] if row else None
+
+    def recent_biometric_prior_jsons(self, limit: int = 14) -> list[str]:
+        """Most recent biometric_prior JSONs, newest first (obs_id 'bio-<ISO
+        date>' sorts chronologically). For the rolling-baseline window."""
+        rows = self._conn.execute(
+            """SELECT observation_json FROM observation_buffer
+               WHERE kind = 'biometric_prior'
+               ORDER BY obs_id DESC LIMIT ?""",
+            (limit,),
+        ).fetchall()
+        return [r[0] for r in rows]
+
     def sample(self, n: int = 100) -> list[BufferedObservation]:
         """Sample observations maintaining anchor/organic ratio."""
         n_anchor = max(1, int(n * self._anchor_ratio))
@@ -101,7 +147,7 @@ class ObservationBuffer:
         rows = self._conn.execute(
             """SELECT obs_id, observation_json, priority, partition, surprise_score
                FROM observation_buffer
-               WHERE partition = 'anchor'
+               WHERE partition = 'anchor' AND kind IS NULL
                ORDER BY RANDOM()
                LIMIT ?""",
             (n_anchor,),
@@ -120,7 +166,7 @@ class ObservationBuffer:
         rows = self._conn.execute(
             """SELECT obs_id, observation_json, priority, partition, surprise_score
                FROM observation_buffer
-               WHERE partition = 'organic'
+               WHERE partition = 'organic' AND kind IS NULL
                ORDER BY priority DESC
                LIMIT ?""",
             (n_organic,),
@@ -148,7 +194,7 @@ class ObservationBuffer:
             self._conn.execute(
                 """DELETE FROM observation_buffer WHERE obs_id IN (
                     SELECT obs_id FROM observation_buffer
-                    WHERE partition = 'organic'
+                    WHERE partition = 'organic' AND kind IS NULL
                     ORDER BY priority ASC
                     LIMIT ?
                 )""",

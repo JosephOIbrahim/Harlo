@@ -154,8 +154,10 @@ def make_server(port: int = DEFAULT_PORT, *, enabled: Optional[bool] = None,
 
 
 def run() -> None:
+    from .persistence import default_store
+
     port = int(os.environ.get("HARLO_BIO_PORT", str(DEFAULT_PORT)))
-    srv = make_server(port)
+    srv = make_server(port, store=default_store())
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
