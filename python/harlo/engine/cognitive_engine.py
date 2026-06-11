@@ -58,6 +58,9 @@ class CognitiveEngine:
         self._observations: list = []
         self._pending_save = False
         self._memory_queue: deque = deque(maxlen=100)
+        # Sessions whose first observation has already been biometric-seeded
+        # (Phase 4 deep seed) — seed once per session, never leak across them.
+        self._seeded_sessions: set = set()
 
         # --- Stage (graceful fallback) ---
         self.stage = self._init_stage(use_real_usd, stage_dir, in_memory)
@@ -206,6 +209,20 @@ class CognitiveEngine:
             from .mock_cogexec import evaluate_dag
             resolved = evaluate_dag(self.stage, obs, idx)
 
+            # Deep seed (Phase 4): the FIRST exchange of a new session starts at
+            # today's biometric Energy. compute_energy transitions from the
+            # previous /state, so we override the resolved energy and re-author
+            # to /state at idx — the next exchange then transitions from the
+            # seed. Gated by BIOMETRICS_ENABLED; once per session; no-op absent
+            # a prior. Never breaks the exchange.
+            seed_energy = self._biometric_seed_energy(session_id)
+            if seed_energy is not None:
+                resolved.state.energy = seed_energy
+                try:
+                    self.stage.author("/state", idx, resolved)
+                except Exception as e:
+                    logger.warning(f"biometric seed re-author failed: {e}")
+
             # Schedule evaluation (post-DAG so the field survives).
             # Engine remains clock-free: current_time_iso is INPUT, not a clock read.
             if current_time_iso is not None:
@@ -289,6 +306,30 @@ class CognitiveEngine:
         }
 
     # ─── Helpers ──────────────────────────────────────────────────
+
+    def _biometric_seed_energy(self, session_id):
+        """Phase 4 deep seed: the FIRST observation of a NEW session starts its
+        Energy from today's biometric_prior, instead of the MEDIUM baseline.
+
+        Gated by BIOMETRICS_ENABLED (the feature kill switch) → default-off
+        leaves existing behavior unchanged. Seeded once per session_id (never
+        leaks across sessions on the singleton engine). No-op when no prior was
+        captured today. NEVER raises — seeding must not break the exchange.
+        """
+        if not session_id or os.environ.get("BIOMETRICS_ENABLED", "0") != "1":
+            return None
+        if session_id in self._seeded_sessions:
+            return None
+        self._seeded_sessions.add(session_id)
+        try:
+            from .schemas import Energy
+            from harlo.biometric_prior.readpath import seed_block
+
+            seed = seed_block()  # reads today's prior from the observation buffer
+            return Energy[seed["energy"]] if seed else None
+        except Exception as e:
+            logger.warning(f"biometric seed skipped: {e}")
+            return None
 
     def _build_authored_observation(self, tool_name, tool_input, session_id, idx):
         """Build observation from MCP tool call context."""

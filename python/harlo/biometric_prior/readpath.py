@@ -5,9 +5,9 @@ rolling 14-day baseline, and returns the Energy seed that twin_session_status
 surfaces. Absent prior → None (session startup unchanged; default MEDIUM as
 today). A missing prior must NEVER block startup — callers wrap defensively.
 
-This surfaces the seed as the authoritative session-init Energy. Wiring it into
-the v9 observation pipeline's first-exchange state is a deeper integration left
-for the architect (see LOG); this read path is the observable seed.
+This read path backs BOTH surfaces: twin_session_status's biometric_seed block,
+and the engine's DEEP seed (CognitiveEngine seeds a new session's first-exchange
+resolved Energy from this, gated by BIOMETRICS_ENABLED).
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ def seed_block(today: Optional[str] = None, store=None) -> Optional[dict]:
     if store is None:
         from .persistence import default_store
 
-        store = default_store()
+        store = default_store(with_stage=False)  # read path → buffer only
     prior = store.today_prior(today)
     if prior is None:
         return None

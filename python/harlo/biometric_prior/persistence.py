@@ -58,18 +58,23 @@ class BufferUsdStore:
         ]
 
 
-def default_store() -> "BufferUsdStore":
+def default_store(with_stage: bool = True) -> "BufferUsdStore":
     """Production store: the engine's observation buffer + real USD stage.
-    Degrades to buffer-only if pxr/USD is unavailable."""
+    Degrades to buffer-only if pxr/USD is unavailable.
+
+    with_stage=False → buffer-only (for READ paths like seed_block): avoids
+    opening a second CognitiveStage on the engine's live harlo.usda.
+    """
     from harlo.engine.engine_config import BUFFER_DB_PATH, STAGE_DIR
     from harlo.engine.observation_buffer import ObservationBuffer
 
     buffer = ObservationBuffer(BUFFER_DB_PATH)
     stage = None
-    try:
-        from harlo.engine.stage_factory import create_stage
+    if with_stage:
+        try:
+            from harlo.engine.stage_factory import create_stage
 
-        stage = create_stage(stage_dir=STAGE_DIR)
-    except Exception:
-        stage = None
+            stage = create_stage(stage_dir=STAGE_DIR)
+        except Exception:
+            stage = None
     return BufferUsdStore(buffer, stage)
