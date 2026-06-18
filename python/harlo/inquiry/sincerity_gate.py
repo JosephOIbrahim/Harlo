@@ -50,12 +50,55 @@ class SincerityResult:
     signals_matched: list[str]
 
 
-def classify(response_text: str) -> SincerityResult:
+def _classify_via_llm(response_text: str, llm_provider) -> SincerityResult | None:
+    """Classify via an on-device LLM judge (e.g. Apple Foundation Models).
+
+    *llm_provider* is any object with a ``generate(prompt) -> str`` method
+    (duck-typed — see provider/apple_fm.py). Returns ``None`` on any error
+    or unparseable output so the caller falls back to the heuristic.
+
+    Keeping this in the inquiry namespace preserves the S2 boundary: the
+    self-reported response is classified for tone, not objective truth.
+    """
+    import json
+
+    prompt = (
+        "Classify the sincerity of this reply to a gentle question. "
+        "Respond with ONLY a JSON object "
+        '{"classification": <one of sincere|sarcastic|exasperated|'
+        'performative|uncertain>, "confidence": <0.0-1.0>}. '
+        f"Reply: {response_text!r}"
+    )
+    try:
+        raw = llm_provider.generate(prompt)
+        start, end = raw.find("{"), raw.rfind("}")
+        if start < 0 or end < 0:
+            return None
+        parsed = json.loads(raw[start : end + 1])
+        cls = SincerityClass(str(parsed["classification"]).lower().strip())
+        confidence = float(parsed.get("confidence", 0.6))
+    except Exception:
+        return None
+    return SincerityResult(
+        classification=cls,
+        confidence=max(0.0, min(confidence, 1.0)),
+        signals_matched=["llm_judge"],
+    )
+
+
+def classify(response_text: str, llm_provider=None) -> SincerityResult:
     """Classify a response's sincerity.
 
-    Heuristic classifier. In production this would be backed by
-    an LLM judge; the structure is ready for that upgrade.
+    If *llm_provider* is supplied (any object exposing
+    ``generate(prompt) -> str``, e.g. the on-device Apple Foundation Models
+    provider), an LLM judge is tried first and the keyword heuristic is the
+    fallback. Without a provider, behavior is unchanged (pure heuristic).
     """
+    if llm_provider is not None:
+        llm_result = _classify_via_llm(response_text, llm_provider)
+        if llm_result is not None:
+            return llm_result
+
     text = response_text.lower().strip()
 
     matches: dict[SincerityClass, list[str]] = {

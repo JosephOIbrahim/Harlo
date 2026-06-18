@@ -3,11 +3,11 @@
 Falls back to direct in-process execution when daemon is not running.
 """
 
-import json
 import socket
 from pathlib import Path
 from typing import Optional
 
+from ..daemon import framing
 from ..daemon.config import SOCKET_PATH
 
 
@@ -36,21 +36,15 @@ def _try_socket(command: str, args: dict, timeout: float) -> Optional[dict]:
         sock.settimeout(timeout)
         sock.connect(sock_path)
 
-        request = json.dumps({"command": command, "args": args}) + "\n"
-        sock.sendall(request.encode("utf-8"))
-
-        data = b""
-        for _ in range(1024):  # bounded recv loop
-            chunk = sock.recv(4096)
-            if not chunk:
-                break
-            data += chunk
-            if b"\n" in data:
-                break
-
+        # Canonical length-prefixed framing (matches the daemon + the Swift
+        # HealthBridge). The daemon replies in the same framing mode.
+        sock.sendall(framing.encode_frame({"command": command, "args": args}))
+        response, _mode = framing.read_message(sock)
         sock.close()
-        return json.loads(data.strip())
+        return response
     except (ConnectionRefusedError, FileNotFoundError, socket.timeout, OSError):
+        return None
+    except framing.FramingError:
         return None
 
 

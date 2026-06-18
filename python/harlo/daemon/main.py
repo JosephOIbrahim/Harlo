@@ -6,42 +6,46 @@ Daemon exits when idle. 0W between sessions.
 """
 
 import json
-import os
 import socket
-import sys
-from pathlib import Path
 
-from .config import SOCKET_PATH, ensure_data_dirs
+from . import framing
+from .config import DAEMON_IDLE_TIMEOUT_S, SOCKET_PATH, ensure_data_dirs
 from .router import route_command
+from .socket_activation import acquire_listen_socket
 
 
 def handle_client(conn: socket.socket):
-    """Handle a single client connection."""
-    data = b""
-    for _ in range(1024):  # bounded recv loop
-        chunk = conn.recv(4096)
-        if not chunk:
-            break
-        data += chunk
-        if b"\n" in data:
-            break
+    """Handle a single client connection.
 
-    if not data:
+    Reads one framed request — canonical length-prefixed framing, with
+    legacy newline-delimited JSON auto-detected — and replies in the same
+    framing the client used (see daemon/framing.py). This is the C2 fix:
+    the Swift HealthBridge sends length-prefixed frames that the old
+    newline-only reader could never parse.
+    """
+    try:
+        request, mode = framing.read_message(conn)
+    except framing.FramingError as e:
+        framing.write_message(conn, {"status": "error", "message": str(e)})
+        conn.close()
+        return
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        framing.write_message(conn, {"status": "error", "message": "Invalid JSON"})
+        conn.close()
+        return
+
+    if request is None:
         conn.close()
         return
 
     try:
-        request = json.loads(data.strip())
         command = request.get("command", "")
         args = request.get("args", {})
         result = route_command(command, args)
-    except json.JSONDecodeError:
-        result = {"status": "error", "message": "Invalid JSON"}
     except Exception as e:
         result = {"status": "error", "message": str(e)}
 
-    response = json.dumps(result) + "\n"
-    conn.sendall(response.encode("utf-8"))
+    framing.write_message(conn, result, mode)
     conn.close()
 
 
@@ -66,22 +70,13 @@ def run_socket_activated():
     startup_cleanup()
     install_signal_handlers(shutdown_fn=graceful_shutdown)
 
-    # Check for systemd socket activation (LISTEN_FDS)
-    listen_fds = os.environ.get("LISTEN_FDS")
-    if listen_fds and int(listen_fds) > 0:
-        # Inherited file descriptor 3 from systemd
-        sock = socket.fromfd(3, socket.AF_UNIX, socket.SOCK_STREAM)
-    else:
-        # Fallback: create socket directly (dev mode)
-        sock_path = str(SOCKET_PATH)
-        if os.path.exists(sock_path):
-            os.unlink(sock_path)
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.bind(sock_path)
-        sock.listen(5)
+    # C1 fix: acquire the listening socket via the correct OS protocol —
+    # launchd (launch_activate_socket "HarloCommand") on macOS, systemd
+    # (LISTEN_FDS) on Linux, dev bind otherwise. See socket_activation.py.
+    sock, source = acquire_listen_socket(str(SOCKET_PATH))
 
     # Set timeout so we exit if idle (Rule 1: 0W idle)
-    sock.settimeout(30.0)
+    sock.settimeout(float(DAEMON_IDLE_TIMEOUT_S))
 
     try:
         conn, _ = sock.accept()
@@ -90,8 +85,10 @@ def run_socket_activated():
         pass  # Idle timeout, exit cleanly
     finally:
         sock.close()
-        # Clean up socket file
-        if SOCKET_PATH.exists():
+        # Only remove a socket file WE created (dev mode). Under launchd
+        # the socket is owned by launchd and must NOT be unlinked, or the
+        # next activation breaks.
+        if source == "dev" and SOCKET_PATH.exists():
             SOCKET_PATH.unlink(missing_ok=True)
         # Lifecycle: shutdown
         graceful_shutdown()

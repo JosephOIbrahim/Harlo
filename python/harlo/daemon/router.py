@@ -1011,13 +1011,37 @@ def _handle_biometric_ingest(args: dict) -> dict:
         tracker.record_biometric(sample)
         accepted += 1
 
+    depleted = tracker.is_depleted()
+    force_red = tracker.should_force_red()
+    load = tracker.get_biometric_load()
+
+    # C3 fix: persist the DERIVED modulation state so a later motor command
+    # (a different short-lived daemon process — Rule 1) can actually see a
+    # fresh biometric panic via session_state['biometric_force_red'].
+    # Rule 9 / ADR-0001: only derived scalars are written here — never the
+    # raw HR / HRV sample values.
+    import time as _time
+
+    from ..modulation.state import ModulationState, write_modulation_state
+
+    cognitive = "RED" if force_red else ("DEPLETED" if depleted else "NORMAL")
+    write_modulation_state(
+        ModulationState(
+            is_depleted=depleted,
+            biometric_force_red=force_red,
+            biometric_load=load,
+            cognitive_state=cognitive,
+            updated_at=_time.time(),
+        )
+    )
+
     return {
         "status": "ok",
         "result": {
             "accepted": accepted,
             "rejected": rejected,
-            "depleted": tracker.is_depleted(),
-            "force_red": tracker.should_force_red(),
-            "biometric_load": tracker.get_biometric_load(),
+            "depleted": depleted,
+            "force_red": force_red,
+            "biometric_load": load,
         },
     }
