@@ -10,7 +10,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "HarloHealthBridge",
-            path: "Sources/HarloHealthBridge"
+            path: "Sources/HarloHealthBridge",
+            exclude: ["HarloHealthBridge.entitlements"]
         ),
     ]
 )

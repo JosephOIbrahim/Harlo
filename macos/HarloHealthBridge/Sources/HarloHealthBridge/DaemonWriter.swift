@@ -40,8 +40,11 @@ final class DaemonWriter {
 
         var addr = sockaddr_un()
         addr.sun_family = sa_family_t(AF_UNIX)
+        // Hoist the capacity out of the closure: reading addr.sun_path while
+        // &addr.sun_path.0 is borrowed is an exclusivity violation (Swift 5.9+).
+        let pathCapacity = MemoryLayout.size(ofValue: addr.sun_path) - 1
         _ = withUnsafeMutablePointer(to: &addr.sun_path.0) { ptr in
-            socketPath.withCString { strncpy(ptr, $0, MemoryLayout.size(ofValue: addr.sun_path) - 1) }
+            socketPath.withCString { strncpy(ptr, $0, pathCapacity) }
         }
         let len = socklen_t(MemoryLayout<sockaddr_un>.size)
         let ok = withUnsafePointer(to: &addr) { p in
