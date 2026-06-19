@@ -32,7 +32,7 @@ settings:
     ENABLE_HARDENED_RUNTIME: YES
     OTHER_CODE_SIGN_FLAGS: "--timestamp"
     PRODUCT_NAME: HarloHealthBridge
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
     # Universal binary so Intel + Apple Silicon both work
     ARCHS: "$(ARCHS_STANDARD)"

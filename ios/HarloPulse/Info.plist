@@ -15,34 +15,24 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>0.2.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-
-	<!-- Required before any HealthKit authorization request — missing
-	     string crashes the app at requestAuthorization on device. -->
 	<key>NSHealthShareUsageDescription</key>
 	<string>HarloPulse reads only the health types you switch on (each is off by default) and sends trend batches to Harlo on your Mac over your home network. Raw readings never leave your devices and are never stored on the Mac.</string>
-
-	<!-- Required for the LAN push to the Mac (NWConnection). -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>HarloPulse talks directly to Harlo on your Mac over your home network. No cloud, no third parties.</string>
-
-	<!-- Onscreen-awareness activity type (registered for the
-	     .userActivity annotation on the status screen). -->
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>com.josephibrahim.harlo.pulse.status</string>
 	</array>
-
-	<!-- SwiftUI launch screen + portrait-only settings app. -->
 	<key>UILaunchScreen</key>
 	<dict/>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>UIRequiresFullScreen</key>
-	<true/>
 </dict>
 </plist>

@@ -38,6 +38,7 @@ v0.1.2: USD-proof trial — §F1 native composition · §F2 structural lossless 
 v0.1.6: HarloPulse loop LIVE — Apple Watch → HealthKit → push-on-arrival → launchd socket → biometric barrier → coach
         first organic biometrics through the barrier · Siri/Shortcuts/Spotlight surface · Xcode 27 / iOS 27 SDK
 Phase 5B built: Mac-local sibling — Apple Watch → HealthBridge (sandboxed) → XPC relay → daemon biometric loop (relay→daemon proven; full live Watch test pending)
+v0.2.0: unified release — biometric_prior seed + HarloPulse (iPhone) + HealthBridge/XPC (macOS) reconciled; one version across every surface (core · Rust · macOS app · iOS app · bridge)
 ```
 
 | Sprint | Tests | What Shipped |
