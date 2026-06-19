@@ -16,13 +16,13 @@
 
 ---
 
-Your AI coach. Watches your patterns — and now your body — predicts your
-crashes, backs off during flow, and tells you when to stop before you burn out.
-Built on USD composition semantics for persistent, local-first cognitive state
-management.
+**Make smarter decisions with a coach who knows how you're really doing.**
+Harlo reads your Apple Watch — sleep, heart, stress — learns your patterns, and
+eases off when you're running low. It watches for your crashes, backs off during
+flow, and helps you stop before you burn out.
 
-Your memory, your device. Harlo stores all state locally as composable USD
-layers — no cloud dependency, no data mining, no rented access to your own mind.
+**Private by design.** All your data lives on your device as local, composable
+state — no cloud, no data mining, no rented access to your own mind.
 
 ---
 
