@@ -121,6 +121,8 @@ class TestDispatch:
             launcher.main([])
         assert calls == {"first_run": 1, "prompt": 1, "cli": 1}
 
+    @pytest.mark.skipif(sys.platform != "darwin",
+                        reason="macOS Finder/LaunchServices dialog path; N/A on Linux CI")
     def test_finder_launch_shows_dialog_not_cli(self, monkeypatch, tmp_path):
         """D55: a LaunchServices (double-click) launch shows feedback and
         returns — it does not fall through to Click with no TTY, and it
