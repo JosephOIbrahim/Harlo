@@ -170,11 +170,13 @@ actuates via a Harlo-defined "warm display" Shortcut in the default build.
   record: `action_type`, `prior_value`, `applied_at`, `max_duration`). Raw
   biometric values are **never** stored (Rule 9) — only the prior *setting*
   value and derived state.
-- **Revert:** on a later `biometric_ingest`, if state recovered (`is_depleted()`
-  False) OR `max_duration` elapsed OR user override detected → run the inverse
-  effector and clear the obligation. Tier-2 reverts are the user's Shortcut's
-  responsibility (or a paired "undo" Shortcut); "Harlo decides" reverts restore
-  the recorded prior value.
+- **Revert** fires at the FIRST of: state recovered (`is_depleted()` False on a
+  later `biometric_ingest`) · `max_duration` (90 min default) elapsed · user
+  override detected · **session teardown** (Rule S6 DMN hook) · **next daemon
+  startup** with an already-expired lease. The inverse effector runs and the
+  obligation clears. Tier-2 reverts are the user's Shortcut's responsibility (or
+  a paired "undo" Shortcut); "Harlo decides" reverts restore the recorded prior
+  value. A setting is never left silently changed across sessions.
 
 ## 8. Constitutional Compliance
 
@@ -256,10 +258,16 @@ actuates via a Harlo-defined "warm display" Shortcut in the default build.
 - No iOS effectors (HarloPulse stays read-only for now).
 - No multi-step effector chains (Rule 24 — one action at a time).
 
-## 13. Open Questions
+## 13. Resolved Decisions (CTO)
 
-- Tier-2 default UX: nudge-to-confirm every time, or a profile pre-grant
-  ("always run my `Harlo Depleted` Shortcut")? (Leaning: nudge-to-confirm in v1.)
-- `max_duration` default for a lease before forced revert (e.g. 90 min vs.
-  end-of-day)?
-- Do we want a visible menu-bar indicator when an autonomous lease is active?
+- **Tier-2 UX → nudge-to-confirm by default.** The nudge IS the PER_ACTION
+  consent prompt. A per-capability pre-grant lives in `default_profile.yaml` for
+  power users; otherwise autonomy is *earned* via the reflex curve in Phase 2
+  (graduated autonomy), never auto-granted in v1.
+- **Lease duration → state-recovery first, 90-minute backstop.** Primary revert
+  is `is_depleted()` clearing; a 90-min cap (configurable, ~one ultradian cycle)
+  bounds a stuck lease, and revert also fires on session teardown and next daemon
+  startup (§7). A setting is never left silently changed across sessions.
+- **Transparency → notification with `[keep] [undo] [stop]` at apply-time** for
+  v1 (satisfies rail #3). A persistent menu-bar indicator is deferred to Phase 2,
+  when autonomy is graduated and a standing status surface is warranted (YAGNI).
