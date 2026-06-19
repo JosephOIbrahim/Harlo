@@ -9,6 +9,11 @@ import json
 
 import pytest
 
+# These tests exercise the /cognitive/biometrics USD prim and need real
+# OpenUSD (pxr / usd-core), which the lean CI lint job intentionally omits.
+# Skip the whole module cleanly when pxr is unavailable.
+pytest.importorskip("pxr")
+
 from harlo.biometric_prior.persistence import PRIM_PATH, BufferUsdStore, date_timecode
 from harlo.biometric_prior.schema import BiometricPrior
 from harlo.engine.observation_buffer import ObservationBuffer
