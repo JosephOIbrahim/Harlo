@@ -121,3 +121,48 @@ forgotten.
 Pick the rendezvous approach (XPC helper recommended). Once the bridge can reach
 `twind.sock`, the full Watch → bridge → daemon → DEPLETED/RED loop closes — the
 daemon half is already done and proven.
+
+## Phase 5B — XPC service WIRED (2026-06-19)
+
+The sandbox rendezvous is built. Architecture:
+
+```
+HarloHealthBridge (sandboxed) --NSXPCConnection--> com.harlo.xpc (Mach service)
+   --> HarloXPCRelay (launchd, NON-sandboxed) --framed JSON--> twind.sock --> daemon
+```
+
+Components (committed):
+- `macos/HarloXPCRelay/HarloXPCRelay.swift` — the relay: `NSXPCListener` on the
+  Mach service, forwards framed `biometric_ingest` to the daemon's twind.sock.
+- `macos/launchd/com.harlo.xpc.plist` — the relay LaunchAgent (MachServices,
+  on-demand; idle-exits so Rule 1 0W-idle holds).
+- `DaemonWriter.swift` — now calls the relay over XPC (`NSXPCConnection`).
+- `HarloHealthBridge.entitlements` — adds
+  `com.apple.security.temporary-exception.mach-lookup.global-name = [com.harlo.xpc]`
+  so the sandboxed bridge can look up the relay.
+
+**PROVEN:** client → Mach service → relay → daemon → AllostasisTracker → force_red
+(an XPC ingest of 180 bpm returned `{accepted:1, force_red:true, biometric_load:1.0}`).
+The bridge rebuilds with the XPC DaemonWriter + the mach-lookup entitlement baked in.
+
+Build + install the relay (until a bundled installer exists):
+```
+swiftc -O macos/HarloXPCRelay/HarloXPCRelay.swift -o <relay path>   # e.g. app Helpers/
+codesign -s "Apple Development" --force --options runtime <relay path>
+# point com.harlo.xpc.plist ProgramArguments at <relay path>, copy to
+# ~/Library/LaunchAgents/, then:
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.harlo.xpc.plist
+```
+
+FINAL live test (needs the Mac + Watch, ~2 min):
+1. daemon running (launchd, or `python scripts/start_daemon.py`).
+2. relay LaunchAgent loaded (above).
+3. install + run `HarloHealthBridge.app`; grant HealthKit.
+4. trigger a sample (elevated HR / workout) → `log stream --predicate
+   'subsystem == "com.harlo.healthbridge"'` should show `daemon ingest ok=true`
+   and the modulation state flips toward DEPLETED/RED.
+
+PRODUCTION hardening (future): swap the mach-lookup temp-exception + manual
+LaunchAgent for **SMAppService** (macOS 13+) registering the relay as the app's
+own daemon (no temp-exception, App-Store-clean), and add client code-signature
+validation in `shouldAcceptNewConnection`.

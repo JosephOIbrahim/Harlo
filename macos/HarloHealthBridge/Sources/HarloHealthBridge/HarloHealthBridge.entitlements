@@ -53,5 +53,16 @@
     <array>
         <string>233JSS4X69.com.harlo.shared</string>
     </array>
+
+    <!--
+        Sandbox mach-lookup exception: lets the bridge reach the HarloXPCRelay
+        Mach service (ADR-0001 Phase 5B), which forwards biometric samples to the
+        daemon's twind.sock. The sandbox blocks the daemon socket directly, so the
+        relay is the rendezvous. (temporary-exception -> Developer-ID / dev only.)
+    -->
+    <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+    <array>
+        <string>233JSS4X69.com.harlo.xpc</string>
+    </array>
 </dict>
 </plist>
