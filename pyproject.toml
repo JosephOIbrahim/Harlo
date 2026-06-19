@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "harlo"
 version = "0.2.0"
-description = "Harlo — local-first AI coach, aware of your physical state, with a USD-composed cognitive twin: native composition priority, structural-lossless reconstruction, anchor immunity. Patent Pending."
+description = "Harlo — a private, local-first AI coach that knows how you're really doing: it reads your Apple Watch (sleep, heart, stress), learns your patterns, and eases off when you're running low. Patent Pending."
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.0",
