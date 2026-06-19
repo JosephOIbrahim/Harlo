@@ -46,13 +46,12 @@ targets:
     sources:
       - path: Sources/HarloHealthBridge
         excludes:
-          - "HarloHealthBridge.entitlements"
+          - "*.entitlements"
           - "*.md"
-    info:
-      path: Info.plist
-      properties:
-        # Keys here merge into Info.plist; the on-disk Info.plist is
-        # the source of truth. xcodegen will not overwrite it.
+      - path: Resources
+    # No `info:` block on purpose: xcodegen REGENERATES (clobbers) Info.plist
+    # when one is present, stripping NSHealthShareUsageDescription + LSUIElement.
+    # We point the build at the on-disk Info.plist via INFOPLIST_FILE instead.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.harlo.healthbridge

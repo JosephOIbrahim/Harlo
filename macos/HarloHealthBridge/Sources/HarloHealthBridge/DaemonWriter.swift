@@ -30,6 +30,13 @@ final class DaemonWriter {
     }
 
     private func send(data: Data) throws {
+        // The Harlo daemon (NOT sandboxed) binds twind.sock under the user's real
+        // ~/Library/Application Support/Harlo/. This dev variant builds WITHOUT
+        // App Sandbox (HarloHealthBridge.dev.entitlements), so applicationSupport
+        // resolves to the real path and we reach the daemon directly. The shipping
+        // entitlements keep the sandbox; a sandbox-safe XPC/App-Group rendezvous is
+        // the remaining Phase-5B production task (App Group container blocks the
+        // non-sandboxed daemon from binding there — verified 2026-06-19).
         let socketPath = (FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Harlo/twind.sock")).path

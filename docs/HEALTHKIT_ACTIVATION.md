@@ -90,3 +90,34 @@ forgotten.
    Health sync; trigger a sample (workout / elevated HR).
 5. `log stream --predicate 'subsystem == "com.harlo.healthbridge"'` + `harlo
    doctor` → confirm real HR/HRV → DEPLETED/RED.
+
+## Phase 5B progress — 2026-06-19 (autonomous CTO session)
+
+### What works (proven on this Mac)
+- Signed `HarloHealthBridge.app` builds under team 233JSS4X69; HealthKit consent
+  granted (user approved the dialog).
+- **The daemon data pipeline is proven end-to-end:** a length-prefixed
+  `biometric_ingest` frame (180 bpm) over `twind.sock` → `biometric_barrier` →
+  `AllostasisTracker` → `{"force_red": true, "depleted": true, "biometric_load": 1.0}`.
+- **App icon** added (`Resources/AppIcon.icns` + `CFBundleIconFile`).
+- Daemon gained a `HARLO_SOCKET_PATH` override (config.py) to relocate the command
+  socket without moving `twin.db`.
+- **Fixed a latent regression:** xcodegen was clobbering `Info.plist` (stripping
+  `NSHealthShareUsageDescription` + `LSUIElement`). Removed the `info:` block from
+  project.yml so the on-disk Info.plist is the source of truth via `INFOPLIST_FILE`.
+
+### The one remaining gap — sandbox rendezvous (bridge → daemon socket)
+- The **App Group container does NOT work** as the shared socket: macOS blocks the
+  non-sandboxed daemon from binding there (`Operation not permitted`, verified).
+  Only the entitled sandboxed app can write there.
+- **Disabling App Sandbox** for a dev build is fought by `ENABLE_APP_SANDBOX=YES`
+  + Xcode automatic capability management (re-adds sandbox, drops the entitlements
+  file contents). Would need committed project.yml changes (`ENABLE_APP_SANDBOX=NO`
+  + a dev entitlements file the build actually honors).
+- **Proper production fix (the real Phase-5B task):** a sandbox-safe IPC — an XPC
+  service or a small privileged helper bridging the sandboxed app to the daemon.
+
+### Next
+Pick the rendezvous approach (XPC helper recommended). Once the bridge can reach
+`twind.sock`, the full Watch → bridge → daemon → DEPLETED/RED loop closes — the
+daemon half is already done and proven.

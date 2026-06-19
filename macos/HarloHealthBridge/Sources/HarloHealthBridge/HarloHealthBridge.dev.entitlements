@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        DEV-ONLY entitlements for local end-to-end testing (ADR-0001 Phase 5B).
+        Same HealthKit access as the shipping entitlements, but App Sandbox and
+        the App Group are dropped so the bridge can reach the (non-sandboxed)
+        Harlo daemon's twind.sock under the real ~/Library/Application Support.
+
+        DO NOT ship this. The production build uses HarloHealthBridge.entitlements
+        (sandboxed). The sandbox-safe daemon rendezvous (XPC service or a
+        privileged helper) is the remaining Phase-5B production task — the App
+        Group container does NOT work: macOS blocks the non-sandboxed daemon from
+        binding a socket there (PermissionError EPERM, verified 2026-06-19).
+    -->
+    <key>com.apple.developer.healthkit</key>
+    <true/>
+    <key>com.apple.developer.healthkit.access</key>
+    <array/>
+</dict>
+</plist>

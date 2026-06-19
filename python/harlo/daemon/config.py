@@ -58,7 +58,15 @@ def _detect_data_dir() -> Path:
 
 DATA_DIR = _detect_data_dir()
 DB_PATH = DATA_DIR / "twin.db"
-SOCKET_PATH = DATA_DIR / "twind.sock"
+# HARLO_SOCKET_PATH lets the command socket live OUTSIDE DATA_DIR — specifically
+# in the App Group container shared with the sandboxed HarloHealthBridge, the one
+# path both the sandboxed bridge and the (non-sandboxed) daemon can reach
+# (ADR-0001 Phase 5B). twin.db and all other state stay in DATA_DIR.
+SOCKET_PATH = (
+    Path(os.environ["HARLO_SOCKET_PATH"]).expanduser()
+    if os.environ.get("HARLO_SOCKET_PATH")
+    else DATA_DIR / "twind.sock"
+)
 AUDIT_LOG = DATA_DIR / "audit.log"
 STAGES_DIR = DATA_DIR / "stages"
 DEFERRED_DIR = DATA_DIR / "deferred_verifications"
