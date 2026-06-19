@@ -39,7 +39,7 @@ endif
 
 .PHONY: help build-rust build-macos sign notarize staple dmg release \
         clean-macos test compliance-greps verify doctor signing-readiness \
-        regen-trajectories regen-predictor build-healthbridge
+        regen-trajectories regen-predictor build-healthbridge rotate-key
 
 help:
 	@echo "Harlo build targets"
@@ -58,9 +58,17 @@ help:
 	@echo "  regen-trajectories  Regenerate data/trajectories_10k.jsonl (~229 MB, ~minutes)"
 	@echo "  regen-predictor     regen-trajectories + train models/cognitive_predictor_v1.joblib"
 	@echo "  clean-macos      Remove dist/ and build/"
+	@echo "  rotate-key       Rotate ANTHROPIC_API_KEY (paste new key; validates + persists)"
 
 build-rust:
 	maturin develop --release
+
+# Rotate the daemon's ANTHROPIC_API_KEY: prompts for the new key (hidden, never
+# in shell history), validates it against the API, sets the launchctl session
+# env + a persistent login agent, bounces the daemon. Never prints the key.
+# See docs/key-rotation.md.
+rotate-key:
+	bash scripts/rotate_anthropic_key.sh
 
 build-macos:
 ifeq ($(UNAME_S),Darwin)
