@@ -161,7 +161,7 @@ Modulation Layer with zero resident processes on either side of the wire:
 
 ```mermaid
 flowchart LR
-    W["Apple Watch<br/>HR · HRV · sleep · workouts"]:::runtime --> HK["iPhone HealthKit<br/>background delivery"]:::runtime
+    W["Apple Watch<br/>HR · HRV · RR · sleep · workouts"]:::runtime --> HK["iPhone HealthKit<br/>background delivery"]:::runtime
     HK --> APP["HarloPulse app<br/>HKObserverQuery wakes it"]:::runtime
     APP --> PUSH["delta push<br/>HMAC auth · 48h window · chunked frames"]:::runtime
     PUSH --> LD["Mac launchd<br/>holds TCP 48653 · spawns on SYN"]:::substrate
@@ -516,12 +516,12 @@ non-sandboxed daemon from binding there). The rendezvous is a launchd
 
 ```mermaid
 flowchart LR
-    WATCH["Apple Watch<br/>HR · HRV · sleep · SpO₂"]:::runtime
+    WATCH["Apple Watch<br/>HR · HRV · RR · sleep · SpO₂"]:::runtime
     BRIDGE["HarloHealthBridge.app<br/>SANDBOXED · HealthKit observers<br/>HKObserverQuery · wakes on callback"]:::substrate
     RELAY["HarloXPCRelay<br/>launchd Mach service · NOT sandboxed<br/>com.harlo.xpc"]:::substrate
     DAEMON["Harlo daemon<br/>socket-activated · 0W idle"]:::substrate
     BARRIER["biometric_barrier<br/>jsonschema · Rule 9 / ADR-0001<br/>Modulation Layer ONLY"]:::runtime
-    ALLO["AllostasisTracker<br/>freshness window<br/>DEPLETED / force-RED"]:::runtime
+    ALLO["AllostasisTracker<br/>HR · HRV · RR → load<br/>freshness window · DEPLETED / force-RED"]:::runtime
 
     WATCH -->|"iCloud Health sync"| BRIDGE
     BRIDGE -->|"NSXPCConnection<br/>mach-lookup entitlement"| RELAY
