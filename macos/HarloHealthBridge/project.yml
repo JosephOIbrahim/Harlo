@@ -59,7 +59,28 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Sources/HarloHealthBridge/HarloHealthBridge.entitlements
         ENABLE_APP_SANDBOX: YES
         SKIP_INSTALL: NO
-    dependencies: []
+    dependencies:
+      - target: HarloXPCRelay
+        copy:
+          destination: wrapper
+          subpath: Contents/Helpers
+        codeSign: true
+
+  HarloXPCRelay:
+    # XPC relay (ADR-0001 Phase 5B): a non-sandboxed launchd Mach service that
+    # forwards biometric samples from the sandboxed bridge to the daemon socket.
+    # Built + signed by this project and embedded into
+    # HarloHealthBridge.app/Contents/Helpers/ (where com.harlo.xpc.plist expects it).
+    type: tool
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: ../HarloXPCRelay
+    settings:
+      base:
+        PRODUCT_NAME: HarloXPCRelay
+        PRODUCT_BUNDLE_IDENTIFIER: com.harlo.xpcrelay
+        SKIP_INSTALL: YES
 
 schemes:
   HarloHealthBridge:

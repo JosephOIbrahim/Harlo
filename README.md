@@ -26,7 +26,7 @@ PRODUCTION LIVE — Harlo v6.1-MOTOR
 Substrate-unified with sister project Moneta · P1 CIP defensible
 458 organic observations collected · 5 sprints shipped · Path C closed (Step 3)
 Phase 5A landed: macOS bundle · intake calibration · biometric barrier · Motor Cortex with Basal Ganglia gating
-Phase 5B wiring: Apple Watch → HealthBridge → XPC relay → daemon biometric loop (sandbox-safe; relay→daemon proven end-to-end)
+Phase 5B built: Apple Watch → HealthBridge (sandboxed) → XPC relay → daemon biometric loop (relay→daemon proven; full live Watch test pending)
 ```
 
 | Sprint | Tests | What Shipped |
