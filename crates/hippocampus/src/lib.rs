@@ -11,12 +11,36 @@ pub mod reflex;
 pub mod search;
 pub mod store;
 
+use pyo3::create_exception;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use rusqlite::OptionalExtension;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+create_exception!(
+    hippocampus,
+    EncoderMismatch,
+    pyo3::exceptions::PyValueError,
+    "Raised when a query SDR's encoder differs from a candidate trace's encoder.\n\nRefuses cross-encoder Hamming comparison so a trace stored under one encoder\ncan never be silently recalled under another (CORE-1)."
+);
+
 static DB_PATH: Mutex<Option<PathBuf>> = Mutex::new(None);
+
+/// First foreign encoder id among stored traces, or None when every candidate
+/// was produced by `query_encoder`. Legacy untagged rows count as 'lexical'.
+/// Used to refuse cross-encoder recall before any neighbor is returned.
+fn first_foreign_encoder(
+    conn: &rusqlite::Connection,
+    query_encoder: &str,
+) -> rusqlite::Result<Option<String>> {
+    conn.query_row(
+        "SELECT encoder_id FROM traces WHERE COALESCE(encoder_id, 'lexical') != ?1 LIMIT 1",
+        rusqlite::params![query_encoder],
+        |row| row.get::<_, String>(0),
+    )
+    .optional()
+}
 
 fn get_or_open_db(path: Option<&str>) -> PyResult<rusqlite::Connection> {
     let db_path = if let Some(p) = path {
@@ -43,6 +67,20 @@ fn py_recall<'py>(py: Python<'py>, query_str: &str, depth: &str, db_path: Option
     };
 
     let conn = get_or_open_db(db_path)?;
+
+    // CORE-1: the Rust hot path encodes the query with the lexical encoder.
+    // Refuse — loudly — to Hamming-compare it against any trace persisted under
+    // a different encoder, rather than silently returning a bogus neighbor.
+    if let Some(found) = first_foreign_encoder(&conn, encoder::ENCODER_ID).map_err(|e| {
+        pyo3::exceptions::PyRuntimeError::new_err(format!("Encoder guard error: {}", e))
+    })? {
+        return Err(EncoderMismatch::new_err(format!(
+            "query encoder '{}' cannot be compared against trace stored under encoder '{}'",
+            encoder::ENCODER_ID,
+            found
+        )));
+    }
+
     let result = query::recall(&conn, query_str, depth);
 
     let dict = PyDict::new(py);
@@ -185,5 +223,6 @@ fn hippocampus(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_lookup_reflex, m)?)?;
     m.add_function(wrap_pyfunction!(py_store_reflex, m)?)?;
     m.add_function(wrap_pyfunction!(py_boost, m)?)?;
+    m.add("EncoderMismatch", m.py().get_type::<EncoderMismatch>())?;
     Ok(())
 }

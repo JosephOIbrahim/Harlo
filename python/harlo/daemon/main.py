@@ -9,84 +9,54 @@ import json
 import logging
 import socket
 
+from . import framing
 from .config import (
-    DAEMON_IDLE_TIMEOUT_S, DMN_BUDGET_S, LAUNCHD_SOCKET_NAME,
-    SOCKET_PATH, ensure_data_dirs,
+    DAEMON_IDLE_TIMEOUT_S,
+    DMN_BUDGET_S,
+    LAUNCHD_SOCKET_NAME,
+    SOCKET_PATH,
+    ensure_data_dirs,
 )
 from .router import route_command
 from .socket_activation import acquire_listening_socket
 
-
 _LOGGER = logging.getLogger(__name__)
-
-_MAX_FRAME = 16 * 1024 * 1024  # 16 MiB upper bound on a single frame
-
-
-def _recv_request(conn: socket.socket) -> bytes:
-    """Read one request, supporting BOTH wire framings (D61).
-
-    The CLI sends newline-delimited JSON; HarloHealthBridge sends a
-    4-byte big-endian length prefix + payload (DaemonWriter.swift).
-    The two are sniffable from the first byte: JSON starts with '{'
-    (or whitespace/'['), while a length prefix for any sane payload
-    (< 16 MiB) starts with 0x00.
-    """
-    head = b""
-    while len(head) < 4:
-        chunk = conn.recv(4 - len(head))
-        if not chunk:
-            return head  # short/empty — caller treats as legacy data
-        head += chunk
-
-    if head[0] == 0x00:
-        # Length-prefixed frame (HealthBridge).
-        length = int.from_bytes(head, "big")
-        if length <= 0 or length > _MAX_FRAME:
-            return b""
-        data = b""
-        while len(data) < length:
-            chunk = conn.recv(min(65536, length - len(data)))
-            if not chunk:
-                break
-            data += chunk
-        return data
-
-    # Legacy newline-delimited JSON (CLI).
-    data = head
-    for _ in range(1024):  # bounded recv loop
-        if b"\n" in data:
-            break
-        chunk = conn.recv(4096)
-        if not chunk:
-            break
-        data += chunk
-    return data
 
 
 def handle_client(conn: socket.socket):
     """Handle a single client connection.
 
-    Socket-level failures (peer closed early, reset) propagate as
-    OSError to serve(), which logs and keeps accepting — a rude client
-    must never kill the accept loop (D72). conn is ALWAYS closed here.
+    Reads one framed request — canonical length-prefixed framing, with
+    legacy newline-delimited JSON auto-detected — and replies in the same
+    framing the client used (see daemon/framing.py). This is the C2 fix:
+    the Swift HealthBridge and HarloXPCRelay send length-prefixed frames
+    the old newline-only reader could never parse.
+
+    Socket-level failures (peer closed early, reset) propagate as OSError
+    to serve(), which logs and keeps accepting — a rude client must never
+    kill the accept loop (D72). conn is ALWAYS closed here.
     """
     try:
-        data = _recv_request(conn)
-        if not data:
+        try:
+            request, mode = framing.read_message(conn)
+        except framing.FramingError as e:
+            framing.write_message(conn, {"status": "error", "message": str(e)})
+            return
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            framing.write_message(conn, {"status": "error", "message": "Invalid JSON"})
+            return
+
+        if request is None:
             return
 
         try:
-            request = json.loads(data.strip())
             command = request.get("command", "")
             args = request.get("args", {})
             result = route_command(command, args)
-        except json.JSONDecodeError:
-            result = {"status": "error", "message": "Invalid JSON"}
         except Exception as e:
             result = {"status": "error", "message": str(e)}
 
-        response = json.dumps(result) + "\n"
-        conn.sendall(response.encode("utf-8"))
+        framing.write_message(conn, result, mode)
     finally:
         conn.close()
 
@@ -144,6 +114,10 @@ def run_socket_activated():
     # full graceful_shutdown — close ALL sessions, fire DMN (Rule S6).
     install_signal_handlers(shutdown_fn=graceful_shutdown)
 
+    # C1/D69 fix: acquire via the correct OS protocol — launchd
+    # (launch_activate_socket "HarloCommand") on macOS, systemd
+    # (LISTEN_FDS) on Linux, dev bind otherwise. owns_node is True only
+    # in dev mode (see socket_activation.acquire_listening_socket).
     sock, owns_node = acquire_listening_socket(str(SOCKET_PATH), LAUNCHD_SOCKET_NAME)
     try:
         serve(sock, float(DAEMON_IDLE_TIMEOUT_S))

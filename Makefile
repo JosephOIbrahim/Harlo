@@ -11,6 +11,12 @@ UNAME_S := $(shell uname -s)
 APP_PATH ?= dist/Harlo.app
 DMG_PATH ?= dist/Harlo.dmg
 
+# HarloHealthBridge (Phase 5B) build knobs. Local-dev defaults; CI / release
+# overrides HB_CODESIGN_ID with the "Developer ID Application" identity.
+APPLE_TEAM_ID  ?= 233JSS4X69
+HB_CONFIG      ?= Release
+HB_CODESIGN_ID ?= Apple Development
+
 # Python resolution order:
 #   1. Explicit override on the command line (PYTHON=...)
 #   2. Currently-activated venv ($VIRTUAL_ENV)
@@ -33,7 +39,7 @@ endif
 
 .PHONY: help build-rust build-macos sign notarize staple dmg release \
         clean-macos test compliance-greps verify doctor signing-readiness \
-        regen-trajectories regen-predictor
+        regen-trajectories regen-predictor build-healthbridge
 
 help:
 	@echo "Harlo build targets"
@@ -63,6 +69,24 @@ ifeq ($(UNAME_S),Darwin)
 	@echo "==> Built $(APP_PATH)"
 else
 	@echo "build-macos: skipped on $(UNAME_S) (macOS only)"
+endif
+
+# Phase 5B: build HarloHealthBridge.app with the bundled HarloXPCRelay
+# (xcodegen tool target → Contents/Helpers/, app signature seals it). Notarization
+# is handled separately by the sign chain. Run AFTER build-macos (which wipes build/).
+build-healthbridge:
+ifeq ($(UNAME_S),Darwin)
+	command -v xcodegen >/dev/null 2>&1 || brew install xcodegen
+	xcodegen generate --spec macos/HarloHealthBridge/project.yml
+	xcodebuild -project macos/HarloHealthBridge/HarloHealthBridge.xcodeproj \
+	    -scheme HarloHealthBridge -configuration $(HB_CONFIG) \
+	    -allowProvisioningUpdates CODE_SIGN_STYLE=Automatic \
+	    DEVELOPMENT_TEAM=$(APPLE_TEAM_ID) CODE_SIGN_IDENTITY="$(HB_CODESIGN_ID)" \
+	    ENABLE_DEBUG_DYLIB=NO ENABLE_PREVIEWS=NO MACOSX_DEPLOYMENT_TARGET=13.0 \
+	    -derivedDataPath build/hb build
+	@echo "==> Built HarloHealthBridge.app + embedded HarloXPCRelay (build/hb/Build/Products/$(HB_CONFIG)/)"
+else
+	@echo "build-healthbridge: skipped on $(UNAME_S) (macOS only)"
 endif
 
 sign:

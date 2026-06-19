@@ -122,3 +122,53 @@ class TestIsolation:
         )
         # Should not raise.
         assert sample.age_seconds() >= 0.0
+
+
+class TestRespiratoryRate:
+    """Respiratory rate feeds the DEPLETED/load path (ADR-0001 roadmap #1).
+
+    Only the EXCESS over a normal resting baseline counts — normal
+    breathing (12-16 br/min) must never inflate stress load (unlike the
+    naive mean/threshold HR formula). RR is a slow signal (Apple samples
+    it mainly during sleep/rest), so it contributes to the DEPLETED trend
+    but NEVER to the fresh-only RED motor-inhibition path.
+    """
+
+    def test_elevated_respiratory_rate_raises_load(self) -> None:
+        tracker = AllostasisTracker()
+        # 25 br/min — at the red mark (normal resting is 12-16).
+        tracker.record_biometric(
+            validate_biometric(_sample(type_="respiratory_rate", value=25.0))
+        )
+        assert tracker.get_biometric_load() >= 0.99
+
+    def test_normal_respiratory_rate_contributes_no_load(self) -> None:
+        tracker = AllostasisTracker()
+        # 14 br/min — squarely normal; must add zero stress load.
+        tracker.record_biometric(
+            validate_biometric(_sample(type_="respiratory_rate", value=14.0))
+        )
+        assert tracker.get_biometric_load() == 0.0
+
+    def test_respiratory_rate_scales_between_floor_and_red(self) -> None:
+        # Default floor 16, red 25 → 20.5 br/min is the midpoint → ~0.5.
+        tracker = AllostasisTracker()
+        tracker.record_biometric(
+            validate_biometric(_sample(type_="respiratory_rate", value=20.5))
+        )
+        assert tracker.get_biometric_load() == pytest.approx(0.5, abs=0.02)
+
+    def test_high_respiratory_rate_can_deplete(self) -> None:
+        tracker = AllostasisTracker()
+        tracker.record_biometric(
+            validate_biometric(_sample(type_="respiratory_rate", value=26.0))
+        )
+        assert tracker.is_depleted() is True
+
+    def test_respiratory_rate_alone_does_not_force_red(self) -> None:
+        # Slow signal — must not drive motor inhibition even when very high.
+        tracker = AllostasisTracker()
+        tracker.record_biometric(
+            validate_biometric(_sample(type_="respiratory_rate", value=40.0))
+        )
+        assert tracker.should_force_red() is False

@@ -32,7 +32,7 @@ settings:
     ENABLE_HARDENED_RUNTIME: YES
     OTHER_CODE_SIGN_FLAGS: "--timestamp"
     PRODUCT_NAME: HarloHealthBridge
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
     # Universal binary so Intel + Apple Silicon both work
     ARCHS: "$(ARCHS_STANDARD)"
@@ -46,13 +46,12 @@ targets:
     sources:
       - path: Sources/HarloHealthBridge
         excludes:
-          - "HarloHealthBridge.entitlements"
+          - "*.entitlements"
           - "*.md"
-    info:
-      path: Info.plist
-      properties:
-        # Keys here merge into Info.plist; the on-disk Info.plist is
-        # the source of truth. xcodegen will not overwrite it.
+      - path: Resources
+    # No `info:` block on purpose: xcodegen REGENERATES (clobbers) Info.plist
+    # when one is present, stripping NSHealthShareUsageDescription + LSUIElement.
+    # We point the build at the on-disk Info.plist via INFOPLIST_FILE instead.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.harlo.healthbridge
@@ -60,7 +59,28 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Sources/HarloHealthBridge/HarloHealthBridge.entitlements
         ENABLE_APP_SANDBOX: YES
         SKIP_INSTALL: NO
-    dependencies: []
+    dependencies:
+      - target: HarloXPCRelay
+        copy:
+          destination: wrapper
+          subpath: Contents/Helpers
+        codeSign: true
+
+  HarloXPCRelay:
+    # XPC relay (ADR-0001 Phase 5B): a non-sandboxed launchd Mach service that
+    # forwards biometric samples from the sandboxed bridge to the daemon socket.
+    # Built + signed by this project and embedded into
+    # HarloHealthBridge.app/Contents/Helpers/ (where com.harlo.xpc.plist expects it).
+    type: tool
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: ../HarloXPCRelay
+    settings:
+      base:
+        PRODUCT_NAME: HarloXPCRelay
+        PRODUCT_BUNDLE_IDENTIFIER: com.harlo.xpcrelay
+        SKIP_INSTALL: YES
 
 schemes:
   HarloHealthBridge:

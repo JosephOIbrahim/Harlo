@@ -52,5 +52,9 @@ files/
 macos/HarloHealthBridge/HarloHealthBridge.xcodeproj/
 macos/HarloHealthBridge/.build/
 
+# session scratch / capsules
+.fieldhouse/
+CLAUDE-FABLE-5.md
+
 # HarloPulse (ADR-0002) — xcodegen output (regenerated each build)
 ios/HarloPulse/HarloPulse.xcodeproj/

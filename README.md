@@ -16,13 +16,13 @@
 
 ---
 
-Your AI coach. Watches your patterns — and now your body — predicts your
-crashes, backs off during flow, and tells you when to stop before you burn out.
-Built on USD composition semantics for persistent, local-first cognitive state
-management.
+**Make smarter decisions with a coach who knows how you're really doing.**
+Harlo reads your Apple Watch — sleep, heart, stress — learns your patterns, and
+eases off when you're running low. It watches for your crashes, backs off during
+flow, and helps you stop before you burn out.
 
-Your memory, your device. Harlo stores all state locally as composable USD
-layers — no cloud dependency, no data mining, no rented access to your own mind.
+**Private by design.** All your data lives on your device as local, composable
+state — no cloud, no data mining, no rented access to your own mind.
 
 ---
 
@@ -37,6 +37,8 @@ Phase 5A landed: macOS bundle · intake calibration · biometric barrier · Moto
 v0.1.2: USD-proof trial — §F1 native composition · §F2 structural lossless · anchor immunity · P5 customData · P1 decision-tier — CONFIRMED on live pxr stage (verifier-first, 4 cycles)
 v0.1.6: HarloPulse loop LIVE — Apple Watch → HealthKit → push-on-arrival → launchd socket → biometric barrier → coach
         first organic biometrics through the barrier · Siri/Shortcuts/Spotlight surface · Xcode 27 / iOS 27 SDK
+Phase 5B built: Mac-local sibling — Apple Watch → HealthBridge (sandboxed) → XPC relay → daemon biometric loop (relay→daemon proven; full live Watch test pending)
+v0.2.0: unified release — biometric_prior seed + HarloPulse (iPhone) + HealthBridge/XPC (macOS) reconciled; one version across every surface (core · Rust · macOS app · iOS app · bridge)
 ```
 
 | Sprint | Tests | What Shipped |
@@ -50,6 +52,7 @@ v0.1.6: HarloPulse loop LIVE — Apple Watch → HealthKit → push-on-arrival �
 | **Phase 5A** macOS + Operator | +51 | macOS app bundle (Harlo.app + launchd socket activation), intake calibration CLI emitting three INTAKE_CALIBRATED Merkle layers, biometric barrier per ADR-0001 (opt-in HealthKit signals, freshness window, never enter trace pipeline), Motor Cortex with Basal Ganglia inhibition-default gating, `harlo doctor --strict` operator readiness, signing-readiness pre-flight (27 checks) |
 | **USD Trial** v0.1.2 | +verifier | SOLO trial-harness loop (`docs/trial-harness.md` + `docs/usd-proof-trial.md`); 4 engine cycles verifier-first against `wave1_harness.py`; native USD-composition theses CONFIRMED on the live `pxr`-backed stage: §F1 `LOCAL > VARIANT > SPECIALIZE` resolution, §F2 `reconstruct_clean` bit-identical, anchor structural immunity (adversarial probe), P5 customData state tracking; new MCP tools — `compose_demo`, `lossless_demo`, `anchor_demo`, `p5_state_demo`, `persist_stage`, `decision`. P1 closed via Path C Actor-driven motor surface. |
 | **Pulse Loop** v0.1.6 | +13 | HarloPulse iPhone sidecar deployed to hardware (Xcode 27 / iOS 27 SDK): 6-word HMAC pairing, per-type opt-in HealthKit reads (ADR-0001/D65), HKObserverQuery + background delivery for push-on-arrival, 48h lookback + chunked frames; Mac side `pulse listen` adopts a launchd-held TCP socket (Rule 1 — 0W between Watch syncs); App Intents surface (sync, status snippet, type toggles with clarification, OpenIntent, onscreen awareness); field-debugged end-to-end — first organic Apple Watch biometrics through the barrier into the coach. Four WWDC26 frontier docs: App Intents adoption plan, Foundation Models provider review (+ live-verified Python SDK addendum), code-along addendum, HealthKit collaboration report. |
+| **Phase 5B** macOS HealthBridge | -- | Mac-local sibling to the HarloPulse iPhone loop — same `biometric_barrier`, different transport. Sandboxed `HarloHealthBridge.app` (HealthKit observers, signed under the Apple Developer Program) + `HarloXPCRelay` launchd Mach service bridging the sandboxed app to the daemon's UNIX socket — the App Group container can't host it (macOS blocks the non-sandboxed daemon from binding there). `DaemonWriter` over NSXPC, mach-lookup entitlement; full HR/HRV → `biometric_barrier` → `AllostasisTracker` → DEPLETED/RED. Relay→daemon proven (XPC ingest of 180 bpm → `force_red: true`). |
 
 ---
 
@@ -158,7 +161,7 @@ Modulation Layer with zero resident processes on either side of the wire:
 
 ```mermaid
 flowchart LR
-    W["Apple Watch<br/>HR · HRV · sleep · workouts"]:::runtime --> HK["iPhone HealthKit<br/>background delivery"]:::runtime
+    W["Apple Watch<br/>HR · HRV · RR · sleep · workouts"]:::runtime --> HK["iPhone HealthKit<br/>background delivery"]:::runtime
     HK --> APP["HarloPulse app<br/>HKObserverQuery wakes it"]:::runtime
     APP --> PUSH["delta push<br/>HMAC auth · 48h window · chunked frames"]:::runtime
     PUSH --> LD["Mac launchd<br/>holds TCP 48653 · spawns on SYN"]:::substrate
@@ -502,6 +505,52 @@ flowchart LR
 See `docs/SIGNING.md` and `docs/APPLE_SECRETS_SETUP.md` for the
 signing/notarization chain.
 
+### Phase 5B · Apple Watch biometric loop (HealthKit → XPC → daemon)
+
+Phase 5B closes the sensor loop: an opt-in **Apple Watch → Mac** biometric
+stream feeding the Modulation Layer's allostatic load. The bridge that owns
+HealthKit must be sandboxed (Apple requires it); the daemon is not — and the
+two cannot share a UNIX socket (the App Group container blocks the
+non-sandboxed daemon from binding there). The rendezvous is a launchd
+**Mach service** reached over XPC:
+
+```mermaid
+flowchart LR
+    WATCH["Apple Watch<br/>HR · HRV · RR · sleep · SpO₂"]:::runtime
+    BRIDGE["HarloHealthBridge.app<br/>SANDBOXED · HealthKit observers<br/>HKObserverQuery · wakes on callback"]:::substrate
+    RELAY["HarloXPCRelay<br/>launchd Mach service · NOT sandboxed<br/>com.harlo.xpc"]:::substrate
+    DAEMON["Harlo daemon<br/>socket-activated · 0W idle"]:::substrate
+    BARRIER["biometric_barrier<br/>jsonschema · Rule 9 / ADR-0001<br/>Modulation Layer ONLY"]:::runtime
+    ALLO["AllostasisTracker<br/>HR · HRV · RR → load<br/>freshness window · DEPLETED / force-RED"]:::runtime
+
+    WATCH -->|"iCloud Health sync"| BRIDGE
+    BRIDGE -->|"NSXPCConnection<br/>mach-lookup entitlement"| RELAY
+    RELAY -->|"framed JSON<br/>twind.sock"| DAEMON
+    DAEMON --> BARRIER --> ALLO
+
+    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
+    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+```
+
+- **`HarloHealthBridge.app`** — sandboxed, signed under the Apple Developer
+  Program (HealthKit is a restricted entitlement → paid membership). Owns the
+  HealthKit observers; wakes only on `HKObserverQuery` callbacks (the sole
+  KeepAlive process, ADR-0001).
+- **`HarloXPCRelay`** — a non-sandboxed launchd Mach service. The sandboxed
+  bridge reaches it via a `mach-lookup` temporary-exception entitlement; the
+  relay forwards length-prefixed `biometric_ingest` JSON to the daemon's
+  `twind.sock`, which it (being unsandboxed) can reach. On-demand + idle-exit,
+  so Rule 1 (0W idle) holds.
+- **`biometric_barrier`** — every sample is jsonschema-validated and enters the
+  **Modulation Layer only**; a compliance grep forbids biometrics in `bridge/`
+  or `elenchus/`. Stale samples (older than the freshness window) can mark
+  DEPLETED but never drive RED — Apple-Watch→Mac latency must not inhibit motor.
+
+The daemon receive-side and the relay→daemon path are proven end-to-end (an XPC
+ingest of 180 bpm returned `{force_red: true, biometric_load: 1.0}`). See
+[`docs/HEALTHKIT_ACTIVATION.md`](docs/HEALTHKIT_ACTIVATION.md) for the build /
+provisioning / install runbook.
+
 ---
 
 ## Tech Stack
@@ -515,6 +564,8 @@ signing/notarization chain.
 - **MCP** — 8 tools over stdio. Works with Claude Desktop, Claude Code, any MCP client.
 - **Click 8.x CLI** — `harlo intake`, `harlo doctor`, `harlo audit` operator surfaces.
 - **launchd socket activation** — 0W idle daemon per Rule 1; separate KeepAlive plist for the HealthBridge.
+- **Swift + HealthKit** — `HarloHealthBridge.app` (sandboxed HealthKit observer over `HKObserverQuery`/`HKAnchoredObjectQuery`) and `HarloXPCRelay` (the non-sandboxed XPC Mach-service relay). Apple Watch → Mac biometric stream into the Modulation Layer.
+- **XPC (`NSXPCConnection`)** — sandbox-safe bridge↔daemon rendezvous; the relay is a launchd Mach service the sandboxed app reaches via a `mach-lookup` entitlement (the App Group container can't host the daemon socket).
 - **py2app bundling** — Harlo.app produced from the Python source tree.
 - **codesign + notarytool** — Apple Developer ID signing and notarization for distributed artifacts.
 

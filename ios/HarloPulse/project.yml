@@ -31,7 +31,7 @@ settings:
     CODE_SIGN_STYLE: Automatic        # iOS dev-signed personal install (ADR-0002 consequences);
                                       # NOT the Mac's Manual/Developer ID story
     PRODUCT_NAME: HarloPulse
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
     TARGETED_DEVICE_FAMILY: "1"       # iPhone only
     SUPPORTS_MACCATALYST: NO

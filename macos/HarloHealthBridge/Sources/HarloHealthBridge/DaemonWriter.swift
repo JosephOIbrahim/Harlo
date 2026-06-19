@@ -1,16 +1,22 @@
-// DaemonWriter — pushes biometric samples to the Harlo daemon via
-// the existing socket at ~/Library/Application Support/Harlo/twind.sock.
+// DaemonWriter — pushes biometric samples to the Harlo daemon via the
+// HarloXPCRelay Mach service (ADR-0001 Phase 5B).
 //
-// Connecting to the socket wakes the launchd-activated daemon. The
-// daemon validates each sample through biometric_barrier (Rule 9 +
-// ADR-0001) and forwards to the Modulation Layer only. Biometric
-// data never enters the trace store.
+// The sandboxed bridge cannot reach the daemon's UNIX socket directly, and the
+// App Group container can't host it (the non-sandboxed daemon is blocked from
+// binding there). So we hand the samples to HarloXPCRelay — a launchd Mach
+// service — over XPC, and the (non-sandboxed) relay forwards them to twind.sock.
+// Reaching the relay requires the mach-lookup temporary-exception entitlement.
 
 import Foundation
 import OSLog
 
+@objc protocol HarloXPCProtocol {
+    func ingest(_ payload: Data, withReply reply: @escaping (Bool, String) -> Void)
+}
+
 final class DaemonWriter {
     private let log = Logger(subsystem: "com.harlo.healthbridge", category: "writer")
+    private static let machServiceName = "233JSS4X69.com.harlo.xpc"
 
     func push(samples: [[String: Any]]) {
         let payload: [String: Any] = [
@@ -21,62 +27,19 @@ final class DaemonWriter {
             log.error("could not serialize \(samples.count) samples")
             return
         }
-        do {
-            try send(data: data)
-            log.info("pushed \(samples.count) samples to daemon")
-        } catch {
-            log.error("daemon push failed: \(error.localizedDescription)")
+
+        let conn = NSXPCConnection(machServiceName: DaemonWriter.machServiceName, options: [])
+        conn.remoteObjectInterface = NSXPCInterface(with: HarloXPCProtocol.self)
+        conn.resume()
+
+        let proxy = conn.remoteObjectProxyWithErrorHandler { [weak self] error in
+            self?.log.error("xpc relay error: \(error.localizedDescription)")
+            conn.invalidate()
+        } as? HarloXPCProtocol
+
+        proxy?.ingest(data) { [weak self] ok, resp in
+            self?.log.info("daemon ingest ok=\(ok) resp=\(resp, privacy: .public)")
+            conn.invalidate()
         }
-    }
-
-    private func send(data: Data) throws {
-        // D62: group-container path (sandbox-reachable), with the
-        // legacy App Support path as the unsandboxed fallback.
-        let socketPath = SharedPaths.socketURL.path
-        guard SharedPaths.validateSocketPathLength(socketPath) else {
-            log.error("socket path exceeds sun_path limit (\(socketPath.utf8.count) bytes): \(socketPath)")
-            throw BridgeError.socketPathTooLong
-        }
-
-        let fd = socket(AF_UNIX, SOCK_STREAM, 0)
-        guard fd >= 0 else { throw BridgeError.socketCreate }
-        defer { close(fd) }
-
-        var addr = sockaddr_un()
-        addr.sun_family = sa_family_t(AF_UNIX)
-        _ = withUnsafeMutablePointer(to: &addr.sun_path.0) { ptr in
-            socketPath.withCString { strncpy(ptr, $0, MemoryLayout.size(ofValue: addr.sun_path) - 1) }
-        }
-        let len = socklen_t(MemoryLayout<sockaddr_un>.size)
-        let ok = withUnsafePointer(to: &addr) { p in
-            p.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(fd, $0, len) }
-        }
-        guard ok == 0 else { throw BridgeError.socketConnect }
-
-        // Length-prefixed frame: 4-byte big-endian length, then payload.
-        var be = UInt32(data.count).bigEndian
-        let head = Data(bytes: &be, count: 4)
-        try writeAll(fd: fd, data: head)
-        try writeAll(fd: fd, data: data)
-    }
-
-    private func writeAll(fd: Int32, data: Data) throws {
-        try data.withUnsafeBytes { raw in
-            var remaining = data.count
-            var ptr = raw.baseAddress!
-            while remaining > 0 {
-                let w = write(fd, ptr, remaining)
-                if w < 0 { throw BridgeError.socketWrite }
-                remaining -= w
-                ptr = ptr.advanced(by: w)
-            }
-        }
-    }
-
-    enum BridgeError: Error {
-        case socketCreate
-        case socketConnect
-        case socketWrite
-        case socketPathTooLong
     }
 }

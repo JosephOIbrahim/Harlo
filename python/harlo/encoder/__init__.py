@@ -17,6 +17,11 @@ from typing import Optional
 
 from .semantic_encoder import SemanticEncoder, hamming_distance, sdr_sparsity
 
+# Identifier for the semantic (BGE + LSH) encoder path. Traces stored via this
+# module are tagged with it so a cross-encoder Hamming comparison is refused at
+# recall time (CORE-1). The lexical (Rust hot path) encoder uses id "lexical".
+SEMANTIC_ENCODER_ID = "semantic"
+
 # Lazy singleton for the semantic encoder (model loading is expensive)
 _semantic_encoder: Optional[SemanticEncoder] = None
 
@@ -69,9 +74,17 @@ def _ensure_db_schema(conn: sqlite3.Connection):
             boosts_json TEXT NOT NULL DEFAULT '[]',
             tags_json TEXT NOT NULL DEFAULT '[]',
             domain TEXT,
-            source TEXT
+            source TEXT,
+            encoder_id TEXT NOT NULL DEFAULT 'lexical'
         )
     """)
+    # Migrate pre-existing databases that predate the encoder tag (CORE-1).
+    # Mirrors crates/hippocampus/src/store.rs::ensure_encoder_id_column.
+    columns = [row[1] for row in conn.execute("PRAGMA table_info(traces)").fetchall()]
+    if "encoder_id" not in columns:
+        conn.execute(
+            "ALTER TABLE traces ADD COLUMN encoder_id TEXT NOT NULL DEFAULT 'lexical'"
+        )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_traces_created ON traces(created_at)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_traces_domain ON traces(domain)")
 
@@ -110,9 +123,11 @@ def semantic_store(
         conn.execute(
             """INSERT OR REPLACE INTO traces
                (id, message, sdr_blob, initial_strength, decay_lambda,
-                created_at, last_accessed, boosts_json, tags_json, domain, source)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (trace_id, message, sdr_blob, 1.0, 0.05, now, now, "[]", tags_json, domain, source),
+                created_at, last_accessed, boosts_json, tags_json, domain, source,
+                encoder_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (trace_id, message, sdr_blob, 1.0, 0.05, now, now, "[]", tags_json,
+             domain, source, SEMANTIC_ENCODER_ID),
         )
         conn.commit()
     finally:
@@ -140,15 +155,32 @@ def semantic_recall(
     import json
 
     k = 15 if depth == "deep" else 5
-
-    enc = get_semantic_encoder()
-    query_sdr = enc.encode(query)
-
     now = int(time.time())
 
     conn = sqlite3.connect(db_path)
     try:
         _ensure_db_schema(conn)
+
+        # CORE-1 fail-fast guard: the query will be encoded with the semantic
+        # encoder, so refuse — loudly, and BEFORE paying for the model load —
+        # to Hamming-compare it against any trace persisted under a different
+        # encoder, rather than silently returning a bogus neighbor.
+        foreign = conn.execute(
+            "SELECT encoder_id FROM traces "
+            "WHERE COALESCE(encoder_id, 'lexical') != ? LIMIT 1",
+            (SEMANTIC_ENCODER_ID,),
+        ).fetchone()
+        if foreign is not None:
+            from harlo.hippocampus import EncoderMismatch
+
+            raise EncoderMismatch(
+                f"query encoder '{SEMANTIC_ENCODER_ID}' cannot be compared "
+                f"against trace stored under encoder '{foreign[0]}'"
+            )
+
+        # Same-encoder store: encode the query now (lazy model load).
+        enc = get_semantic_encoder()
+        query_sdr = enc.encode(query)
 
         # Load all SDR blobs
         cursor = conn.execute("SELECT id, sdr_blob FROM traces")

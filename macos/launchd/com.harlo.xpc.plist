@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        HarloXPCRelay LaunchAgent (ADR-0001 Phase 5B). Registers the Mach service
+        the sandboxed HarloHealthBridge connects to; launchd spawns the relay
+        on-demand and it forwards framed biometric_ingest JSON to the daemon's
+        twind.sock. On-demand + idle-exits → keeps Rule 1 (0W idle) intact.
+
+        ProgramArguments is rewritten by the installer to the on-disk relay path
+        (Helpers/ in the app bundle for a shipped build, or build/ for dev).
+    -->
+    <key>Label</key>
+    <string>com.harlo.xpc</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Applications/HarloHealthBridge.app/Contents/Helpers/HarloXPCRelay</string>
+    </array>
+
+    <key>MachServices</key>
+    <dict>
+        <key>233JSS4X69.com.harlo.xpc</key>
+        <true/>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>ProcessType</key>
+    <string>Adaptive</string>
+
+    <key>StandardErrorPath</key>
+    <string>~/Library/Logs/Harlo/xpcrelay.err.log</string>
+</dict>
+</plist>

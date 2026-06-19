@@ -1037,16 +1037,40 @@ def _handle_biometric_ingest(args: dict) -> dict:
     force_red = tracker.should_force_red()
     biometric_load = tracker.get_biometric_load()
 
-    # D60: persist the DERIVED verdict (never raw samples — Rule 9) so
-    # the coach/status surface can read it after this short-lived
-    # process exits. Best-effort: a failed persist must not reject the
-    # ingest itself.
+    # Persist the DERIVED modulation verdict to BOTH stores. Rule 9 /
+    # ADR-0001: only derived scalars are written here — never the raw
+    # HR / HRV sample values.
+    #
+    # C3: the JSON store (modulation/state.py) the MOTOR path reads — a
+    # later motor command (a different short-lived daemon process, Rule 1)
+    # sees a fresh biometric panic via session_state['biometric_force_red']
+    # (the basal_ganglia gate).
+    import time as _time
+
+    from ..modulation.state import ModulationState, write_modulation_state
+
+    cognitive = "RED" if force_red else ("DEPLETED" if depleted else "NORMAL")
+    write_modulation_state(
+        ModulationState(
+            is_depleted=depleted,
+            biometric_force_red=force_red,
+            biometric_load=biometric_load,
+            cognitive_state=cognitive,
+            updated_at=_time.time(),
+        )
+    )
+
+    # D60: ALSO persist to the SQLite store the coach/status surface reads
+    # (mcp_server.read_modulation_state). Best-effort: a failed persist
+    # must not reject the ingest itself.
     if accepted:
         try:
             from ..daemon.config import DB_PATH
-            from ..modulation.state_store import write_modulation_state
+            from ..modulation.state_store import (
+                write_modulation_state as write_modulation_state_db,
+            )
 
-            write_modulation_state(
+            write_modulation_state_db(
                 str(DB_PATH),
                 biometric_load=biometric_load,
                 depleted=depleted,

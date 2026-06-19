@@ -34,6 +34,16 @@ pytest tests/ -v                   # Python unit tests
 pytest tests/test_integration/ -v  # Integration tests
 ```
 
+> Build/env gotchas (cost a debugging cycle on 2026-06-19 — don't re-hit):
+> - `maturin develop --release` RE-RESOLVES the unpinned `>=` deps in pyproject
+>   and silently upgrades the ML stack (numpy/transformers/xgboost) → native
+>   segfaults in the suite. Pin the ML stack (constraints file) or rebuild the
+>   ext without re-resolving (`maturin build` + `pip install --no-deps wheel`).
+> - Exported `PYTORCH_MPS_HIGH_WATERMARK_RATIO` ≤ ~1.0 makes torch raise
+>   "invalid low watermark ratio" on model load (also breaks `harlo recall`).
+> - `PYTHONOPTIMIZE=1` (`-O`) strips production `assert`s → assert-based tests
+>   fail "DID NOT RAISE". Unset for test runs. `ruff` must be installed for lint.
+
 ## The 33 Inviolable Rules
 
 ### Biological Constraints (v3.0)

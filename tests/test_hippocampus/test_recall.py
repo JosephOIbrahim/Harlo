@@ -10,8 +10,11 @@ Phase 1 verification:
 
 import json
 import os
+import sqlite3
 import tempfile
 import time
+
+import pytest
 
 from harlo import hippocampus
 
@@ -237,5 +240,53 @@ class TestConsolidate:
             result = hippocampus.py_consolidate(db_path=db)
             assert result["graph_nodes"] == 0
             assert result["graph_edges"] == 0
+        finally:
+            os.unlink(db)
+
+
+class TestEncoderGuard:
+    """Cross-encoder mismatch guard (CORE-1).
+
+    A trace stored under one SDR encoder must never be silently recalled
+    under another. The query/candidate encoder mismatch is made LOUD via a
+    typed EncoderMismatch, and every trace carries a persisted encoder tag.
+    """
+
+    def test_encoder_mismatch_raises(self):
+        """A candidate tagged with a foreign encoder must raise, not rank."""
+        from harlo.hippocampus import EncoderMismatch
+
+        db = _temp_db()
+        try:
+            hippocampus.py_store_trace("t1", "hello world greeting", db_path=db)
+            # Simulate a trace persisted under a different encoder.
+            conn = sqlite3.connect(db)
+            conn.execute("UPDATE traces SET encoder_id = 'semantic' WHERE id = 't1'")
+            conn.commit()
+            conn.close()
+
+            with pytest.raises(EncoderMismatch):
+                hippocampus.py_recall("hello world", db_path=db)
+        finally:
+            os.unlink(db)
+
+    def test_encoder_tag_same_encoder_rank1_recall(self):
+        """Same-encoder traces carry a persisted tag and recall at rank 1."""
+        db = _temp_db()
+        try:
+            hippocampus.py_store_trace("t1", "hello world greeting", db_path=db)
+            hippocampus.py_store_trace("t2", "quantum physics equation", db_path=db)
+
+            # The encoder that produced the trace is persisted on the row.
+            conn = sqlite3.connect(db)
+            tag = conn.execute(
+                "SELECT encoder_id FROM traces WHERE id = 't1'"
+            ).fetchone()[0]
+            conn.close()
+            assert tag == "lexical"
+
+            # Under its own encoder, the planted trace returns at rank 1.
+            result = hippocampus.py_recall("hello world", db_path=db)
+            assert result["traces"][0]["trace_id"] == "t1"
         finally:
             os.unlink(db)
