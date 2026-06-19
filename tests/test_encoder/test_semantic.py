@@ -386,3 +386,38 @@ class TestHammingDistance:
         from harlo.encoder.semantic_encoder import hamming_distance
         with pytest.raises(AssertionError):
             hamming_distance(bytes(10), bytes(20))
+
+
+class TestSemanticEncoderGuard:
+    """Cross-encoder mismatch guard on the Python semantic recall path (CORE-1)."""
+
+    def test_encoder_mismatch_semantic_recall_fails_fast(self, monkeypatch):
+        """semantic_recall refuses a foreign-encoder trace and does so BEFORE
+        constructing the (expensive) semantic model — the guard is fail-fast.
+
+        A tripwire replaces get_semantic_encoder; if the model is constructed
+        before the encoder check, the tripwire fires instead of EncoderMismatch.
+        """
+        from harlo import encoder as encoder_mod
+        from harlo import hippocampus
+        from harlo.encoder import semantic_recall
+        from harlo.hippocampus import EncoderMismatch
+
+        def _tripwire():
+            raise AssertionError(
+                "semantic model must not load on a cross-encoder refusal"
+            )
+
+        monkeypatch.setattr(encoder_mod, "get_semantic_encoder", _tripwire)
+
+        db = tempfile.mktemp(suffix=".db")
+        try:
+            # Plant a lexical-tagged trace via the Rust store (no model needed).
+            hippocampus.py_store_trace("t1", "hello world", db_path=db)
+            # A semantic query must refuse the lexical trace with EncoderMismatch,
+            # without ever constructing the semantic model.
+            with pytest.raises(EncoderMismatch):
+                semantic_recall(db, "hello world")
+        finally:
+            if os.path.exists(db):
+                os.unlink(db)

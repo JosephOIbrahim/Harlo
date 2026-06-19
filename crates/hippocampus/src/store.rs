@@ -22,6 +22,9 @@ pub struct TraceRecord {
     pub tags_json: String,
     pub domain: Option<String>,
     pub source: Option<String>,
+    /// Identifier of the encoder that produced `sdr_blob` (CORE-1). Guards
+    /// against silent cross-encoder Hamming comparison at recall time.
+    pub encoder_id: String,
 }
 
 /// Apoptosis report after cleanup.
@@ -55,7 +58,8 @@ pub fn init_db(conn: &Connection) -> Result<()> {
             boosts_json TEXT NOT NULL DEFAULT '[]',
             tags_json TEXT NOT NULL DEFAULT '[]',
             domain TEXT,
-            source TEXT
+            source TEXT,
+            encoder_id TEXT NOT NULL DEFAULT 'lexical'
         );
 
         CREATE TABLE IF NOT EXISTS reflexes (
@@ -85,6 +89,26 @@ pub fn init_db(conn: &Connection) -> Result<()> {
         CREATE INDEX IF NOT EXISTS idx_graph_target ON graph_edges(target_id);
         ",
     )?;
+    // Migrate pre-existing databases that predate the encoder tag (CORE-1).
+    ensure_encoder_id_column(conn)?;
+    Ok(())
+}
+
+/// Add the `encoder_id` column to an existing `traces` table if absent.
+/// Idempotent: new databases already have it via CREATE TABLE; legacy rows
+/// default to 'lexical' (the historical Rust hot-path encoder).
+fn ensure_encoder_id_column(conn: &Connection) -> Result<()> {
+    let mut stmt = conn.prepare("PRAGMA table_info(traces)")?;
+    let has_column = stmt
+        .query_map([], |row| row.get::<_, String>(1))?
+        .filter_map(|r| r.ok())
+        .any(|name| name == "encoder_id");
+    if !has_column {
+        conn.execute(
+            "ALTER TABLE traces ADD COLUMN encoder_id TEXT NOT NULL DEFAULT 'lexical'",
+            [],
+        )?;
+    }
     Ok(())
 }
 
@@ -116,8 +140,8 @@ pub fn store_trace(conn: &Connection, trace: &TraceRecord) -> Result<()> {
     conn.execute(
         "INSERT OR REPLACE INTO traces
          (id, message, sdr_blob, initial_strength, decay_lambda,
-          created_at, last_accessed, boosts_json, tags_json, domain, source)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+          created_at, last_accessed, boosts_json, tags_json, domain, source, encoder_id)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
         params![
             trace.id,
             trace.message,
@@ -130,6 +154,7 @@ pub fn store_trace(conn: &Connection, trace: &TraceRecord) -> Result<()> {
             trace.tags_json,
             trace.domain,
             trace.source,
+            trace.encoder_id,
         ],
     )?;
     Ok(())
@@ -148,7 +173,7 @@ pub fn load_all_sdrs(conn: &Connection) -> Result<Vec<(String, Vec<u8>)>> {
 pub fn load_trace(conn: &Connection, id: &str) -> Result<Option<TraceRecord>> {
     let mut stmt = conn.prepare(
         "SELECT id, message, sdr_blob, initial_strength, decay_lambda,
-                created_at, last_accessed, boosts_json, tags_json, domain, source
+                created_at, last_accessed, boosts_json, tags_json, domain, source, encoder_id
          FROM traces WHERE id = ?1",
     )?;
     let mut rows = stmt.query_map(params![id], |row| {
@@ -164,6 +189,7 @@ pub fn load_trace(conn: &Connection, id: &str) -> Result<Option<TraceRecord>> {
             tags_json: row.get(8)?,
             domain: row.get(9)?,
             source: row.get(10)?,
+            encoder_id: row.get(11)?,
         })
     })?;
     match rows.next() {
@@ -313,6 +339,7 @@ mod tests {
             tags_json: "[]".to_string(),
             domain: None,
             source: None,
+            encoder_id: "lexical".to_string(),
         }
     }
 

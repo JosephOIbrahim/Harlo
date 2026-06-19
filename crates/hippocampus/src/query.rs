@@ -198,6 +198,7 @@ pub fn store_new_trace(
         tags_json: serde_json::to_string(tags)?,
         domain: domain.map(String::from),
         source: source.map(String::from),
+        encoder_id: crate::encoder::ENCODER_ID.to_string(),
     };
 
     crate::store::store_trace(conn, &trace)?;

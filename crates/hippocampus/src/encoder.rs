@@ -11,6 +11,11 @@ use std::hash::{Hash, Hasher};
 /// SDR width in bits. 2048 bits = 256 bytes.
 pub const SDR_WIDTH: usize = 2048;
 
+/// Identifier for the encoder that produced an SDR. The Rust hot path is the
+/// lexical n-gram encoder; traces it stores are tagged with this id so a
+/// cross-encoder Hamming comparison can be refused at recall time (CORE-1).
+pub const ENCODER_ID: &str = "lexical";
+
 /// Target sparsity: ~2-5% of bits active.
 const TARGET_ACTIVE_BITS: usize = 80;
 
