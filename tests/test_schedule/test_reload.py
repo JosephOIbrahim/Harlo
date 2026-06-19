@@ -27,14 +27,14 @@ from pxr import Usd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-from src.cognitive_engine import CognitiveEngine
-from src.schedule import (
+from harlo.engine.cognitive_engine import CognitiveEngine
+from harlo.engine.schedule import (
     DayWindow,
     Schedule,
     author_schedule_to_stage,
     load_schedule_from_stage,
 )
-from src.schemas import ScheduleKind
+from harlo.engine.schemas import ScheduleKind
 
 NY = ZoneInfo("America/New_York")
 

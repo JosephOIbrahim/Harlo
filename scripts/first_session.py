@@ -10,10 +10,18 @@ import json
 import os
 import sys
 
-# Ensure src/ is importable
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Make the in-tree package importable without an install (mirrors
+# lint.yml's PYTHONPATH=python); harmless when harlo is installed.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "python"))
 
-from src.cognitive_engine import CognitiveEngine
+# Demo/acceptance script: sandbox engine state so runs never mutate
+# the live DATA_DIR (engine paths are DATA_DIR-rooted since D56/D81).
+import tempfile as _tf
+_sandbox = _tf.mkdtemp(prefix="harlo-script-")
+os.environ.setdefault("HARLO_STAGE_DIR", os.path.join(_sandbox, "stages"))
+os.environ.setdefault("HARLO_BUFFER_DB", os.path.join(_sandbox, "observations.db"))
+
+from harlo.engine.cognitive_engine import CognitiveEngine
 
 
 def main():

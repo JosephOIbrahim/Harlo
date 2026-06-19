@@ -1,0 +1,74 @@
+# xcodegen spec for HarloPulse (ADR-0002).
+#
+# Generate the Xcode project on demand:
+#     brew install xcodegen
+#     cd ios/HarloPulse && xcodegen generate
+#
+# The generated HarloPulse.xcodeproj is gitignored so we don't commit
+# pbxproj noise. Regenerate fresh every build.
+#
+# Builds the iPhone companion app that owns the HealthKit read
+# entitlement where the data actually lives (D67: HealthKit data does
+# not exist on any Mac through macOS 27) and pushes trend batches to
+# the Mac's `harlo pulse listen` over LAN TCP (ADR-0002).
+
+name: HarloPulse
+
+options:
+  bundleIdPrefix: com.josephibrahim.harlo
+  developmentLanguage: en
+  createIntermediateGroups: true
+  defaultConfig: Release
+  deploymentTarget:
+    iOS: "17.0"
+  generateEmptyDirectories: false
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: "233JSS4X69"
+    CODE_SIGN_STYLE: Automatic        # iOS dev-signed personal install (ADR-0002 consequences);
+                                      # NOT the Mac's Manual/Developer ID story
+    PRODUCT_NAME: HarloPulse
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"       # iPhone only
+    SUPPORTS_MACCATALYST: NO
+
+targets:
+  HarloPulse:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources/HarloPulse
+        excludes:
+          - "HarloPulse.entitlements"
+          - "*.md"
+    dependencies:
+      # Explicit link so appintentsmetadataprocessor extracts the intent
+      # metadata (autolink alone makes it skip — Siri/Shortcuts would
+      # never discover the intents).
+      - sdk: AppIntents.framework
+    # NO `info:` block on purpose: xcodegen REGENERATES (overwrites) the
+    # file named there on every `xcodegen generate`, silently destroying
+    # hand-maintained keys (we lost the HealthKit usage strings to this
+    # once). INFOPLIST_FILE below points at the checked-in plist, which
+    # xcodegen then leaves alone — the on-disk file really is the source
+    # of truth this way.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.josephibrahim.harlo.pulse
+        INFOPLIST_FILE: Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/HarloPulse/HarloPulse.entitlements
+
+schemes:
+  HarloPulse:
+    build:
+      targets:
+        HarloPulse: all
+    run:
+      config: Debug
+    archive:
+      config: Release

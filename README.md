@@ -1,16 +1,25 @@
 <p align="center">
-  <img src="./assets/harlo-logo.jpg" alt="Harlo — Your AI Coach" width="600">
+  <img src="./assets/harlo-logo.jpg" alt="HARLO — Local-first AI Coach" width="720">
 </p>
 
 <p align="center">
   <strong>Patent Pending</strong> | <a href="LICENSE">Apache 2.0</a> | <a href="PATENTS.md">Patent Details</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/JosephOIbrahim/Harlo/releases"><img src="https://img.shields.io/github/v/release/JosephOIbrahim/Harlo?include_prereleases&label=release&color=d4895e" alt="Release"></a>
+  <img src="https://img.shields.io/badge/tests-1381%20passing-e6c466" alt="Tests">
+  <img src="https://img.shields.io/badge/hot%20recall-0.84ms%20%40%20100k%20traces-d4895e" alt="Hot recall">
+  <img src="https://img.shields.io/badge/idle-0%20resident%20processes-e6c466" alt="Idle">
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20iOS-lightgrey" alt="Platform">
+</p>
+
 ---
 
-Your AI coach. Watches your patterns, predicts your crashes, backs off during
-flow, and tells you when to stop before you burn out. Built on USD composition
-semantics for persistent, local-first cognitive state management.
+Your AI coach. Watches your patterns — and now your body — predicts your
+crashes, backs off during flow, and tells you when to stop before you burn out.
+Built on USD composition semantics for persistent, local-first cognitive state
+management.
 
 Your memory, your device. Harlo stores all state locally as composable USD
 layers — no cloud dependency, no data mining, no rented access to your own mind.
@@ -21,12 +30,14 @@ layers — no cloud dependency, no data mining, no rented access to your own min
 
 ```
 PRODUCTION LIVE — Harlo v6.1-MOTOR
-1,365 passing · 11 skipped · Real OpenUSD canonical persistence · USD-Lite runtime tier
-8/8 phase gates passed · 19 D-block decisions clean (D1-D19)
-Substrate-unified with sister project Moneta · P1 CIP defensible
-458 organic observations collected · 5 sprints shipped · Path C closed (Step 3)
+1,381 passing · 5 skipped (lean bundle) · Real OpenUSD canonical persistence · USD-Lite runtime tier
+8/8 phase gates passed · Substrate-unified with sister project Moneta · P1 CIP defensible
+1,390+ organic observations collected · Path C closed (Step 3)
 Phase 5A landed: macOS bundle · intake calibration · biometric barrier · Motor Cortex with Basal Ganglia gating
-Phase 5B built: Apple Watch → HealthBridge (sandboxed) → XPC relay → daemon biometric loop (relay→daemon proven; full live Watch test pending)
+v0.1.2: USD-proof trial — §F1 native composition · §F2 structural lossless · anchor immunity · P5 customData · P1 decision-tier — CONFIRMED on live pxr stage (verifier-first, 4 cycles)
+v0.1.6: HarloPulse loop LIVE — Apple Watch → HealthKit → push-on-arrival → launchd socket → biometric barrier → coach
+        first organic biometrics through the barrier · Siri/Shortcuts/Spotlight surface · Xcode 27 / iOS 27 SDK
+Phase 5B built: Mac-local sibling — Apple Watch → HealthBridge (sandboxed) → XPC relay → daemon biometric loop (relay→daemon proven; full live Watch test pending)
 ```
 
 | Sprint | Tests | What Shipped |
@@ -38,7 +49,152 @@ Phase 5B built: Apple Watch → HealthBridge (sandboxed) → XPC relay → daemo
 | **S5** Production | 22 | Graceful degradation (independent failure isolation), health check endpoint, kill switches (`ENGINE_ENABLED`, `USE_REAL_USD`, `OBSERVATION_LOGGING`, `PREDICTION_ENABLED`), first session verified, production docs |
 | **Path C** Step 3 v3.4.0 | +39 | Real OpenUSD as canonical persistence (codeless schema, 21 prim types under `harlo` plugin separate from Moneta); USD-Lite engine preserved as fast in-memory runtime tier (Fabric pattern); sync layer per D4 policy table; migration script for USD-Lite v1 → real USD; substrate-unified with sister project Moneta. P1 CIP framing now defensible. |
 | **Phase 5A** macOS + Operator | +51 | macOS app bundle (Harlo.app + launchd socket activation), intake calibration CLI emitting three INTAKE_CALIBRATED Merkle layers, biometric barrier per ADR-0001 (opt-in HealthKit signals, freshness window, never enter trace pipeline), Motor Cortex with Basal Ganglia inhibition-default gating, `harlo doctor --strict` operator readiness, signing-readiness pre-flight (27 checks) |
-| **Phase 5B** Apple Watch loop | -- | Sandboxed `HarloHealthBridge.app` (HealthKit observers, signed under the Apple Developer Program) + `HarloXPCRelay` launchd Mach service bridging the sandboxed app to the daemon's UNIX socket — the App Group container can't host it (macOS blocks the non-sandboxed daemon from binding there). `DaemonWriter` over NSXPC, mach-lookup entitlement; full HR/HRV → `biometric_barrier` → `AllostasisTracker` → DEPLETED/RED. Relay→daemon proven (XPC ingest of 180 bpm → `force_red: true`). |
+| **USD Trial** v0.1.2 | +verifier | SOLO trial-harness loop (`docs/trial-harness.md` + `docs/usd-proof-trial.md`); 4 engine cycles verifier-first against `wave1_harness.py`; native USD-composition theses CONFIRMED on the live `pxr`-backed stage: §F1 `LOCAL > VARIANT > SPECIALIZE` resolution, §F2 `reconstruct_clean` bit-identical, anchor structural immunity (adversarial probe), P5 customData state tracking; new MCP tools — `compose_demo`, `lossless_demo`, `anchor_demo`, `p5_state_demo`, `persist_stage`, `decision`. P1 closed via Path C Actor-driven motor surface. |
+| **Pulse Loop** v0.1.6 | +13 | HarloPulse iPhone sidecar deployed to hardware (Xcode 27 / iOS 27 SDK): 6-word HMAC pairing, per-type opt-in HealthKit reads (ADR-0001/D65), HKObserverQuery + background delivery for push-on-arrival, 48h lookback + chunked frames; Mac side `pulse listen` adopts a launchd-held TCP socket (Rule 1 — 0W between Watch syncs); App Intents surface (sync, status snippet, type toggles with clarification, OpenIntent, onscreen awareness); field-debugged end-to-end — first organic Apple Watch biometrics through the barrier into the coach. Four WWDC26 frontier docs: App Intents adoption plan, Foundation Models provider review (+ live-verified Python SDK addendum), code-along addendum, HealthKit collaboration report. |
+| **Phase 5B** macOS HealthBridge | -- | Mac-local sibling to the HarloPulse iPhone loop — same `biometric_barrier`, different transport. Sandboxed `HarloHealthBridge.app` (HealthKit observers, signed under the Apple Developer Program) + `HarloXPCRelay` launchd Mach service bridging the sandboxed app to the daemon's UNIX socket — the App Group container can't host it (macOS blocks the non-sandboxed daemon from binding there). `DaemonWriter` over NSXPC, mach-lookup entitlement; full HR/HRV → `biometric_barrier` → `AllostasisTracker` → DEPLETED/RED. Relay→daemon proven (XPC ingest of 180 bpm → `force_red: true`). |
+
+---
+
+## Benchmarks
+
+Measured 2026-06-10 on the reference machine (Mac Studio M1 Ultra, 128 GB,
+macOS 27). Reproduce the search rows with `cargo bench -p hippocampus`
+(criterion, `crates/hippocampus/benches/recall.rs`).
+
+| Path | Constitutional budget | Measured | Headroom |
+|------|----------------------|----------|----------|
+| SDR search, 10k traces (k=5) | — | **0.084 ms** median | — |
+| SDR search, 100k traces (k=5) | < 2 ms (Rule 3) | **0.844 ms** median | 2.4× |
+| PyO3 module import | — | 2.4 ms | — |
+| Cold start — import + first recall over FFI | < 5 ms (Rule 3) | **3.4 ms** | 1.5× |
+| Hot recall round trip (Python → Rust → SQLite) | < 2 ms (Rule 3) | **0.66 ms** p50 · 0.94 ms p95 | 3.0× |
+| Resident processes between sessions | 0 (Rule 1) | **0** — launchd holds the sockets, PID column reads `-` | — |
+| Full Python suite (lean bundle) | — | 1,381 passed in 17 s | — |
+
+1-bit SDR vectors with Hamming distance (no float32, no cosine — Rule 2) keep
+the search path pure integer XOR + popcount: a full 100k-trace scan completes
+in less time than a single localhost HTTP round trip.
+
+---
+
+## USD Substrate Trial — Live-Stage Theses Confirmed (v0.1.2)
+
+Four engine cycles run against a verifier-first SOLO trial harness proved
+the foundational USD-as-cognitive-substrate theses **on the live `pxr`-
+backed `real_usd` stage** — not via Python proxy, not by parametric
+guarantee. Every cycle observed RED before the change, GREEN after, and
+was independently re-verified in a cold-pxr process. Trial state lives
+in `docs/usd-proof-trial.md` (SPEC + CHAMPION v6 + LOG).
+
+- **§F1 — USD-native-priority** (Cycle 2). pxr resolves
+  `LOCAL > VARIANT > SPECIALIZE` on `/Brain/CompositionDemo`.
+  `GetPropertyStack` reports the strength order itself. Native composition
+  arcs map to cognitive priority without fighting USD semantics.
+- **§F2 — structural lossless** (Cycle 3). `reconstruct_clean()` as
+  flatten-to-base recovers the clean baseline bit-identically from a
+  composed (clean + delta) stage. Same SHA256 from cold-pxr re-read;
+  reconstruction is exact, not float-tolerant.
+- **§F2 anchor structural immunity** (Cycle 4). CONSTITUTIONAL / SAFETY /
+  CONSENT / KNOWLEDGE anchors invariant across 4 delta profiles. The
+  adversarial profile explicitly authors
+  `/Brain/Anchors/CONSTITUTIONAL.value = "MALICIOUS_OVERRIDE"`; pxr
+  rejects it by composition mechanics — anchor sublayer at
+  `subLayerPaths[0]` wins. Structural, not parametric.
+- **P5 — customData state tracking** (Cycle 5). Unchanged / Edited / New
+  derived per-prim from prim-stack analysis, written to a derived tags
+  sublayer, read back through composition. Three prims, three states —
+  tagged / computed / expected all agree.
+- **P1 decision-tier closure** (Cycle 6). New `decision` MCP tool — the
+  Actor-driven motor surface — queues MotorPrims that
+  `persist_current_brain` drains. Live stage now authors session +
+  entity + decision tiers.
+
+Reproduce: `.venv312/bin/python wave1_harness.py`. The 7-row scoreboard
+asserts the live USD flip, populated hierarchy (P1), native composition
+(P3 / §F1), structural lossless (P4 / §F2), anchor immunity (§F2 follow-
+up), and customData state tracking (P5).
+
+### Path C motor surface (Cycle 6) — Actor → live MotorPrim
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Tool
+    participant Queue
+    participant Persist
+    participant Brain
+    participant Writer
+    participant Stage
+    User->>Tool: decision action gate_status
+    Note right of Tool: Rule 23 default<br/>Basal Ganglia inhibit-by-default
+    Tool->>Queue: queue_motor_action
+    Note over Queue: module-level list<br/>lives for the MCP subprocess
+    User->>Persist: persist_stage
+    Persist->>Queue: snapshot_pending_motor_actions
+    Persist->>Brain: full_stage with motor_actions
+    Brain->>Writer: motor_to_prims
+    Writer->>Stage: DefinePrim MotorPrim under Brain Motor
+    Note over Stage: live pxr stage<br/>Brain Motor populated
+```
+
+Diagram legend:
+- **User** = the actor (Claude in production; the trial harness in tests)
+- **Tool** = `decision` MCP tool (Actor-driven motor surface)
+- **Queue** = `_PENDING_MOTOR_ACTIONS` module-level list in `persistence/__init__.py`
+- **Persist** = `persist_current_brain` (called by `persist_stage` MCP tool)
+- **Brain** = `brainstem.stage_builder.full_stage(motor_actions=…)`
+- **Writer** = `python/harlo/usd_lite/persistence/writer.py:_write_motor` — `stage.DefinePrim("/Brain/Motor/action_i", "MotorPrim")`
+- **Stage** = `<DATA_DIR>/stages/runtime.usda` (the live `pxr.Usd.Stage`)
+
+The inert motor system (`premotor`, `basal_ganglia`, `executor`) remains
+disconnected — Path C creates the **smallest honest motor surface**.
+Consent escalation, basal-ganglia gating, and executor wiring are parked
+for future cycles.
+
+---
+
+## HarloPulse — The Push-on-Arrival Biometric Loop (v0.1.6)
+
+The iPhone sidecar shipped to hardware. Apple Watch biometrics now reach the
+Modulation Layer with zero resident processes on either side of the wire:
+
+```mermaid
+flowchart LR
+    W["Apple Watch<br/>HR · HRV · sleep · workouts"]:::runtime --> HK["iPhone HealthKit<br/>background delivery"]:::runtime
+    HK --> APP["HarloPulse app<br/>HKObserverQuery wakes it"]:::runtime
+    APP --> PUSH["delta push<br/>HMAC auth · 48h window · chunked frames"]:::runtime
+    PUSH --> LD["Mac launchd<br/>holds TCP 48653 · spawns on SYN"]:::substrate
+    LD --> LIS["pulse listen<br/>adopts socket · whitelist only"]:::substrate
+    LIS --> BB["biometric barrier<br/>ADR-0001 · freshness window"]:::substrate
+    BB --> MOD["modulation layer<br/>derived verdict only — D60"]:::substrate
+    MOD --> COACH["coach · status<br/>Claude Desktop / Claude Code"]:::substrate
+
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
+```
+
+Properties, all field-verified on real hardware (iPhone → Mac Studio, June 2026):
+
+- **Push-on-arrival, not polling** — the Watch syncs, HealthKit wakes the app
+  in the background, the app pushes the delta. No schedule, no daemon on the
+  phone, no polling loop anywhere.
+- **0 W on the Mac** (Rule 1) — launchd holds port 48653; `pulse listen` is
+  spawned by the first SYN, drains the connection, exits. KeepAlive is
+  structurally forbidden by the plist tests.
+- **6-word pairing, HMAC-authenticated frames** — the raw token never
+  persists; both sides keep only the derived key (iOS Keychain / 0600 file).
+  Single-command whitelist (`biometric_ingest`), 1 MiB frame cap, 5-minute
+  auth window.
+- **Raw samples never touch disk on the Mac** (Rule 9) — the barrier consumes
+  them in memory and stores only the derived modulation verdict (load,
+  depleted, stale).
+- **Per-type opt-in, default OFF** (ADR-0001 / D65) — nine HealthKit types,
+  each with its own toggle and its own permission sheet.
+- **Siri surface** — "Sync HarloPulse," status snippet, type toggles with
+  clarification dialogs, OpenIntent, onscreen awareness on iOS 18.2+.
+
+Design history: `docs/adr/0002-iphone-sidecar.md` · WWDC26 adoption analyses
+in `docs/frontier/`.
 
 ---
 
@@ -76,8 +232,8 @@ flowchart TB
     SYNCLAYER --> RUNTIME
     MIG -.->|"upgrade path"| PERSISTENCE
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 The persistence layer is the canonical truth. The runtime layer is the
@@ -155,8 +311,8 @@ flowchart TB
     APIB --> PROV
     PROV -.->|"attaches to"| CLP
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 - **Two abstract bases:** `HarloPrim` (root of every Harlo type) and
@@ -200,8 +356,8 @@ flowchart LR
     CP --> OUT_CP
     INMEM -.-> OUT_INMEM
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 - **write_through** — synchronous persistence on every mutation. Used
@@ -295,8 +451,8 @@ flowchart TB
     RED -.->|"halt"| INQ
     RED -.->|"halt"| VER
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 ### Phase 5A · macOS bundle + operator layer
@@ -341,8 +497,8 @@ flowchart LR
     BIO -.->|"allostatic only"| GATE
     GATE --> ACT
 
-    classDef substrate fill:#1a2332,stroke:#4a90a4,color:#e8eef2
-    classDef runtime fill:#d4af37,stroke:#8b7115,color:#1a2332
+    classDef substrate fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef runtime fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 See `docs/SIGNING.md` and `docs/APPLE_SECRETS_SETUP.md` for the
@@ -469,12 +625,12 @@ graph TB
     MEMORY --> MCP
     ENGINE -->|"enriched context"| USER
 
-    classDef user fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
-    classDef tool fill:#0f3460,stroke:#3b82f6,color:#93c5fd
-    classDef engine fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe,font-weight:bold
-    classDef usd fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold,stroke-width:3px
-    classDef memory fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
-    classDef buffer fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
+    classDef user fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
+    classDef tool fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef engine fill:#d4895e,stroke:#a0623d,color:#000000,font-weight:bold
+    classDef usd fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold,stroke-width:3px
+    classDef memory fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef buffer fill:#e6c466,stroke:#a8884a,color:#000000
 ```
 
 ### Exchange Loop
@@ -502,9 +658,9 @@ graph LR
 
     CALL --> PIPELINE --> RESPONSE
 
-    classDef input fill:#7c3aed,stroke:#a78bfa,color:#fff,font-weight:bold
-    classDef step fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
-    classDef output fill:#22c55e,stroke:#4ade80,color:#fff,font-weight:bold
+    classDef input fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
+    classDef step fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef output fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
 ```
 
 ### Cognitive State Machines
@@ -604,16 +760,16 @@ graph TB
     MATCH --> DELEGATES
     DELEGATES -->|"Sync/Execute/Commit"| SUBLAYERS
 
-    classDef route fill:#0f3460,stroke:#3b82f6,color:#93c5fd,font-weight:bold
-    classDef req fill:#1e3a5f,stroke:#60a5fa,color:#bfdbfe
-    classDef red fill:#7f1d1d,stroke:#ef4444,color:#fff,font-weight:bold
-    classDef orange fill:#5c1a1a,stroke:#ef4444,color:#fca5a5
-    classDef consent fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
-    classDef registry fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
-    classDef claude fill:#0f3460,stroke:#3b82f6,color:#93c5fd,font-weight:bold
-    classDef code fill:#1a3a4a,stroke:#06b6d4,color:#a5f3fc,font-weight:bold
-    classDef future fill:#1a1a2e,stroke:#6b7280,color:#9ca3af,stroke-dasharray: 5 5
-    classDef sub fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,stroke-width:2px
+    classDef route fill:#d4895e,stroke:#a0623d,color:#000000,font-weight:bold
+    classDef req fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef red fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
+    classDef orange fill:#e6c466,stroke:#a8884a,color:#000000
+    classDef consent fill:#e6c466,stroke:#a8884a,color:#000000
+    classDef registry fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef claude fill:#d4895e,stroke:#a0623d,color:#000000,font-weight:bold
+    classDef code fill:#d4895e,stroke:#a0623d,color:#000000,font-weight:bold
+    classDef future fill:#d4895e,stroke:#a0623d,color:#000000,stroke-dasharray: 5 5
+    classDef sub fill:#e6c466,stroke:#a8884a,color:#000000,stroke-width:2px
 ```
 
 ### Prediction Pipeline
@@ -657,11 +813,11 @@ graph TB
     ORGANIC -->|"retrain"| TRAINING
     MODEL --> LIVE
 
-    classDef gen fill:#2e1a4a,stroke:#a78bfa,color:#ddd6fe
-    classDef anchor fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,stroke-width:3px
-    classDef organic fill:#4a3a1a,stroke:#f59e0b,color:#fde68a
-    classDef train fill:#0f3460,stroke:#3b82f6,color:#93c5fd
-    classDef live fill:#1a4a3a,stroke:#22c55e,color:#bbf7d0,font-weight:bold
+    classDef gen fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef anchor fill:#d4895e,stroke:#a0623d,color:#000000,stroke-width:3px
+    classDef organic fill:#e6c466,stroke:#a8884a,color:#000000
+    classDef train fill:#d4895e,stroke:#a0623d,color:#000000
+    classDef live fill:#e6c466,stroke:#a8884a,color:#000000,font-weight:bold
 ```
 
 ---

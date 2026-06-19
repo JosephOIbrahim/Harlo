@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        HealthKit access. Apple's 2024+ guidance: declare the
+        `access` array even when empty so the entitlement parses
+        cleanly. Empty array means "use HealthKit but no
+        clinical-record access" — HarloPulse only wants the standard
+        sample types (HealthBridge precedent).
+    -->
+    <key>com.apple.developer.healthkit</key>
+    <true/>
+    <key>com.apple.developer.healthkit.access</key>
+    <array/>
+
+    <!--
+        Background delivery. D64 lesson: enableBackgroundDelivery on
+        iOS 15+ requires this entitlement explicitly or the call fails
+        at runtime. This is what lets HKObserverQuery wake the app for
+        trend-cadence pushes.
+    -->
+    <key>com.apple.developer.healthkit.background-delivery</key>
+    <true/>
+
+    <!--
+        Network posture. HarloPulse opens ONE outbound TCP connection
+        per batch, to the paired Mac's `harlo pulse listen` on the
+        local network. The HealthBridge entitlements promised that any
+        TCP in the Harlo stack would carry an Architect review and an
+        explicit ADR — this is that ADR: docs/adr/0002-iphone-sidecar.md
+        (LAN-only, token-paired, HMAC-authenticated, no cloud relay).
+        iOS apps are sandboxed by default; no sandbox keys needed here.
+    -->
+</dict>
+</plist>

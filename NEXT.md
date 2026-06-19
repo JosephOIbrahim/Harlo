@@ -1,86 +1,81 @@
-# NEXT — Resume point after the Phase 5A landing session
+# NEXT — Resume point after the HarloPulse loop landing (2026-06-10)
 
-State captured at master `c42e82d` (+1 local `ee46533` parked) on 2026-05-24, end of an extended session that closed PR #10 and verified Phase 5A on the Mac Studio.
+State captured at v0.1.6 on master, end of a two-day arc (June 9–10) that took
+HarloPulse from scaffold to a field-verified push-on-arrival loop on real
+hardware, adopted four WWDC26 sessions into the codebase, and merged PRs
+#12–#15.
 
 ## Where we are
 
-**Landed on master:**
-- `f0ce331` — Phase 5A merge (PR #10): macOS bundle, intake CLI, biometric barrier, operator tooling
-- `f074c6a` — verify dev-loop fixes (cargo `.cargo/config.toml`, readiness script yaml-availability, first_run fixture, schedule-test skipif, Makefile compliance-greps filters)
-- `7a9fa8c` — py2app `install_requires` workaround for modern setuptools
-- `c42e82d` — polish: Makefile venv auto-detect, agents/queue archive, SIGNING.md Python 3.14 note
+**The loop is live and autonomous.** Apple Watch → iPhone HealthKit
+(background delivery) → HarloPulse delta push (HMAC, 48h window, chunked) →
+Mac launchd socket (TCP 48653, 0W idle) → `pulse listen` → biometric barrier →
+D60 modulation verdict → `coach`/`status` in Claude Desktop + Claude Code.
+First organic biometrics flowed 2026-06-10 15:15 local; Desktop's coach
+surfaces the modulation block.
 
-**Verified locally:** `make verify` (no PYTHON= override needed — auto-detects `.venv314/`) → cargo 42/42, pytest 1365 passed / 11 skipped, compliance greps clean, `harlo doctor --strict` clean, signing-readiness 27/27 READY.
+**Landed this arc (v0.1.3 → v0.1.6):**
+- PR #12 — HarloPulse scaffold (ADR-0002): pairing CLI, listener, iOS app
+- PR #13 — App Intents P0: Sync/Status/Toggle intents, snippet view, shortcuts
+- PR #14 — frontier docs: App Intents adoption plan (12-pattern matrix),
+  FM provider review (+ live-verified `apple_fm_sdk` Python addendum),
+  code-along addendum, HealthKit collaboration report
+- PR #15 — code-along P1: OpenIntent + onscreen awareness (iOS 18.2+)
+- Direct to master: device-deploy fixes, host-candidate fix (scutil Bonjour),
+  1 MiB frame fix (48h lookback + 500-sample chunks), launchd socket
+  activation for `pulse listen` + `com.harlo.pulse` plist + structural tests
 
-**Verified on CI:** Required checks all green. py2app builds Harlo.app on the macos-15 runner.
+**Verified:** signed device build on Xcode 27 toolchain, installed + launched
+on the iPhone; lean-bundle suite 1,381 passed / 5 skipped; criterion
+benchmarks landed in README (100k-trace search 0.844 ms median — Rule 3 holds
+with 2.4× headroom).
 
-## What's parked
+## Toolchain facts (will bite again if forgotten)
 
-### CI workflow hardenings — abandoned this session
-
-Two `macos-build.yml` improvements were drafted as a single commit on a local parked branch and then abandoned because the gh CLI OAuth App on `joe002` couldn't hold `workflow` scope (org policy or app config — `gh auth refresh -s workflow` completed the device-code authorize but server-side scopes stayed at `gist, read:org, repo`):
-
-1. **Master push trigger** (paths-filtered) so regressions land-detect immediately instead of waiting for a PR or tag
-2. **Graceful-skip** of the signing chain when Apple Developer secrets are absent, so `workflow_dispatch` + master pushes go green as build canaries without forcing secrets to exist first
-
-The branch and commit have been deleted. If these turn out to matter later, recreating the 40-line YAML diff takes ~30 minutes — the bigger prereq is a different auth path (fine-grained PAT with Workflows: R+W, or browser edit at <https://github.com/JosephOIbrahim/Harlo/edit/master/.github/workflows/macos-build.yml>).
-
-### Apple Developer secrets — 8 of them, none provisioned
-
-Required for `macos-build.yml`'s sign / notarize / DMG steps. Until these land, tag pushes (`v*.*.*`) will skip the signing chain on the new graceful-skip path — i.e., release pipeline cannot ship signed artifacts.
-
-**To resume:** work through `docs/APPLE_SECRETS_SETUP.md` (operator checklist, ~30–60 min, browser-heavy). Then `gh secret list` should show all 8 names; `gh workflow run macos-build.yml -f dry_run=false` validates end-to-end.
-
-## What's freshly available
-
-### Predictor artifacts — tracked via git-lfs
-
-`models/cognitive_predictor_v1.joblib` (385 KB) and `data/trajectories_10k.jsonl` (237 MB) are now committed via git-lfs (`.gitattributes` tracks `models/*.joblib` and `data/*.jsonl`). Trained this session: XGBoost MultiOutputRegressor, 206 686 train / 25 836 val / 25 836 test rows, 111 features. Unblocks the four tests marked `requires_predictor_model`.
-
-**Fresh-clone path (primary):**
-
-```sh
-git lfs install   # one-time, per machine
-git clone https://github.com/JosephOIbrahim/Harlo.git
-# .joblib + .jsonl materialize as real files, not LFS pointers
-```
-
-Contributors without `git lfs install` get tiny pointer files (~130 bytes); predictor-dependent tests (`test_sprint*`, `test_recalibration`, the schedule e2e) skip cleanly when the .joblib content is missing, so the lint loop stays green either way.
-
-**Retrain path (fallback):** rerun against new training data or after schema changes —
-
-```sh
-make regen-predictor      # generates trajectories if missing, then retrains the .joblib
-make regen-trajectories   # just the data step
-```
-
-LFS quota: 237 MB used of GitHub's 1 GB free-tier allowance.
-
-### FAMILY-hours routing — investigated and fixed (was actually a migration bug)
-
-Earlier this session, `tests/test_schedule/test_e2e_mcp_bridge.py::test_enrich_runs_full_exchange_with_clock_substitution` was marked `skipif(not predictor.exists())` under the assumption the failure was missing-artifact, then re-marked `xfail` after the predictor regen didn't fix it. Final investigation showed the failure had nothing to do with routing OR the predictor.
-
-Real cause: `python/harlo/session/first_run.py`'s legacy migration skipped any top-level item where `target.exists()`. Engine bootstrap (via `schedule_migrate.migrate_inline`) writes a stub `schedule.usda` at `DATA_DIR/stages/` *before* `first_run` migration runs, so `first_run` saw `stages/` already existed and skipped it — leaving Joe's legacy 3,073-byte `schedule.usda` (with Saturday all-day FAMILY) unmigrated and the empty 198-byte stub in place. `evaluate_schedule` sees `timezone=""` and falls back to `WORK` (`src/schedule.py:132`), so the FAMILY → restorer override at `src/computations/compute_routing.py:91-92` never fires.
-
-Fix: `first_run.py` now uses `shutil.copytree(src, dst, dirs_exist_ok=True)` for directory items so engine-bootstrap stubs get overwritten by legacy content. The first-run marker contract guarantees subdir contents at migration time are only auto-generated stubs, not user data — overwriting is safe. Top-level files (twin.db, observations.db, …) still preserve the don't-clobber semantics. Regression test added at `tests/test_session/test_first_run.py::TestFirstRun::test_migration_overwrites_engine_stubs`. The xfail marker on the schedule e2e test was removed — it passes now.
-
-CLAUDE.md Rule 28 framing and `mcp_server.py:415` are correct as written; the documented "FAMILY → restorer" behavior IS what the engine implements when the schedule is loaded. The earlier "stale docs" framing was based on a misdiagnosis.
-
-## Known fragilities (informational, not blockers)
-
-- **macOS dev-loop on Python 3.14:** `.venv314` is 3.14; py2app's modulegraph 0.19.7 hits AST recursion on 3.14, so local `make build-macos` needs a separate 3.12 venv. CI is 3.12. Documented in `docs/SIGNING.md` "Local build environment" section.
-- **macos-build's `build` job is `continue-on-error: true` for PRs.** Advisory canary by design — failures show in the UI but don't block merge. Strict on tag pushes.
-- **`agents/queue/done/`** holds the completed 0001/0002/0003 task descriptors from PR #10. Harness globs non-recursively, so they're out of the dispatch loop.
+- Xcode 27 beta lives at `/Applications/Xcode-beta.app`; `xcode-select` still
+  points at CLT (no sudo policy) — prefix builds with
+  `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer`.
+- `xcodegen` is a source build at `/opt/homebrew/bin/xcodegen` (brew refused
+  on macOS 27). Do NOT re-add an `info:` block to `project.yml` — it
+  regenerates Info.plist and destroys the HealthKit usage strings.
+- Device builds need `-allowProvisioningUpdates` AND
+  `-allowProvisioningDeviceRegistration` the first time; after that, plain
+  GUI-equivalent builds work.
+- The lean venv (`.venv312`) excludes the ML stack by design:
+  `test_provider`, `test_encoder/test_semantic`, `test_onnx`, one tactical
+  test fail on ImportError (`anthropic`, `sentence_transformers`). Not
+  regressions — the full bundle runs them.
 
 ## Next-session candidates, ranked
 
-1. **Apple secrets** — 30–60 min, browser. Unblocks the full signing pipeline. Walkthrough: `docs/APPLE_SECRETS_SETUP.md`.
-2. **Tag `v0.1.0`** — after #1 lands. Produces the first notarized stapled Harlo.app DMG attached to a draft GitHub release.
-3. **Phase 5B (HealthBridge signing)** — register `com.harlo.healthbridge` in the portal + enable HealthKit capability + extend CI workflow with the second build job. `macos/HarloHealthBridge/` is already fully scaffolded; needs portal-side activation.
-4. **Investigate the `test_injection` segfault on Python 3.14** — pre-existing flake during full `make verify` runs (USD + tqdm threading interaction). Doesn't affect CI (Python 3.12) or isolated test runs. Lower priority than the lanes above.
+1. **v0.1.6 follow-through** — verify the GitHub release renders, badges
+   resolve, mermaid loop diagram renders on github.com.
+2. **Apple Developer secrets** (carried) — 8 secrets per
+   `docs/APPLE_SECRETS_SETUP.md`; unblocks signed/notarized DMG on tag push.
+3. **HarloGlance** (P1, adoption plan §5) — Mac menu-bar status app; py2app
+   can't host App Intents, needs a small Swift host.
+4. **HdAppleFM spike** — pure-Python Foundation Models delegate via
+   `apple_fm_sdk` (feasibility proven live 2026-06-09); System 1/System 2
+   mapping to `reasoningLevel`.
+5. **Pulse plist installer wiring** — materialize `com.harlo.pulse.plist`
+   via `scripts/macos_install_daemon.py` (rides Phase 5B / D68).
+6. **CHANGELOG.md backfill** for the v0.1.x line (D77 leftover).
+7. **Icon Composer pass** — HarloPulse app icon; Reality Composer Pro
+   brain.usda render-the-mind demo (parked creative).
+8. **WWDC follow-up reminder** — Monday June 15, 10:00 AM calendar slot
+   already exists; agenda: assistant-schema gap, FM provider timeline.
+
+## Known fragilities (carried, still true)
+
+- macos-build `build` job is advisory on PRs (continue-on-error), strict on
+  tag pushes. Without Apple secrets, tag pushes skip the signing chain.
+- py2app needs the 3.12 venv (`make build-macos`); modulegraph breaks on 3.14.
+- gh CLI OAuth on this machine cannot hold `workflow` scope — workflow-file
+  edits need the browser or a fine-grained PAT.
 
 ## Pointers
 
-- Canonical signing runbook: [`docs/SIGNING.md`](docs/SIGNING.md)
-- Operator checklist (this session's deliverable): [`docs/APPLE_SECRETS_SETUP.md`](docs/APPLE_SECRETS_SETUP.md)
-- Phase 5B preview: `docs/SIGNING.md` § "Phase 5B preview (not yet active)"
+- Loop design history: `docs/adr/0002-iphone-sidecar.md`
+- WWDC26 analyses: `docs/frontier/`
+- Signing runbook: `docs/SIGNING.md` · operator checklist: `docs/APPLE_SECRETS_SETUP.md`
+- CTO review of the orchestrated sprint: `docs/CTO_REVIEW_2026-06-09.md`

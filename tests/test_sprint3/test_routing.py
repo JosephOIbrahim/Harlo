@@ -2,12 +2,12 @@
 
 import pytest
 
-from src.computations.compute_routing import compute_routing
-from src.consent import ConsentManager
-from src.delegate_claude import HdClaude
-from src.delegate_claude_code import HdClaudeCode
-from src.delegate_registry import DelegateRegistry
-from src.schemas import (
+from harlo.engine.computations.compute_routing import compute_routing
+from harlo.engine.consent import ConsentManager
+from harlo.engine.delegate_claude import HdClaude
+from harlo.engine.delegate_claude_code import HdClaudeCode
+from harlo.engine.delegate_registry import DelegateRegistry
+from harlo.engine.schemas import (
     Burnout,
     BurstPhase,
     CognitiveObservation,

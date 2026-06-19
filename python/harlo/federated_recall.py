@@ -116,8 +116,14 @@ def _query_warm(db_path: str, query: str, limit: int = 10) -> list[RecallResult]
         return []
 
     try:
-        from harlo.encoder import semantic_recall
-        result = semantic_recall(db_path, query, depth="normal")
+        try:
+            from harlo.encoder import semantic_recall
+            result = semantic_recall(db_path, query, depth="normal")
+        except ImportError:
+            # Lean-bundle degrade: route to Rust lexical encoder (identical
+            # result shape) instead of silently dropping the warm tier.
+            from harlo import hippocampus
+            result = hippocampus.py_recall(query, "normal", db_path)
         traces = result.get("traces", [])
 
         results = []

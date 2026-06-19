@@ -21,6 +21,7 @@ ALL_PLISTS = {
     "com.harlo.daemon": _PLIST_DIR / "com.harlo.daemon.plist",
     "com.harlo.agents": _PLIST_DIR / "com.harlo.agents.plist",
     "com.harlo.healthbridge": _PLIST_DIR / "com.harlo.healthbridge.plist",
+    "com.harlo.pulse": _PLIST_DIR / "com.harlo.pulse.plist",
 }
 
 # Only HealthBridge is permitted KeepAlive (ADR-0001).
@@ -84,6 +85,18 @@ class TestDaemonAndAgents:
                 f"{label}/{sock_name}: SockPathName must be a path"
 
 
+class TestSocketsContract:
+    """D69: launch_activate_socket(3) looks up the plist Sockets key by
+    name — drift between the plist and the code constant is an instant
+    silent activation failure."""
+
+    def test_daemon_sockets_key_matches_code_constant(self):
+        from harlo.daemon.config import LAUNCHD_SOCKET_NAME
+        plist = plistlib.loads(ALL_PLISTS["com.harlo.daemon"].read_bytes())
+        sockets = plist["Sockets"]
+        assert list(sockets.keys()) == [LAUNCHD_SOCKET_NAME]
+
+
 class TestBundlePathInvariant:
     """ProgramArguments[0] must point at a real bundle path so that
     macos_install_daemon.py can plistlib-rewrite it on install."""
@@ -102,3 +115,32 @@ class TestBundlePathInvariant:
         prog = plist["ProgramArguments"][0]
         assert "HarloHealthBridge" in prog, \
             "healthbridge: ProgramArguments[0] should reference HarloHealthBridge.app"
+
+
+class TestPulseSocketActivation:
+    """com.harlo.pulse: launchd-held TCP socket, name parity with the
+    adoption call in pulse_listen (field-proven 2026-06-10: SYN ->
+    launchd spawn -> 'Listening on launchd socket' -> accepted=1)."""
+
+    def _plist(self):
+        with (_PLIST_DIR / "com.harlo.pulse.plist").open("rb") as fh:
+            return plistlib.load(fh)
+
+    def test_sockets_key_matches_adoption_name(self):
+        plist = self._plist()
+        assert "HarloPulse" in plist.get("Sockets", {}), (
+            "Sockets key must be 'HarloPulse' — pulse_listen adopts via "
+            "adopt_launchd_socket('HarloPulse'); name parity is load-bearing"
+        )
+
+    def test_tcp_port_matches_default(self):
+        from harlo.cli.commands.pulse import DEFAULT_PORT
+        plist = self._plist()
+        sock = plist["Sockets"]["HarloPulse"]
+        assert sock["SockServiceName"] == str(DEFAULT_PORT)
+        assert sock["SockType"] == "stream"
+
+    def test_no_keepalive(self):
+        # Rule 1: launchd re-arms the socket after clean exit; KeepAlive
+        # would make this a resident process for no reason.
+        assert "KeepAlive" not in self._plist()

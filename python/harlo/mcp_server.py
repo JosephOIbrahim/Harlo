@@ -4,7 +4,7 @@ Wraps the Twin's core functions (recall, store, coach, patterns, session)
 as MCP tools over stdio transport. v8.0: No LLM client code — the Actor
 (Claude) reasons, the Twin (Observer) stores and projects.
 
-Bridges into the v9 cognitive_engine (src/) via a lazy singleton: every
+Bridges into the v9 cognitive engine (harlo.engine) via a lazy singleton: every
 tool call runs through process_exchange to keep exchange_index monotonic
 and the schedule state up to date. Engine failures degrade gracefully
 to v8-only behavior — every tool body still works without the engine.
@@ -15,6 +15,7 @@ from __future__ import annotations
 import atexit
 import json
 import logging
+import os
 import threading
 import time
 import uuid
@@ -23,11 +24,18 @@ from mcp.server import FastMCP
 
 # Resolve paths via the single source of truth (Rule: no divergent
 # state directories between CLI and MCP entry points).
-from harlo.daemon.config import DATA_DIR, DB_PATH as _DB_PATH, PROJECT_ROOT
+from harlo.daemon.config import DATA_DIR, DB_PATH as _DB_PATH
 
 DB_PATH = str(_DB_PATH)
 TRUST_DELTA_VERIFIED = 0.02
 TRUST_DELTA_REJECTED = -0.05
+
+# CTO review D53: the USD-proof-trial verifier tools (compose_demo,
+# lossless_demo, anchor_demo, p5_state_demo, persist_stage, decision)
+# are NOT registered on the production MCP surface unless explicitly
+# enabled. wave1_harness sets this; Claude Desktop should not see
+# verifier surface in its tool list.
+_TRIAL_TOOLS = os.environ.get("HARLO_TRIAL_TOOLS") == "1"
 
 # ─── v9 cognitive engine bridge ─────────────────────────────────────────
 # Lazy singleton; first tool call initializes. Init failure → False
@@ -54,11 +62,7 @@ def _consume_banner() -> str:
         if _banner_shown:
             return ""
         try:
-            import sys as _sys
-            _root = str(PROJECT_ROOT)
-            if _root not in _sys.path:
-                _sys.path.insert(0, _root)
-            from src.branding import HARLO_BANNER
+            from harlo.engine.branding import HARLO_BANNER
             _banner_shown = True
             return HARLO_BANNER
         except Exception:
@@ -78,14 +82,15 @@ def _get_engine():
     with _engine_lock:
         if _engine is None:
             try:
-                # src/ is not pip-installed; ensure it's importable
-                import sys as _sys
-                _root = str(PROJECT_ROOT)
-                if _root not in _sys.path:
-                    _sys.path.insert(0, _root)
-                from src.cognitive_engine import CognitiveEngine
+                # D56: the engine is a packaged harlo submodule now —
+                # no sys.path surgery, ships in wheels and the bundle.
+                # stage_dir comes from engine_config so the
+                # HARLO_STAGE_DIR override is honored end-to-end
+                # (default is identical: DATA_DIR / "stages").
+                from harlo.engine import engine_config
+                from harlo.engine.cognitive_engine import CognitiveEngine
                 _engine = CognitiveEngine(
-                    stage_dir=str(DATA_DIR / "stages"),
+                    stage_dir=engine_config.STAGE_DIR,
                 )
                 atexit.register(_engine.close)
                 logging.getLogger(__name__).info(
@@ -136,6 +141,21 @@ def _v9_block(enrichment) -> dict:
             "prediction": enrichment.get("prediction"),
         }
     }
+
+
+def _modulation_block() -> dict:
+    """D60: surface the persisted biometric modulation verdict to MCP
+    consumers (coach/status). Empty dict when no bridge has ever pushed
+    — absence of the block means 'no biometric signal', not an error."""
+    try:
+        from harlo.modulation.state_store import read_modulation_state
+
+        state = read_modulation_state(DB_PATH)
+    except Exception:
+        return {}
+    if state is None:
+        return {}
+    return {"modulation": state}
 
 
 def _v9_status_block(enrichment) -> dict:
@@ -243,10 +263,17 @@ def twin_recall(query: str, depth: str = "normal") -> str:
 
     try:
         try:
-            from encoder import semantic_recall
+            try:
+                from encoder import semantic_recall
+            except ImportError:
+                from harlo.encoder import semantic_recall
+            result = semantic_recall(DB_PATH, query, depth=depth)
         except ImportError:
-            from harlo.encoder import semantic_recall
-        result = semantic_recall(DB_PATH, query, depth=depth)
+            # Lean-bundle degrade: sentence_transformers is excluded from the
+            # bundle on purpose. Route to the Rust lexical encoder, which
+            # returns an identically-shaped dict (context/confidence/traces).
+            from harlo import hippocampus
+            result = hippocampus.py_recall(query, depth, str(DB_PATH))
         response = {
             "status": "ok",
             "context": result.get("context", ""),
@@ -298,6 +325,207 @@ def query_past_experience(query: str, limit: int = 10) -> str:
         return json.dumps(response, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
+
+
+def p5_state_demo() -> str:
+    """Author the SPEC P5 customData state-tracking scene on the live stage.
+
+    Cycle 5 verifier-side: authors p5_base + p5_overlay layers with 3 prims
+    (A only-in-base = Unchanged, B in-both = Edited, C only-in-overlay =
+    New), then a derived p5_tags layer that walks the analysis prim stack
+    and writes `customData["state"]` per prim. Composed root has
+    subLayerPaths=[tags, overlay, base]. The verifier reads customData via
+    normal pxr composition and asserts it matches the actual prim-stack
+    state (recomputed independently).
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("p5_state_demo", {})
+    try:
+        from harlo.usd_lite.state_tracking_demo import author_p5_state_demo
+        # D53: demo scenes live under trial/, never beside production stages/.
+        base_dir = str(DATA_DIR / "trial")
+        result = author_p5_state_demo(base_dir)
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
+def anchor_demo() -> str:
+    """Author the SPEC §F2 anchor structural-immunity scene on the live stage.
+
+    Cycle 4 verifier-side: authors an `anchor_layer.usda` (always-strongest
+    sublayer holding the 4 anchor prims), a `base_layer.usda` (weakest, holding
+    non-anchor cognitive defaults), four delta layers (default / stress / rest
+    + ONE adversarial that explicitly authors an opinion on an anchor path),
+    plus per-profile composed roots with `subLayerPaths=[anchor, delta_X, base]`
+    and a clean composed root for the reference clean_anchor_hash.
+
+    The verifier (wave1_harness.check_anchor_immunity) asserts (a) anchor hash
+    invariance across all profiles including adversarial, (b) non-anchor hash
+    variation across modulating profiles (deltas non-vacuous), (c) the
+    adversarial layer actually authored its attack, (d) the composed
+    adversarial stage resolves the attacked anchor to its CLEAN value
+    — proving structural immunity, not parametric protection.
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("anchor_demo", {})
+    try:
+        from harlo.usd_lite.anchor_demo import author_anchor_immunity_demo
+        # D53: demo scenes live under trial/, never beside production stages/.
+        base_dir = str(DATA_DIR / "trial")
+        result = author_anchor_immunity_demo(base_dir)
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
+def lossless_demo() -> str:
+    """Author the SPEC §F2 thesis-test scene on the live `real_usd` stage.
+
+    Cycle 3 verifier-side: authors clean baseline + delta overlay as separate
+    USD sublayers tagged via customLayerData["layer_role"], composes them via
+    root subLayerPaths, plus a clean-only composed root for the reference
+    clean_hash. Returns the reference clean_hash computed through the same
+    `reconstruct_clean` path the verifier uses (apples vs apples for SHA256
+    bit-identity). The verifier reads the actual reconstruction and asserts
+    `SHA256(reconstruct_clean(composed_with_delta)) == clean_hash` — bit-
+    identical, NOT float-tolerant.
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("lossless_demo", {})
+    try:
+        from harlo.usd_lite.lossless_demo import author_lossless_demo
+        # D53: demo scenes live under trial/, never beside production stages/.
+        base_dir = str(DATA_DIR / "trial")
+        result = author_lossless_demo(base_dir)
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
+def compose_demo() -> str:
+    """Author the SPEC §F1 thesis-test scene on the live `real_usd` stage.
+
+    Cycle 2 verifier-side: authors LOCAL + VARIANT + SPECIALIZE arcs on three
+    sibling test prims under /Brain/CompositionDemo and saves them to a
+    dedicated .usda. The verifier (wave1_harness.check_native_composition)
+    then opens the file in a cold pxr process and reads pxr's RESOLVED
+    attribute value at each prim — testing the USD-native-priority thesis
+    on real composition semantics, not on a Python IntEnum proxy.
+
+    Returns JSON with: path (the .usda written), attribute (name being
+    composed), scenarios (list of {path, arcs, expected_winner,
+    expected_value}). The verifier asserts pxr's resolution against
+    expected_value at each scenario.
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("compose_demo", {})
+    try:
+        from harlo.usd_lite.composition_demo import author_native_composition_demo
+        # D53: demo scenes live under trial/, never beside production stages/.
+        stage_path = str(DATA_DIR / "trial" / "composition_demo.usda")
+        result = author_native_composition_demo(stage_path)
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
+def decision(action: str, gate_status: str = "inhibited") -> str:
+    """Record an Actor-driven decision; queues a MotorPrim for the next
+    persist_stage. Cycle 6 — Path C motor-surface wire-up.
+
+    Spawns a MotorPrim with the caller's action string. gate_status
+    defaults to "inhibited" per Rule 23 (Basal Ganglia inhibit-by-default).
+    The MotorPrim is queued module-locally; the next `persist_stage` call
+    drains the queue and authors the MotorPrims under /Brain/Motor/.
+
+    Basal_ganglia execution gating is a separate parked decision.
+    Until it lands, gate_status is CLAMPED to "inhibited" (CTO review
+    D52; Rule 23 inhibition-default / Rule 26): requests for any other
+    gate_status are rejected, never silently authored.
+    """
+    if gate_status != "inhibited":
+        return json.dumps({
+            "status": "error",
+            "error": (
+                f"gate_status={gate_status!r} rejected: gate_status is "
+                "clamped to 'inhibited' until Basal Ganglia gating is "
+                "wired (Rule 23 inhibition-default; CTO review D52)"
+            ),
+        })
+    _ensure_data_dir()
+    enrichment = _enrich("decision",
+                         {"action": action, "gate_status": gate_status})
+    try:
+        from harlo.usd_lite.persistence import queue_motor_action
+        entry = queue_motor_action(action, gate_status)
+        response = {"status": "ok", **entry}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
+def persist_stage() -> str:
+    """Persist the current cognitive state to a USD .usda file.
+
+    Explicit persist entrypoint for the USD-proof trial verifier
+    (`wave1_harness.check_populated_hierarchy`). Assembles a BrainStage from
+    in-process state and writes via `harlo.usd_lite.persistence.write`. The
+    v9 engine init path is NOT modified — persistence is an operation invoked
+    at known times, not a side-effect of init.
+
+    Returns a JSON object with: path (the .usda file written), tier_counts
+    (session/entity/decision prim counts), decision_deferred (bool), and
+    decision_deferred_reason (str).
+    """
+    _ensure_data_dir()
+    enrichment = _enrich("persist_stage", {})
+    try:
+        from harlo.usd_lite.persistence import persist_current_brain
+        result = persist_current_brain(DB_PATH, DATA_DIR / "stages")
+        response = {"status": "ok", **result}
+        response.update(_v9_block(enrichment))
+        return json.dumps(response, default=str)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+        })
+
+
+# D53: trial/verifier tools register ONLY when HARLO_TRIAL_TOOLS=1.
+# Production MCP clients (Claude Desktop) never see this surface.
+if _TRIAL_TOOLS:
+    server.tool(name="p5_state_demo")(p5_state_demo)
+    server.tool(name="anchor_demo")(anchor_demo)
+    server.tool(name="lossless_demo")(lossless_demo)
+    server.tool(name="compose_demo")(compose_demo)
+    server.tool(name="decision")(decision)
+    server.tool(name="persist_stage")(persist_stage)
 
 
 _hot_store = None
@@ -439,6 +667,7 @@ def twin_coach(session_id: str | None = None) -> str:
             ctx = enrichment.get("cognitive_context") or ""
             if ctx:
                 response["cognitive_context"] = ctx
+        response.update(_modulation_block())
         response.update(_v9_status_block(enrichment))
         return json.dumps(response, default=str)
     except Exception as e:
@@ -507,7 +736,18 @@ def twin_session_status() -> str:
         response["status"] = "ok"
         response["active_sessions"] = [s.to_dict() for s in active]
         response["count"] = len(active)
+        response.update(_modulation_block())
         response.update(_v9_status_block(enrichment))
+        # biometric_prior Energy seed (Phase 4). A missing prior must NEVER
+        # block session startup — default behavior is unchanged when absent.
+        try:
+            from harlo.biometric_prior.readpath import seed_block
+
+            seed = seed_block()
+            if seed is not None:
+                response["biometric_seed"] = seed
+        except Exception:
+            pass
         return json.dumps(response, default=str)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
@@ -621,10 +861,7 @@ def _print_version() -> None:
     """Print the colored HARLO banner + version on stdout. CLI --version path."""
     import sys as _sys
     try:
-        _root = str(PROJECT_ROOT)
-        if _root not in _sys.path:
-            _sys.path.insert(0, _root)
-        from src.branding import HARLO_BANNER
+        from harlo.engine.branding import HARLO_BANNER
     except Exception:
         HARLO_BANNER = "HARLO"
     try:

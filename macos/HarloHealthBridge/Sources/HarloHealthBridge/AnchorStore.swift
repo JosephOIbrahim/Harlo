@@ -8,8 +8,10 @@ final class AnchorStore {
     private let path: URL
 
     init() {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        self.path = base.appendingPathComponent("Harlo/healthkit_anchor.bin")
+        // D62: anchor lives in the App Group container (the entitlements
+        // comment always promised this) so the main app's "dignified
+        // revocation" path (ADR-0001 constraint 5) can find and delete it.
+        self.path = SharedPaths.anchorURL
         try? FileManager.default.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
     }
 

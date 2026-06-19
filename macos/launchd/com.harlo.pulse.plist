@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Socket-activated HarloPulse listener — the Mac half of the
+        push-on-arrival loop (ADR-0002): the iPhone pushes whenever
+        HealthKit hands it new samples; launchd holds TCP 48653 and
+        spawns `pulse listen` on the first SYN. The listener adopts the
+        socket via launch_activate_socket("HarloPulse") (the Sockets
+        key below — name parity is load-bearing, same as the daemon's
+        "HarloCommand"), serves until idle, exits 0. Rule 1: 0W between
+        Watch syncs.
+
+        No KeepAlive on purpose. launchd re-arms the socket after every
+        clean exit; the phone's next push respawns us.
+
+        D70 NOTE: launchd performs NO tilde expansion — the installer
+        (scripts/macos_install_daemon.py) rewrites paths when
+        materializing into ~/Library/LaunchAgents. ProgramArguments[0]
+        is the canonical bundle path; dev installs rewrite it.
+    -->
+    <key>Label</key>
+    <string>com.harlo.pulse</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Applications/Harlo.app/Contents/MacOS/Harlo</string>
+        <string>pulse</string>
+        <string>listen</string>
+        <string>--timeout</string>
+        <string>120</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HARLO_DATA_DIR</key>
+        <string>~/Library/Application Support/Harlo</string>
+    </dict>
+
+    <key>Sockets</key>
+    <dict>
+        <key>HarloPulse</key>
+        <dict>
+            <key>SockServiceName</key>
+            <string>48653</string>
+            <key>SockType</key>
+            <string>stream</string>
+            <key>SockFamily</key>
+            <string>IPv4</string>
+        </dict>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>~/Library/Logs/Harlo/pulse.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>~/Library/Logs/Harlo/pulse.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+</dict>
+</plist>

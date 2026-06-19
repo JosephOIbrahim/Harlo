@@ -98,6 +98,10 @@ def startup_cleanup() -> dict:
 def graceful_shutdown() -> dict:
     """Close all active sessions and fire DMN teardown for each.
 
+    Signal-path shutdown (SIGTERM/SIGINT: launchctl bootout, system
+    shutdown, explicit user stop). For the idle path use
+    idle_shutdown() — closing all sessions on idle was D72's bug.
+
     Returns a report dict with shutdown results.
     """
     report = {
@@ -117,6 +121,28 @@ def graceful_shutdown() -> dict:
     except Exception:
         pass  # Best effort — don't crash on shutdown
 
+    remove_pid_file()
+    return report
+
+
+def idle_shutdown() -> dict:
+    """Rule-1 idle exit: expire only stale sessions.
+
+    Active sessions are PRESERVED — session state lives in SQLite and
+    must survive across daemon activations (D72). Contrast with
+    graceful_shutdown(), which closes ALL sessions and is reserved for
+    the signal path (SIGTERM/SIGINT: launchctl bootout, system
+    shutdown, explicit user stop) where the daemon is going away for
+    real and Rule S6 teardown should fire now.
+    """
+    report = {"expired_sessions": [], "active_preserved": 0}
+    try:
+        from ..session import SessionManager
+        mgr = SessionManager(db_path=str(DB_PATH), timeout_s=SESSION_TIMEOUT_S)
+        report["expired_sessions"] = mgr.close_expired()   # fires DMN per expired session
+        report["active_preserved"] = len(mgr.list_active())
+    except Exception:
+        pass  # best effort — never crash on shutdown
     remove_pid_file()
     return report
 

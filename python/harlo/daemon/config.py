@@ -16,6 +16,7 @@ source / app bundle — they ship with the code, not the user state.
 
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
@@ -75,7 +76,22 @@ HEALTHKIT_ANCHOR_PATH = DATA_DIR / "healthkit_anchor.bin"
 AGENTS_DIR = DATA_DIR / "agents"
 AGENTS_QUEUE_DIR = AGENTS_DIR / "queue"
 AGENTS_OUTPUTS_DIR = AGENTS_DIR / "outputs"
-TEMP_DIR = Path(os.environ.get("TMPDIR", "/dev/shm" if os.name != "nt" else os.environ.get("TEMP", ".")))
+def _detect_temp_dir(env: os._Environ | dict = os.environ,
+                     shm: Path = Path("/dev/shm")) -> Path:
+    """Rule-30 temp location. Order: TMPDIR override → /dev/shm when it
+    exists (Linux, RAM-backed — Rule 30's preferred spirit) →
+    tempfile.gettempdir() (macOS $TMPDIR /var/folders/..., Windows
+    %TEMP%). /dev/shm does not exist on macOS (D73); the old fallback
+    made every Rule-30 dump silently fail there. Injectable for tests."""
+    override = env.get("TMPDIR")
+    if override:
+        return Path(override)
+    if shm.is_dir():
+        return shm
+    return Path(tempfile.gettempdir())
+
+
+TEMP_DIR = _detect_temp_dir()
 
 CONFIG_DIR = PROJECT_ROOT / "config"
 PROFILE_PATH = CONFIG_DIR / "default_profile.yaml"
@@ -104,6 +120,9 @@ SESSION_TIMEOUT_S = int(os.environ.get("TWIN_SESSION_TIMEOUT", "1800"))
 # Daemon settings
 PID_FILE = DATA_DIR / "twind.pid"
 DAEMON_IDLE_TIMEOUT_S = 30  # Exit after this many seconds idle (Rule 1)
+
+# launchd Sockets-dictionary key — MUST match macos/launchd/com.harlo.daemon.plist
+LAUNCHD_SOCKET_NAME = "HarloCommand"
 
 
 def ensure_data_dirs():

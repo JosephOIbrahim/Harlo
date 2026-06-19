@@ -17,7 +17,7 @@ import sys
 
 def main() -> int:
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from src.schedule_migrate import migrate_inline
+    from harlo.engine.schedule_migrate import migrate_inline
 
     if len(sys.argv) > 2:
         print("usage: migrate_schedule_sublayer.py [STAGE_DIR]", file=sys.stderr)

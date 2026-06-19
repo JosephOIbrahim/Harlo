@@ -2,10 +2,10 @@
 
 import pytest
 
-from src.delegate_base import DelegateResult, TaskContext
-from src.delegate_claude import HdClaude
-from src.delegate_claude_code import HdClaudeCode
-from src.delegate_registry import DelegateRegistry
+from harlo.engine.delegate_base import DelegateResult, TaskContext
+from harlo.engine.delegate_claude import HdClaude
+from harlo.engine.delegate_claude_code import HdClaudeCode
+from harlo.engine.delegate_registry import DelegateRegistry
 
 
 class TestHdClaude:

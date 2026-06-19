@@ -115,7 +115,10 @@ class TestLaunchdPrompt:
         with patch.object(sys, "platform", "darwin"):
             assert first_run.prompt_install_launchd() is False
 
-    def test_no_tty_stamps_marker_and_returns_false(self, isolated_data_dir):
+    def test_no_tty_returns_false_without_stamping(self, isolated_data_dir):
+        """D55: a silent (no-TTY) launch must NOT permanently suppress
+        the onboarding offer. The marker stays absent so the next
+        interactive launch still prompts."""
         tmp_path, first_run = isolated_data_dir
         out = io.StringIO()
         with patch.object(sys, "platform", "darwin"), \
@@ -123,8 +126,7 @@ class TestLaunchdPrompt:
             result = first_run.prompt_install_launchd(out=out)
         assert result is False
         marker = tmp_path / ".launchd_offered"
-        assert marker.exists()
-        assert "no-tty" in marker.read_text()
+        assert not marker.exists()
 
     def test_auto_accept_false_records_decline(self, isolated_data_dir):
         tmp_path, first_run = isolated_data_dir
@@ -187,3 +189,60 @@ class TestLaunchdPrompt:
         assert result is False
         marker = tmp_path / ".launchd_offered"
         assert "failed: 42" in marker.read_text()
+
+
+class TestLegacyObservationMerge:
+    """D56/B2 — one-shot merge of the pre-D56 repo-tree observation buffer."""
+
+    def _make_buffer(self, path, rows):
+        import sqlite3
+        conn = sqlite3.connect(str(path))
+        conn.execute(
+            """CREATE TABLE observation_buffer (
+                obs_id TEXT PRIMARY KEY,
+                observation_json TEXT NOT NULL,
+                priority REAL NOT NULL DEFAULT 0.0,
+                partition TEXT NOT NULL DEFAULT 'organic',
+                surprise_score REAL NOT NULL DEFAULT 0.0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"""
+        )
+        conn.executemany(
+            "INSERT INTO observation_buffer (obs_id, observation_json) VALUES (?, ?)",
+            rows,
+        )
+        conn.commit()
+        conn.close()
+
+    def test_merge_is_lossless_and_idempotent(self, isolated_data_dir, monkeypatch):
+        import sqlite3
+        tmp_path, first_run = isolated_data_dir
+        legacy_dir = tmp_path / "legacy_repo_data"
+        legacy_dir.mkdir()
+        monkeypatch.setattr(first_run, "_LEGACY_DATA", legacy_dir)
+
+        # Fork: 2 shared rows, 1 unique per side.
+        self._make_buffer(legacy_dir / "observations.db",
+                          [("a", "{}"), ("b", "{}"), ("legacy-only", "{}")])
+        self._make_buffer(tmp_path / "observations.db",
+                          [("a", "{}"), ("b", "{}"), ("datadir-only", "{}")])
+
+        merged = first_run._merge_legacy_observations()
+        assert merged == 1  # only legacy-only is new
+
+        conn = sqlite3.connect(str(tmp_path / "observations.db"))
+        ids = {r[0] for r in conn.execute(
+            "SELECT obs_id FROM observation_buffer").fetchall()}
+        conn.close()
+        assert ids == {"a", "b", "legacy-only", "datadir-only"}
+
+        # Idempotent: marker stamped, second call is a no-op.
+        assert (tmp_path / ".obs_merge_v1").exists()
+        assert first_run._merge_legacy_observations() == 0
+
+    def test_no_legacy_db_stamps_and_skips(self, isolated_data_dir, monkeypatch):
+        tmp_path, first_run = isolated_data_dir
+        legacy_dir = tmp_path / "legacy_repo_data"
+        legacy_dir.mkdir()
+        monkeypatch.setattr(first_run, "_LEGACY_DATA", legacy_dir)
+        assert first_run._merge_legacy_observations() == 0
+        assert (tmp_path / ".obs_merge_v1").exists()

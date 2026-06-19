@@ -376,12 +376,15 @@ mod tests {
     #[test]
     fn test_apoptosis_deletes_weak_traces() {
         let conn = open_memory_db().unwrap();
-        // Old trace that should have decayed
+        // Δ9: decay unit is days. now = 200 days; epsilon at ~92 days.
+        let day = 86_400_i64;
+        let now = 200 * day;
+        // Old trace (200 days) that should have decayed below epsilon.
         store_trace(&conn, &make_trace("old", "ancient memory", 0)).unwrap();
-        // Recent trace that should survive
-        store_trace(&conn, &make_trace("new", "fresh memory", 999_990)).unwrap();
+        // Recent trace (1 day) that should survive.
+        store_trace(&conn, &make_trace("new", "fresh memory", now - day)).unwrap();
 
-        let report = microglia_apoptosis(&conn, 0.01, 0.05, 1_000_000).unwrap();
+        let report = microglia_apoptosis(&conn, 0.01, 0.05, now).unwrap();
         assert!(report.traces_deleted >= 1, "Should delete decayed traces");
 
         // Old trace should be gone
@@ -416,10 +419,12 @@ mod tests {
             )
             .unwrap();
         }
-        // Survivor.
-        store_trace(&conn, &make_trace("new", "fresh", 999_990)).unwrap();
+        // Survivor (1 day old; Δ9 decay unit is days, old_* are 200 days).
+        let day = 86_400_i64;
+        let now = 200 * day;
+        store_trace(&conn, &make_trace("new", "fresh", now - day)).unwrap();
 
-        let report = microglia_apoptosis(&conn, 0.01, 0.05, 1_000_000).unwrap();
+        let report = microglia_apoptosis(&conn, 0.01, 0.05, now).unwrap();
         assert_eq!(report.traces_deleted, total);
 
         // Boundary ids on either side of the chunk split are gone.

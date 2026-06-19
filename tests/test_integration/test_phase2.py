@@ -132,7 +132,7 @@ class TestZeroWattIdle:
         """No sleep() calls in src/ directory."""
         import os
 
-        src_dir = os.path.join(os.path.dirname(__file__), "..", "..", "src")
+        src_dir = os.path.join(os.path.dirname(__file__), "..", "..", "python", "harlo", "engine")
         src_dir = os.path.abspath(src_dir)
 
         for root, dirs, files in os.walk(src_dir):
@@ -147,7 +147,7 @@ class TestZeroWattIdle:
         """No while True loops in src/ directory."""
         import os
 
-        src_dir = os.path.join(os.path.dirname(__file__), "..", "..", "src")
+        src_dir = os.path.join(os.path.dirname(__file__), "..", "..", "python", "harlo", "engine")
         src_dir = os.path.abspath(src_dir)
 
         for root, dirs, files in os.walk(src_dir):

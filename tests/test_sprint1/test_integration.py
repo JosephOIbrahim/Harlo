@@ -6,12 +6,12 @@ End-to-end test: 50-exchange simulated session with all systems connected.
 
 import pytest
 
-from src.bridge import Bridge, SessionResult
-from src.delegate_base import TaskContext
-from src.delegate_claude import HdClaude
-from src.mock_usd_stage import MockUsdStage
-from src.observation_buffer import ObservationBuffer
-from src.schemas import (
+from harlo.engine.bridge import Bridge, SessionResult
+from harlo.engine.delegate_base import TaskContext
+from harlo.engine.delegate_claude import HdClaude
+from harlo.engine.mock_usd_stage import MockUsdStage
+from harlo.engine.observation_buffer import ObservationBuffer
+from harlo.engine.schemas import (
     BurstPhase,
     Burnout,
     CognitiveObservation,
@@ -20,7 +20,7 @@ from src.schemas import (
     Momentum,
     StateBlock,
 )
-from src.validator import validate_trajectory
+from harlo.engine.validator import validate_trajectory
 
 
 # -------------------------------------------------------------------
