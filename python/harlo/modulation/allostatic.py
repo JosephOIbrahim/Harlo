@@ -38,6 +38,12 @@ _BIOMETRIC_RED_FRESHNESS_SEC = 300.0
 # until the intake form calibrates them per user.
 _DEFAULT_HR_RED_BPM = 140.0  # sustained high-HR for inhibition
 _DEFAULT_HRV_RED_MS = 20.0   # low HRV under stress
+# Respiratory rate (breaths/min). Normal resting is 12-16; only the EXCESS
+# above the floor adds load, saturating at the red mark. RR is a slow signal
+# (Apple samples it mainly during sleep/rest), so it feeds DEPLETED via
+# get_biometric_load — never the fresh-only RED motor-inhibition path.
+_DEFAULT_RR_FLOOR_BPM = 16.0
+_DEFAULT_RR_RED_BPM = 25.0
 
 
 @dataclass
@@ -75,12 +81,16 @@ class AllostasisTracker:
         biometric_red_freshness_sec: float = _BIOMETRIC_RED_FRESHNESS_SEC,
         hr_red_bpm: float = _DEFAULT_HR_RED_BPM,
         hrv_red_ms: float = _DEFAULT_HRV_RED_MS,
+        rr_floor_bpm: float = _DEFAULT_RR_FLOOR_BPM,
+        rr_red_bpm: float = _DEFAULT_RR_RED_BPM,
     ) -> None:
         self._window_sec = window_sec
         self._biometric_window_sec = biometric_window_sec
         self._biometric_red_freshness_sec = biometric_red_freshness_sec
         self._hr_red_bpm = hr_red_bpm
         self._hrv_red_ms = hrv_red_ms
+        self._rr_floor_bpm = rr_floor_bpm
+        self._rr_red_bpm = rr_red_bpm
         self._records: deque[_PromptRecord] = deque()
         self._biometric: deque[_BiometricRecord] = deque()
 
@@ -200,7 +210,19 @@ class AllostasisTracker:
             else:
                 hrv_score = min(max(self._hrv_red_ms / mean_hrv, 0.0), 1.0)
 
-        return max(hr_score, hrv_score)
+        # Respiratory rate: only the EXCESS over the normal resting floor
+        # counts, ramping linearly to 1.0 at the red mark. Normal breathing
+        # (<= floor) contributes zero — RR has a high physiological baseline,
+        # so the mean/threshold shape used for HR would wrongly inflate load.
+        rr_values = [r.value for r in self._biometric if r.type == "respiratory_rate"]
+        rr_score = 0.0
+        if rr_values:
+            mean_rr = sum(rr_values) / len(rr_values)
+            span = self._rr_red_bpm - self._rr_floor_bpm
+            if span > 0:
+                rr_score = min(max((mean_rr - self._rr_floor_bpm) / span, 0.0), 1.0)
+
+        return max(hr_score, hrv_score, rr_score)
 
     def should_force_red(self, now: datetime | None = None) -> bool:
         """Whether biometric data, within the freshness window, indicates
