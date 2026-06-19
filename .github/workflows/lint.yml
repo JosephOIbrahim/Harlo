@@ -34,8 +34,11 @@ jobs:
           python -m pip install --upgrade pip
           # Core runtime + dev deps (sufficient for compliance + the
           # unit tests that don't need the ML extras).
+          # networkx is a light, pure-Python hard dep of harlo.engine
+          # (mock_cogexec DAG) — without it the biometric_prior engine-seed
+          # tests can't run. Kept out of the "ML extras" (torch/onnx/xgboost).
           python -m pip install \
-            click jsonschema numpy pyyaml pydantic mcp \
+            click jsonschema numpy pyyaml pydantic mcp networkx \
             pytest pytest-timeout
 
       - name: Build Rust hot path
