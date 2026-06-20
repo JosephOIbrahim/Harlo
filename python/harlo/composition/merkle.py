@@ -80,26 +80,6 @@ class MerkleTree:
             pos //= 2
         return self._nodes[1]
 
-    def get_proof(self, index: int) -> list[tuple[str, str]]:
-        """Return a Merkle proof (audit path) for the leaf at *index*.
-
-        Each element is (sibling_hash, side) where side is 'L' or 'R'
-        indicating which side the sibling is on.
-        """
-        if index < 0 or index >= self._leaf_count:
-            raise IndexError(f"Leaf index {index} out of range [0, {self._leaf_count})")
-        proof: list[tuple[str, str]] = []
-        pos = self._leaf_offset + index
-        while pos > 1:
-            if pos % 2 == 0:
-                sibling = self._nodes[pos + 1]
-                proof.append((sibling, "R"))
-            else:
-                sibling = self._nodes[pos - 1]
-                proof.append((sibling, "L"))
-            pos //= 2
-        return proof
-
     @property
     def leaf_count(self) -> int:
         return self._leaf_count

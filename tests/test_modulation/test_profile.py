@@ -62,14 +62,6 @@ class TestGain:
         # With positive s_nm and d, gain should be > 1.0
         assert compute_gain(0.5, 2.0, "general") == 2.0
 
-    def test_apply_modulation_preserves_clean(self):
-        from harlo.modulation.gain import apply_modulation
-
-        clean = {"fact": "test data", "confidence": 0.8}
-        result = apply_modulation(clean, None)
-        # Clean data should always be recoverable
-        assert "fact" in result or "fact" in clean
-
 
 class TestAllostasis:
     """Allostatic load tests (Rule 9)."""

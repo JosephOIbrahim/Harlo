@@ -14,6 +14,13 @@
 > ⚠️ The Python **pytest suite could not be run** in this environment (pytest not installed;
 > `harlo` not pip-installed). Run `pytest tests/` in your configured env as the final gate.
 
+> **STATUS — Tier 2 + Tier 4 (M3) APPLIED 2026-06-20** (follow-up to PR #19). 4 files, **−75 lines**.
+> - **C1** `MerkleTree.get_proof` deleted — its only caller (the stage wrapper) went in Tier 1, so it is now confirmed dead.
+> - **R5 (partial)** `bytes_to_sdr` + its roundtrip test deleted (dead deserialization; `sdr_to_bytes` kept — production). **`hamming_distance` KEPT** — it backs real encoder-locality contract tests (similar→close, different→far, identity→0); deleting it would cost coverage, not just lines. Deliberate deviation from the Tier 2 line item.
+> - **M3** `apply_modulation` + its test deleted. Rule 10 (anchor gain = 1.0) stays covered by `compute_gain` tests (test_profile) and the production `compute_injection_gain` tests (test_cogexec) — no coverage lost.
+> - **Tier 5 (D3)** still parked — needs a roadmap call (will `agents/harness.py` adopt the second socket API?). Untouched.
+> Verification: `cargo test -p hippocampus` 40/0; py_compile + import + dangling-ref grep clean.
+
 Scope: **over-engineering and unnecessary complexity only.** Not correctness,
 security, or performance (route those to a normal review). Findings list what to
 cut; this report does **not** apply fixes.

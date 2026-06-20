@@ -152,13 +152,6 @@ pub fn sdr_to_bytes(sdr: &BitVec<u8, Lsb0>) -> Vec<u8> {
     sdr.as_raw_slice().to_vec()
 }
 
-/// Deserialize bytes back to a bitvec.
-pub fn bytes_to_sdr(bytes: &[u8]) -> BitVec<u8, Lsb0> {
-    let mut sdr = BitVec::<u8, Lsb0>::from_slice(bytes);
-    sdr.resize(SDR_WIDTH, false);
-    sdr
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -215,14 +208,6 @@ mod tests {
         meta.tags.push("important".to_string());
         let b = encode_to_sdr("hello", &meta);
         assert_ne!(a, b, "Metadata should affect the encoding");
-    }
-
-    #[test]
-    fn test_sdr_roundtrip() {
-        let sdr = encode_to_sdr("roundtrip test", &Metadata::default());
-        let bytes = sdr_to_bytes(&sdr);
-        let restored = bytes_to_sdr(&bytes);
-        assert_eq!(sdr, restored);
     }
 
     #[test]
