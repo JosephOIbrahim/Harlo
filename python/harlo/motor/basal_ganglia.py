@@ -16,6 +16,12 @@ from .premotor import PlannedAction
 from .consent import ConsentLevel, ConsentState, effective_consent_level
 from .scope import Scope, validate_scope
 
+# Single source of truth for the Rule 25 LOCKED failure reason. gate() keys the
+# LOCKED decision off an exact match against this constant (not a substring), so
+# a missing-consent reason that happens to mention "LOCKED" in its action_id
+# cannot be misclassified as LOCKED.
+_LOCKED_CONSENT_REASON = "LOCKED consent — gate NEVER opens (Rule 25)"
+
 
 class GateDecision(Enum):
     DISINHIBIT = "disinhibit"  # All checks pass — action may proceed
@@ -99,7 +105,7 @@ def _check_consent(
 
     # Rule 25: LOCKED never opens
     if level == ConsentLevel.LOCKED:
-        return False, "LOCKED consent — gate NEVER opens (Rule 25)"
+        return False, _LOCKED_CONSENT_REASON
 
     action_id = f"{action.action_type}:{action.target}"
     if not consent_state.has_consent(level, action_id):
@@ -240,8 +246,8 @@ def gate(
         return GateResult(decision=GateDecision.DISINHIBIT, checks=checks)
 
     # Rule 25: If the consent check failed because consent was LOCKED,
-    # return LOCKED (gate NEVER opens).
-    if not consent_ok and consent_reason and "LOCKED" in consent_reason:
+    # return LOCKED (gate NEVER opens). Exact match — never a substring.
+    if not consent_ok and consent_reason == _LOCKED_CONSENT_REASON:
         return GateResult(
             decision=GateDecision.LOCKED,
             checks=checks,
