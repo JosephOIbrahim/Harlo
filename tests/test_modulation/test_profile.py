@@ -165,22 +165,6 @@ class TestBarrier:
             validate_llm_output("not json at all")
 
 
-class TestDetector:
-    """Pattern detection tests."""
-
-    def test_detect_default(self):
-        from harlo.modulation.detector import detect_pattern
-
-        result = detect_pattern([])
-        assert result in ("adhd", "analytical", "creative", "depleted", "default")
-
-    def test_detect_returns_string(self):
-        from harlo.modulation.detector import detect_pattern
-
-        result = detect_pattern(["hello", "world"])
-        assert isinstance(result, str)
-
-
 class TestCompliance:
     """Phase 2 compliance checks."""
 

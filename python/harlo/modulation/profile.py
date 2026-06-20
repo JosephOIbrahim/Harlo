@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -127,32 +127,3 @@ def load_profile(path: str | Path | None = None) -> Profile:
         motor_session_consent=int(motor.get("session_consent", 0)),
         motor_scope=motor.get("scope", {}),
     )
-
-
-def save_profile(profile: Profile, path: str | Path) -> None:
-    """Save a Profile to YAML config file."""
-    p = Path(path)
-    data = {
-        "modulation": {
-            "s_nm": profile.s_nm,
-            "association_radius": profile.association_radius,
-            "escalation_threshold": profile.escalation_threshold,
-            "decay_lambda": profile.decay_lambda,
-            "tangent_tolerance": profile.tangent_tolerance,
-            "verbosity": profile.verbosity,
-        },
-        "anchors": profile.anchors,
-        "inquiry": {
-            "depth": profile.inquiry_depth,
-            "consent_level": profile.inquiry_consent_level,
-            "boundaries": profile.inquiry_boundaries,
-        },
-        "motor": {
-            "session_consent": profile.motor_session_consent,
-            "scope": profile.motor_scope,
-        },
-    }
-    if _HAS_YAML:
-        p.write_text(yaml.dump(data, default_flow_style=False), encoding="utf-8")
-    else:
-        p.write_text(json.dumps(data, indent=2), encoding="utf-8")

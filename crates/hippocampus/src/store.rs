@@ -35,14 +35,6 @@ pub struct ApoptosisReport {
     pub db_size_after: u64,
 }
 
-/// Consolidation report.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConsolidationReport {
-    pub traces_merged: usize,
-    pub graph_nodes: usize,
-    pub graph_edges: usize,
-}
-
 /// Initialize the database schema.
 pub fn init_db(conn: &Connection) -> Result<()> {
     conn.execute_batch(

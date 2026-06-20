@@ -103,66 +103,6 @@ pub fn lookup_reflex(conn: &Connection, hash: &str) -> Result<Option<Reflex>> {
     }
 }
 
-/// Increment hit count on reflex use.
-pub fn increment_hit_count(conn: &Connection, hash: &str) -> Result<()> {
-    conn.execute(
-        "UPDATE reflexes SET hit_count = hit_count + 1 WHERE pattern_hash = ?1",
-        params![hash],
-    )?;
-    Ok(())
-}
-
-/// Record a successful reflex execution.
-pub fn record_success(conn: &Connection, hash: &str) -> Result<()> {
-    conn.execute(
-        "UPDATE reflexes SET success_count = success_count + 1 WHERE pattern_hash = ?1",
-        params![hash],
-    )?;
-    Ok(())
-}
-
-/// Rule 32: Single failure = instant de-compilation.
-/// compiled=False, success_count=0. Route to Premotor for re-planning.
-pub fn decompile_reflex(conn: &Connection, hash: &str) -> Result<()> {
-    conn.execute(
-        "UPDATE reflexes SET compiled = 0, success_count = 0 WHERE pattern_hash = ?1",
-        params![hash],
-    )?;
-    Ok(())
-}
-
-/// List all compiled reflexes.
-pub fn list_reflexes(conn: &Connection) -> Result<Vec<Reflex>> {
-    let mut stmt = conn.prepare(
-        "SELECT pattern_hash, response_json, merkle_root, verification_state,
-                is_permanent, hit_count, compiled, success_count
-         FROM reflexes ORDER BY hit_count DESC",
-    )?;
-    let rows = stmt.query_map([], |row| {
-        let response_str: String = row.get(1)?;
-        Ok(Reflex {
-            pattern_hash: row.get(0)?,
-            response: serde_json::from_str(&response_str).unwrap_or(serde_json::Value::Null),
-            merkle_root: row.get(2)?,
-            verification_state: row.get(3)?,
-            is_permanent: row.get::<_, i32>(4)? != 0,
-            hit_count: row.get::<_, u32>(5)?,
-            compiled: row.get::<_, i32>(6)? != 0,
-            success_count: row.get::<_, u32>(7)?,
-        })
-    })?;
-    rows.collect()
-}
-
-/// Invalidate a reflex by hash.
-pub fn invalidate_reflex(conn: &Connection, hash: &str) -> Result<bool> {
-    let changed = conn.execute(
-        "DELETE FROM reflexes WHERE pattern_hash = ?1",
-        params![hash],
-    )?;
-    Ok(changed > 0)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -239,27 +179,4 @@ mod tests {
         assert!(found.is_none());
     }
 
-    #[test]
-    fn test_decompile_reflex_on_failure() {
-        let conn = open_memory_db().unwrap();
-        let mut reflex = make_verified_reflex("fail1");
-        reflex.success_count = 5;
-        store_reflex(&conn, &reflex).unwrap();
-
-        // Rule 32: Single failure = instant de-compilation
-        decompile_reflex(&conn, "fail1").unwrap();
-
-        // Should not be found via lookup (compiled=0)
-        let found = lookup_reflex(&conn, "fail1").unwrap();
-        assert!(found.is_none(), "Decompiled reflex must not be returned");
-    }
-
-    #[test]
-    fn test_invalidate_reflex() {
-        let conn = open_memory_db().unwrap();
-        store_reflex(&conn, &make_verified_reflex("inv1")).unwrap();
-        let deleted = invalidate_reflex(&conn, "inv1").unwrap();
-        assert!(deleted);
-        assert!(lookup_reflex(&conn, "inv1").unwrap().is_none());
-    }
 }

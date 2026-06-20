@@ -78,13 +78,6 @@ class MerkleStage:
         """Return all layers in insertion order."""
         return list(self._layers)
 
-    def get_proof(self, index: int):
-        """Return a Merkle proof for the layer at *index*."""
-        if self._tree is None:
-            self._rebuild_tree()
-        assert self._tree is not None
-        return self._tree.get_proof(index)
-
     def update_layer(self, index: int, layer: Layer) -> str:
         """Replace a layer at *index* with O(log n) Merkle update."""
         if index < 0 or index >= len(self._layers):

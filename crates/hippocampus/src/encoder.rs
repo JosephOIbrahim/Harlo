@@ -23,21 +23,11 @@ const TARGET_ACTIVE_BITS: usize = 80;
 const HASH_ROUNDS: usize = 3;
 
 /// Metadata associated with a trace for encoding.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Metadata {
     pub tags: Vec<String>,
     pub domain: Option<String>,
     pub source: Option<String>,
-}
-
-impl Default for Metadata {
-    fn default() -> Self {
-        Self {
-            tags: Vec::new(),
-            domain: None,
-            source: None,
-        }
-    }
 }
 
 /// Encode a message + metadata into a 1-bit SDR bitvector.

@@ -16,11 +16,16 @@ from .premotor import PlannedAction
 from .consent import ConsentLevel, ConsentState, effective_consent_level
 from .scope import Scope, validate_scope
 
+# Single source of truth for the Rule 25 LOCKED failure reason. gate() keys the
+# LOCKED decision off an exact match against this constant (not a substring), so
+# a missing-consent reason that happens to mention "LOCKED" in its action_id
+# cannot be misclassified as LOCKED.
+_LOCKED_CONSENT_REASON = "LOCKED consent — gate NEVER opens (Rule 25)"
+
 
 class GateDecision(Enum):
     DISINHIBIT = "disinhibit"  # All checks pass — action may proceed
     INHIBIT = "inhibit"        # One or more checks failed
-    ESCALATE = "escalate"      # Needs higher consent
     LOCKED = "locked"          # Level 3 — NEVER opens
 
 
@@ -100,7 +105,7 @@ def _check_consent(
 
     # Rule 25: LOCKED never opens
     if level == ConsentLevel.LOCKED:
-        return False, "LOCKED consent — gate NEVER opens (Rule 25)"
+        return False, _LOCKED_CONSENT_REASON
 
     action_id = f"{action.action_type}:{action.target}"
     if not consent_state.has_consent(level, action_id):
@@ -140,16 +145,7 @@ def _check_reversibility(action: PlannedAction, session_state: dict) -> tuple[bo
             return False, "Irreversible LOCKED action — permanently blocked"
 
         # Warn but pass — consent check already escalated the level
-        if not action.side_effects:
-            return True, None
-
-        # Side effects on irreversible action — extra scrutiny
-        max_side_effects = session_state.get("max_irreversible_side_effects", 3)
-        if len(action.side_effects) > max_side_effects:
-            return False, (
-                f"Irreversible action has {len(action.side_effects)} side effects "
-                f"(max {max_side_effects})"
-            )
+        return True, None
 
     return True, None
 
@@ -188,7 +184,7 @@ def gate(
 
     DEFAULT: INHIBIT (Rule 23).
     ALL five checks must pass for DISINHIBIT.
-    ANY failure results in INHIBIT, ESCALATE, or LOCKED.
+    ANY failure results in INHIBIT or LOCKED.
 
     The five checks:
     1. Anchor alignment
@@ -249,29 +245,16 @@ def gate(
     if all_passed:
         return GateResult(decision=GateDecision.DISINHIBIT, checks=checks)
 
-    # Rule 25: If consent was LOCKED, return LOCKED
-    level = ConsentLevel(action.consent_level)
-    effective = effective_consent_level(
-        level,
-        is_depleted=session_state.get("is_depleted", False),
-        is_irreversible=not action.reversible,
-    )
-    if effective == ConsentLevel.LOCKED or level == ConsentLevel.LOCKED:
+    # Rule 25: If the consent check failed because consent was LOCKED,
+    # return LOCKED (gate NEVER opens). Exact match — never a substring.
+    if not consent_ok and consent_reason == _LOCKED_CONSENT_REASON:
         return GateResult(
             decision=GateDecision.LOCKED,
             checks=checks,
-            failure_reason=first_failure or "LOCKED — gate NEVER opens",
+            failure_reason=consent_reason,
         )
 
-    # If consent check failed but others passed, suggest escalation
-    if not consent_ok and all(v for k, v in checks.items() if k != "consent"):
-        return GateResult(
-            decision=GateDecision.ESCALATE,
-            checks=checks,
-            failure_reason=first_failure,
-        )
-
-    # Default: INHIBIT
+    # Default: INHIBIT on the first failing check.
     return GateResult(
         decision=GateDecision.INHIBIT,
         checks=checks,

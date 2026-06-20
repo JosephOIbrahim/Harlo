@@ -49,7 +49,7 @@ class TestBasalGanglia:
             side_effects=[],
         )
         result = gate(action, {})
-        assert result.decision in (GateDecision.INHIBIT, GateDecision.ESCALATE, GateDecision.LOCKED)
+        assert result.decision == GateDecision.INHIBIT
 
     def test_level_3_always_locked(self):
         """Rule 25: Level 3 = LOCKED regardless."""

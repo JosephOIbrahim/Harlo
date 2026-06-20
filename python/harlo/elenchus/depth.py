@@ -56,8 +56,3 @@ def get_depth(domain: str) -> int:
     """
     config = _load_config()
     return config.get(domain.lower(), _DEFAULT_DEPTH)
-
-
-def get_max_depth() -> int:
-    """Get the maximum allowed verification depth."""
-    return 3

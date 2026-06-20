@@ -21,7 +21,6 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Any
 
 from .types import InquiryType, TTL_HOURS
 from .apophenia_guard import EvidenceBundle, evaluate as guard_evaluate
@@ -134,7 +133,7 @@ class InquiryEngine:
             return None
 
         # S3: Rupture check — blocked topics
-        if self.rupture_ledger.is_topic_blocked(topic_key):
+        if self.rupture_ledger.should_offer_stop(topic_key):
             return None
 
         # S1: Apophenia guard
@@ -374,14 +373,3 @@ class InquiryEngine:
             f"I've noticed something about your {candidate.inquiry_type.value} "
             f"— {candidate.hypothesis}. What are your thoughts?"
         )
-
-    def get_stats(self) -> dict[str, Any]:
-        """Return engine statistics for diagnostics."""
-        return {
-            "active_inquiries": len(self._active),
-            "crystallized_traces": self.crystal_store.count(),
-            "pending_observations": len(self.dmn_window.observations),
-            "rejected_topics": self.rupture_ledger.get_all_rejected_topics(),
-            "blocked_keys": self.consent.get_blocked_keys(),
-            "utility_mode": self.timing.utility_mode,
-        }

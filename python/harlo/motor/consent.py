@@ -87,11 +87,6 @@ def effective_consent_level(
     return level
 
 
-def is_locked(level: ConsentLevel) -> bool:
-    """Rule 25: check if consent level is LOCKED (never opens)."""
-    return level == ConsentLevel.LOCKED
-
-
 class ConsentState:
     """Track per-session consent grants."""
 
