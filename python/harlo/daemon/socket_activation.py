@@ -161,6 +161,10 @@ def acquire_listening_socket(
 # ---------------------------------------------------------------------------
 # Source-label API (acquire_listen_socket) — retained for callers and tests
 # that branch on the acquisition source string.
+# ponytail: deferred, test-only today (no production caller). Either adopt in
+# agents/harness.py (the intended reuse — see module docstring) or delete
+# acquire_listen_socket + try_launchd/systemd/bind_dev + their tests (~85
+# lines). Decision tracked in issue #21.
 # ---------------------------------------------------------------------------
 
 def try_launchd_socket(name: str = LAUNCHD_SOCKET_NAME) -> socket.socket | None:
