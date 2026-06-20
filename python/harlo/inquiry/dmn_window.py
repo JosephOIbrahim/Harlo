@@ -97,22 +97,6 @@ class DMNWindow:
 
         return candidates
 
-    def to_teardown_context(self) -> dict:
-        """Package state for DMNTeardown background thread."""
-        return {
-            "session_start": self.session_start,
-            "observation_count": len(self.observations),
-            "observations": [
-                {
-                    "content": o.content,
-                    "category": o.category.value,
-                    "weight": o.weight,
-                    "timestamp": o.timestamp,
-                }
-                for o in self.observations
-            ],
-        }
-
     def clear(self) -> None:
         """Reset for a new session."""
         self.observations.clear()

@@ -8,7 +8,6 @@ Tests:
 - Pattern persistence in SQLite
 - Persistence across detector instances
 - Inquiry engine integration via router
-- Legacy detect_pattern backward compat
 - Edge cases
 """
 
@@ -23,7 +22,6 @@ import pytest
 from harlo.modulation.detector import (
     DetectedPattern,
     PatternDetector,
-    detect_pattern,
     _hamming_distance,
 )
 
@@ -327,20 +325,6 @@ class TestPersistence:
         stored = d2.get_stored_patterns()
         assert len(stored) >= 1
 
-    def test_clear_patterns(self, db_path):
-        """clear_patterns() should remove all stored patterns."""
-        sdr = _make_sdr(list(range(0, 80)))
-        for i in range(4):
-            _store_trace_with_sdr(db_path, f"t{i}", f"msg {i}", sdr)
-
-        detector = PatternDetector(db_path)
-        detector.detect_all()
-        assert len(detector.get_stored_patterns()) >= 1
-
-        deleted = detector.clear_patterns()
-        assert deleted >= 1
-        assert len(detector.get_stored_patterns()) == 0
-
 
 # ─────────────────────────────────────────────────────────────────────
 # DetectedPattern Serialization
@@ -389,33 +373,6 @@ class TestRouterIntegration:
         assert result["status"] == "ok"
         assert "patterns" in result["result"]
         assert "count" in result["result"]
-
-
-# ─────────────────────────────────────────────────────────────────────
-# Legacy API
-# ─────────────────────────────────────────────────────────────────────
-
-class TestLegacyAPI:
-    """Test backward-compatible detect_pattern function."""
-
-    def test_empty_messages_returns_default(self):
-        """Empty messages should return 'default'."""
-        assert detect_pattern([]) == "default"
-
-    def test_adhd_pattern(self):
-        """Many short messages should return 'adhd'."""
-        messages = [{"content": "hi"} for _ in range(10)]
-        assert detect_pattern(messages) == "adhd"
-
-    def test_analytical_pattern(self):
-        """Long messages should return 'analytical'."""
-        messages = [{"content": "x" * 250} for _ in range(3)]
-        assert detect_pattern(messages) == "analytical"
-
-    def test_default_pattern(self):
-        """Normal-length messages should return 'default'."""
-        messages = [{"content": "A normal message of medium length"} for _ in range(3)]
-        assert detect_pattern(messages) == "default"
 
 
 # ─────────────────────────────────────────────────────────────────────

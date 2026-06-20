@@ -10,7 +10,6 @@ Tests:
 
 import json
 import os
-import sqlite3
 import tempfile
 
 import pytest
@@ -266,108 +265,11 @@ class TestMotorHandlers:
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Connection Pool
-# ─────────────────────────────────────────────────────────────────────
-
-class TestConnectionPool:
-    """Test SQLite connection pooling."""
-
-    def test_get_connection_returns_connection(self):
-        """get_connection should return a sqlite3 Connection."""
-        from harlo.daemon.connection_pool import get_connection, close_connection
-
-        db = tempfile.mktemp(suffix=".db")
-        try:
-            conn = get_connection(db)
-            assert isinstance(conn, sqlite3.Connection)
-            conn.execute("SELECT 1")
-            close_connection(db)
-        finally:
-            if os.path.exists(db):
-                os.unlink(db)
-
-    def test_same_connection_returned(self):
-        """Repeated calls should return the same connection."""
-        from harlo.daemon.connection_pool import get_connection, close_connection
-
-        db = tempfile.mktemp(suffix=".db")
-        try:
-            conn1 = get_connection(db)
-            conn2 = get_connection(db)
-            assert conn1 is conn2
-            close_connection(db)
-        finally:
-            if os.path.exists(db):
-                os.unlink(db)
-
-    def test_different_paths_different_connections(self):
-        """Different db paths should get different connections."""
-        from harlo.daemon.connection_pool import get_connection, close_all
-
-        db1 = tempfile.mktemp(suffix=".db")
-        db2 = tempfile.mktemp(suffix=".db")
-        try:
-            conn1 = get_connection(db1)
-            conn2 = get_connection(db2)
-            assert conn1 is not conn2
-            close_all()
-        finally:
-            for f in [db1, db2]:
-                if os.path.exists(f):
-                    os.unlink(f)
-
-    def test_close_connection(self):
-        """close_connection should close and remove cached connection."""
-        from harlo.daemon.connection_pool import get_connection, close_connection
-
-        db = tempfile.mktemp(suffix=".db")
-        try:
-            conn1 = get_connection(db)
-            close_connection(db)
-            # Next call should get a NEW connection
-            conn2 = get_connection(db)
-            assert conn1 is not conn2
-            close_connection(db)
-        finally:
-            if os.path.exists(db):
-                os.unlink(db)
-
-    def test_close_all(self):
-        """close_all should close all connections."""
-        from harlo.daemon.connection_pool import get_connection, close_all
-
-        db1 = tempfile.mktemp(suffix=".db")
-        db2 = tempfile.mktemp(suffix=".db")
-        try:
-            get_connection(db1)
-            get_connection(db2)
-            close_all()  # Should not raise
-        finally:
-            for f in [db1, db2]:
-                if os.path.exists(f):
-                    os.unlink(f)
-
-
-# ─────────────────────────────────────────────────────────────────────
 # Compliance
 # ─────────────────────────────────────────────────────────────────────
 
 class TestCompliance:
     """Verify no rules violated."""
-
-    def test_no_sleep_in_connection_pool(self):
-        """Rule 1: No sleep() in connection pool."""
-        import inspect
-        from harlo.daemon import connection_pool
-        source = inspect.getsource(connection_pool)
-        assert "sleep(" not in source
-
-    def test_no_while_true_in_connection_pool(self):
-        """Rule 1: No while True in connection pool."""
-        import inspect
-        from harlo.daemon import connection_pool
-        source = inspect.getsource(connection_pool)
-        assert "while True" not in source
 
     def test_no_sleep_in_executor(self):
         """Rule 1: No sleep() in executor."""

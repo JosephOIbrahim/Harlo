@@ -13,10 +13,6 @@ import json
 import sqlite3
 import time
 from dataclasses import dataclass, field
-from typing import List, Optional
-
-# ── Legacy pattern labels (kept for backward compat) ────────────────
-_PATTERNS = {"adhd", "analytical", "creative", "depleted", "default"}
 
 # ── Clustering constants ────────────────────────────────────────────
 DEFAULT_SIMILARITY_THRESHOLD = 100  # Hamming distance < this = "similar"
@@ -430,55 +426,3 @@ class PatternDetector:
             )
             for r in rows
         ]
-
-    def clear_patterns(self) -> int:
-        """Delete all stored patterns. Returns count deleted."""
-        conn = self._connect()
-        try:
-            _ensure_patterns_table(conn)
-            count = conn.execute("SELECT COUNT(*) FROM patterns").fetchone()[0]
-            conn.execute("DELETE FROM patterns")
-            conn.commit()
-            return count
-        finally:
-            conn.close()
-
-
-# ── Legacy API (backward compatible) ────────────────────────────────
-
-def detect_pattern(messages: List[dict]) -> str:
-    """Detect conversational pattern from message history.
-
-    Legacy heuristic interface. For full pattern detection, use
-    PatternDetector.detect_all() instead.
-
-    Args:
-        messages: List of message dicts with 'content' key.
-
-    Returns:
-        One of: "adhd", "analytical", "creative", "depleted", "default".
-    """
-    if not messages:
-        return "default"
-
-    def _msg_len(m):
-        """Compute message length."""
-        if isinstance(m, dict):
-            return len(str(m.get("content", "")))
-        return len(str(m))
-
-    total_len = sum(_msg_len(m) for m in messages)
-    count = len(messages)
-
-    if count == 0:
-        return "default"
-
-    avg_len = total_len / count
-
-    if avg_len < 20 and count > 5:
-        return "adhd"
-
-    if avg_len > 200:
-        return "analytical"
-
-    return "default"

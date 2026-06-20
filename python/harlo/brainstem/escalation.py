@@ -5,7 +5,6 @@ Absorbed from bridge/ in Phase 4. Uses brainstem adapters and provenance.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Optional
 
 from ..elenchus.protocol import run_gvr

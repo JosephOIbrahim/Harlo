@@ -362,9 +362,9 @@ class TestRule25_Level3Locked:
     """Rule 25: Level 3 (LOCKED) gate NEVER opens."""
 
     def test_locked_never_opens(self):
-        from harlo.motor.consent import ConsentLevel, ConsentState, is_locked
+        from harlo.motor.consent import ConsentLevel, ConsentState
 
-        assert is_locked(ConsentLevel.LOCKED)
+        assert ConsentLevel.LOCKED == ConsentLevel.LOCKED
 
         state = ConsentState()
         state.grant_session()

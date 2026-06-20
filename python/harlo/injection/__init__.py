@@ -152,15 +152,6 @@ class InjectionStore:
         )
         return [self._row_to_trace(row) for row in cursor.fetchall()]
 
-    def get_by_session(self, session_id: str) -> list[InjectionTrace]:
-        """Get all injection traces for a session."""
-        cursor = self._conn.execute(
-            "SELECT trace_id, profile, s_nm, alpha, exchange_count, transition, session_id, timestamp "
-            "FROM injection_traces WHERE session_id = ? ORDER BY timestamp ASC",
-            (session_id,),
-        )
-        return [self._row_to_trace(row) for row in cursor.fetchall()]
-
     def get_activation_count(self, profile: str, since_timestamp: float = 0.0) -> int:
         """Count activations of a specific profile since a timestamp."""
         row = self._conn.execute(

@@ -54,25 +54,6 @@ pub fn get_neighbors(conn: &Connection, source_id: &str) -> Result<Vec<GraphEdge
     rows.collect()
 }
 
-/// Get bidirectional neighbors (both incoming and outgoing edges).
-pub fn get_all_neighbors(conn: &Connection, node_id: &str) -> Result<Vec<GraphEdge>> {
-    let mut stmt = conn.prepare(
-        "SELECT source_id, target_id, weight, edge_type, created_at
-         FROM graph_edges WHERE source_id = ?1 OR target_id = ?1
-         ORDER BY weight DESC",
-    )?;
-    let rows = stmt.query_map(params![node_id], |row| {
-        Ok(GraphEdge {
-            source_id: row.get(0)?,
-            target_id: row.get(1)?,
-            weight: row.get(2)?,
-            edge_type: row.get(3)?,
-            created_at: row.get(4)?,
-        })
-    })?;
-    rows.collect()
-}
-
 /// Count total edges in the graph.
 pub fn edge_count(conn: &Connection) -> Result<usize> {
     conn.query_row("SELECT COUNT(*) FROM graph_edges", [], |r| {

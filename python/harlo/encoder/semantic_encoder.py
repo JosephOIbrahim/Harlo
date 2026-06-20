@@ -63,6 +63,41 @@ class SemanticEncoder:
         matrix *= 0.1  # Scale for numerical stability
         return matrix
 
+    def _embedding_to_sdr(self, embedding: np.ndarray) -> bytes:
+        """Convert one 384-dim float embedding to a 256-byte SDR blob.
+
+        Shared projection → abs/top-k → bit-pack pipeline so encode() and
+        encode_batch() produce byte-identical output.
+
+        Args:
+            embedding: 384-dim float vector (L2-normalized).
+
+        Returns:
+            256 bytes (2048 bits) representing the sparse distributed representation.
+        """
+        # Project through LSH matrix
+        projections = self.projection_matrix @ embedding  # (2048,)
+
+        # Select top-k bits by absolute magnitude where projection > 0
+        abs_projections = np.abs(projections)
+        sorted_indices = np.argsort(abs_projections)[::-1]  # Descending
+
+        active_bits = []
+        for idx in sorted_indices:
+            if len(active_bits) >= TARGET_ACTIVE_BITS:
+                break
+            if projections[idx] > 0:
+                active_bits.append(int(idx))
+
+        # Pack into bytes (LSB first, matching bitvec<u8, Lsb0>)
+        sdr_bytes = bytearray(SDR_WIDTH // 8)  # 256 bytes
+        for bit_idx in active_bits:
+            byte_idx = bit_idx // 8
+            bit_offset = bit_idx % 8
+            sdr_bytes[byte_idx] |= (1 << bit_offset)
+
+        return bytes(sdr_bytes)
+
     def encode(self, text: str) -> bytes:
         """Encode text to a 2048-bit SDR as bytes.
 
@@ -79,31 +114,8 @@ class SemanticEncoder:
         if not text:
             raise ValueError("Text cannot be empty")
 
-        # Step 1: Get 384-dim embedding from BGE
         embedding = self.model.encode(text, normalize_embeddings=True)
-
-        # Step 2: Project through LSH matrix
-        projections = self.projection_matrix @ embedding  # (2048,)
-
-        # Step 3: Select top-k bits by absolute magnitude where projection > 0
-        abs_projections = np.abs(projections)
-        sorted_indices = np.argsort(abs_projections)[::-1]  # Descending
-
-        active_bits = []
-        for idx in sorted_indices:
-            if len(active_bits) >= TARGET_ACTIVE_BITS:
-                break
-            if projections[idx] > 0:
-                active_bits.append(int(idx))
-
-        # Step 4: Pack into bytes (LSB first, matching bitvec<u8, Lsb0>)
-        sdr_bytes = bytearray(SDR_WIDTH // 8)  # 256 bytes
-        for bit_idx in active_bits:
-            byte_idx = bit_idx // 8
-            bit_offset = bit_idx % 8
-            sdr_bytes[byte_idx] |= (1 << bit_offset)
-
-        return bytes(sdr_bytes)
+        return self._embedding_to_sdr(embedding)
 
     def encode_batch(self, texts: list[str]) -> list[bytes]:
         """Encode multiple texts at once (faster than one-by-one).
@@ -121,28 +133,7 @@ class SemanticEncoder:
         # Batch encode embeddings
         embeddings = self.model.encode(texts, normalize_embeddings=True)
 
-        results = []
-        for embedding in embeddings:
-            projections = self.projection_matrix @ embedding
-            abs_projections = np.abs(projections)
-            sorted_indices = np.argsort(abs_projections)[::-1]
-
-            active_bits = []
-            for idx in sorted_indices:
-                if len(active_bits) >= TARGET_ACTIVE_BITS:
-                    break
-                if projections[idx] > 0:
-                    active_bits.append(int(idx))
-
-            sdr_bytes = bytearray(SDR_WIDTH // 8)
-            for bit_idx in active_bits:
-                byte_idx = bit_idx // 8
-                bit_offset = bit_idx % 8
-                sdr_bytes[byte_idx] |= (1 << bit_offset)
-
-            results.append(bytes(sdr_bytes))
-
-        return results
+        return [self._embedding_to_sdr(embedding) for embedding in embeddings]
 
 
 def hamming_distance(a: bytes, b: bytes) -> int:
@@ -165,52 +156,3 @@ def sdr_sparsity(sdr: bytes) -> float:
     """Calculate the sparsity (fraction of active bits) of an SDR."""
     active = sum(bin(byte).count('1') for byte in sdr)
     return active / (len(sdr) * 8)
-
-
-# ─── Quick self-test ─────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    print("Loading BGE model...")
-    enc = SemanticEncoder()
-    print("Model loaded.\n")
-
-    # Test 1: Basic encoding
-    sdr = enc.encode("The cat sat on the mat")
-    print(f"SDR size: {len(sdr)} bytes ({len(sdr) * 8} bits)")
-    print(f"Sparsity: {sdr_sparsity(sdr):.3f} ({sum(bin(b).count('1') for b in sdr)} active bits)")
-
-    # Test 2: Determinism
-    sdr2 = enc.encode("The cat sat on the mat")
-    assert sdr == sdr2, "FAIL: Encoding not deterministic!"
-    print("Determinism: PASS")
-
-    # Test 3: Semantic similarity (THE key test)
-    pairs = [
-        ("The cat sat on the mat", "A feline rested on the rug"),
-        ("It's raining outside", "Rain is falling outdoors"),
-        ("The car is fast", "The vehicle has high speed"),
-    ]
-
-    print("\nSemantic similarity tests:")
-    for a_text, b_text in pairs:
-        a = enc.encode(a_text)
-        b = enc.encode(b_text)
-        dist = hamming_distance(a, b)
-        print(f"  '{a_text}' vs '{b_text}'")
-        print(f"    Hamming distance: {dist} / {SDR_WIDTH}")
-
-    # Test 4: Dissimilarity
-    unrelated = [
-        ("The cat sat on the mat", "Quantum physics is complex"),
-        ("I love pizza", "Space exploration is expensive"),
-    ]
-
-    print("\nDissimilarity tests:")
-    for a_text, b_text in unrelated:
-        a = enc.encode(a_text)
-        b = enc.encode(b_text)
-        dist = hamming_distance(a, b)
-        print(f"  '{a_text}' vs '{b_text}'")
-        print(f"    Hamming distance: {dist} / {SDR_WIDTH}")
-
-    print("\nDone.")

@@ -51,19 +51,6 @@ class InquiryVitality:
         """S5: Below 20% vitality = delete."""
         return self.vitality(now) < VITALITY_THRESHOLD
 
-    def remaining_hours(self, now: float | None = None) -> float:
-        """Hours until vitality drops below threshold."""
-        # Solve: e^(-3t/ttl) = 0.20
-        # t = -ttl * ln(0.20) / 3
-        if now is None:
-            now = time.time()
-        elapsed = max(0.0, now - self.created_at)
-        ttl = self.ttl_seconds
-        # Time at which vitality = threshold
-        t_threshold = -ttl * math.log(VITALITY_THRESHOLD) / DECAY_K
-        remaining_s = t_threshold - elapsed
-        return max(0.0, remaining_s / 3600.0)
-
 
 def sweep_expired(vitalities: list[InquiryVitality], now: float | None = None) -> tuple[list[str], list[InquiryVitality]]:
     """Sweep and return (expired_ids, surviving_vitalities)."""

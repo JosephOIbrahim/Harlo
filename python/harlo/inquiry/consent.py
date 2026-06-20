@@ -30,7 +30,6 @@ class ConsentManager:
     but can be re-enabled here.
     """
     records: dict[str, ConsentRecord] = field(default_factory=dict)
-    globally_enabled: bool = True
 
     def set_consent(
         self,
@@ -48,8 +47,6 @@ class ConsentManager:
 
     def is_allowed(self, key: str) -> bool:
         """Check if a key is allowed. Default: True."""
-        if not self.globally_enabled:
-            return False
         record = self.records.get(key)
         if record is None:
             return True  # Opt-in default
@@ -66,14 +63,6 @@ class ConsentManager:
     def unblock_topic(self, topic_key: str, reason: str = "user_request") -> ConsentRecord:
         """Unblock a previously blocked topic."""
         return self.set_consent(topic_key, allowed=True, reason=reason)
-
-    def disable_all(self, reason: str = "user_request") -> None:
-        """Globally disable all inquiries."""
-        self.globally_enabled = False
-
-    def enable_all(self, reason: str = "user_request") -> None:
-        """Re-enable inquiries globally."""
-        self.globally_enabled = True
 
     def get_blocked_keys(self) -> list[str]:
         """Return all explicitly blocked keys."""

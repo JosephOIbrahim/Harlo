@@ -131,18 +131,15 @@ class DMNTeardown:
 
     def recover_temp(self) -> Optional[dict]:
         """Recover partial results from temp file on boot."""
-        candidates = [
-            TEMP_DIR / "twin_dmn_partial.json",
-        ]
-        for path in candidates:
-            if path.exists():
-                try:
-                    with open(path) as f:
-                        data = json.load(f)
-                    path.unlink()  # Delete after recovery
-                    return data
-                except (json.JSONDecodeError, OSError):
-                    path.unlink(missing_ok=True)
+        path = TEMP_DIR / "twin_dmn_partial.json"
+        if path.exists():
+            try:
+                with open(path) as f:
+                    data = json.load(f)
+                path.unlink()  # Delete after recovery
+                return data
+            except (json.JSONDecodeError, OSError):
+                path.unlink(missing_ok=True)
         return None
 
 

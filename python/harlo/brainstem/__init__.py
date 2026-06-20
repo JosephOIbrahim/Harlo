@@ -48,7 +48,6 @@ __all__ = [
     "elenchus_to_verification",
     "check_intent_preserved",
     "compile_to_reflex",
-    "compose",
     "composition_to_layers",
     "compute_surprise",
     "compute_trace_merkle",

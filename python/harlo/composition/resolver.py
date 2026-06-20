@@ -6,7 +6,7 @@ When two layers share the same arc type, the later timestamp wins.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 from .layer import ArcType, Layer

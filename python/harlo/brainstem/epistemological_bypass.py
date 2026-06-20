@@ -41,7 +41,7 @@ def should_bypass_elenchus(
         return True
 
     if tag_set & _SELF_REPORTED_TAGS:
-        if consumer_lower in _INQUIRY_SOURCES or consumer_lower == "inquiry":
+        if consumer_lower in _INQUIRY_SOURCES:
             return True
         if consumer_lower in ("composition", "compose"):
             return False

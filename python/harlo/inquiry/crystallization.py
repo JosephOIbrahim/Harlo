@@ -84,12 +84,5 @@ class CrystallizationStore:
         worst_idx = min(range(len(self.traces)), key=lambda i: self.traces[i].preservation_score)
         self.traces.pop(worst_idx)
 
-    def get_decay_rate(self, trace_id: str, default_rate: float) -> float:
-        """Get effective decay rate for a trace (crystallized or default)."""
-        for t in self.traces:
-            if t.trace_id == trace_id:
-                return t.crystallized_decay_rate
-        return default_rate
-
     def count(self) -> int:
         return len(self.traces)

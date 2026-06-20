@@ -67,12 +67,6 @@ class RuptureLedger:
         """Total rejection weight for a topic."""
         return self.rejection_count(topic_key) * REJECTION_WEIGHT
 
-    def is_topic_blocked(self, topic_key: str) -> bool:
-        """Check if a topic has been explicitly blocked after offer-to-stop."""
-        # After 3 rejections and the stop offer, the topic is suppressed
-        # unless explicitly re-enabled via consent module
-        return self.rejection_count(topic_key) >= REJECTION_LIMIT
-
     def get_all_rejected_topics(self) -> list[str]:
         """Return topic keys that have reached the rejection limit."""
         return [

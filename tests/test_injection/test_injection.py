@@ -129,22 +129,6 @@ class TestInjectionStore:
         assert len(classical) == 2
         assert all(t.profile == "classical" for t in classical)
 
-    def test_get_by_session(self, inj_store):
-        """get_by_session returns traces for a specific session."""
-        inj_store.store(profile="classical", s_nm=0.02, alpha=0.9,
-                        exchange_count=1, transition="activated",
-                        session_id="sess-A")
-        inj_store.store(profile="classical", s_nm=0.02, alpha=0.5,
-                        exchange_count=10, transition="deactivated",
-                        session_id="sess-A")
-        inj_store.store(profile="microdose", s_nm=0.005, alpha=0.3,
-                        exchange_count=1, transition="activated",
-                        session_id="sess-B")
-
-        sess_a = inj_store.get_by_session("sess-A")
-        assert len(sess_a) == 2
-        assert all(t.session_id == "sess-A" for t in sess_a)
-
     def test_count(self, inj_store):
         """count returns total injection traces."""
         assert inj_store.count() == 0

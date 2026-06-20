@@ -120,12 +120,6 @@ def create_amygdala_reflex(resolution: dict) -> dict:
         "reflex_hash": reflex_hash,
         "type": "amygdala_permanent",
         "triggers": triggers,
-        "matched_keywords": {
-            "safety": sorted(matched_safety),
-            "consent": sorted(matched_consent),
-        },
-        "response": resolution.get("outcome", {}),
-        "outcome": resolution.get("outcome", {}),
         "merkle_root": resolution.get("merkle_root", ""),
         "verification_state": "amygdala_bypass",
         "is_permanent": True,

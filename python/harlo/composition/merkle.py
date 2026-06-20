@@ -100,17 +100,6 @@ class MerkleTree:
             pos //= 2
         return proof
 
-    @staticmethod
-    def verify_proof(leaf_hash: str, proof: list[tuple[str, str]], root: str) -> bool:
-        """Verify a Merkle proof against a known root hash."""
-        current = leaf_hash
-        for sibling_hash, side in proof:
-            if side == "R":
-                current = _combine(current, sibling_hash)
-            else:
-                current = _combine(sibling_hash, current)
-        return current == root
-
     @property
     def leaf_count(self) -> int:
         return self._leaf_count
