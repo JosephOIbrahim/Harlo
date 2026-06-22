@@ -18,7 +18,7 @@
 > - **C1** `MerkleTree.get_proof` deleted — its only caller (the stage wrapper) went in Tier 1, so it is now confirmed dead.
 > - **R5 (partial)** `bytes_to_sdr` + its roundtrip test deleted (dead deserialization; `sdr_to_bytes` kept — production). **`hamming_distance` KEPT** — it backs real encoder-locality contract tests (similar→close, different→far, identity→0); deleting it would cost coverage, not just lines. Deliberate deviation from the Tier 2 line item.
 > - **M3** `apply_modulation` + its test deleted. Rule 10 (anchor gain = 1.0) stays covered by `compute_gain` tests (test_profile) and the production `compute_injection_gain` tests (test_cogexec) — no coverage lost.
-> - **Tier 5 (D3)** still parked — needs a roadmap call (will `agents/harness.py` adopt the second socket API?). Untouched.
+> - **Tier 5 (D3)** RESOLVED — **removed** (issue #21, decision: no `agents/harness.py` adoption). Deleted `acquire_listen_socket` + `try_launchd_socket`/`try_systemd_socket`/`bind_dev_socket` + their test module (~90 lines). Production `acquire_listening_socket` is the sole path.
 > Verification: `cargo test -p hippocampus` 40/0; py_compile + import + dangling-ref grep clean.
 
 Scope: **over-engineering and unnecessary complexity only.** Not correctness,
